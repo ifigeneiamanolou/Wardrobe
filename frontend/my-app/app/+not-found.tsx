@@ -5,7 +5,7 @@ import React from 'react';
 export default function NotFoundPage() {
     <View>
         <Stack.Screen options={{ title: 'Oops! Not Found' }} />  // title of the page
-        <Link href = "/">
+        <Link href = "/tabs">
             Not found !
         </Link>
     </View>
