@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function Home() {
     return(
-        <View>
+        <View className = "flex flex-grow bg-slate-200">
             <Text> Home page </Text>
         </View>
     );

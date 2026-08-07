@@ -1,3 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@theme {
+  --color-white: #fff;
+  --color-beige-dark: #ed1e1e;
+  --color-beige-light: #f4e8e8;
+  --color-pink-light: #f9c7dd;
+  --color-pink-medium: #ffb5d2;
+  --color-pink-dark: #ff7fb4;
+
+}
