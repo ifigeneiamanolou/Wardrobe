@@ -1,6 +1,5 @@
 import React from "react";
 import { Stack } from 'expo-router';
-import '../../global.css';
 
 const isLoggedIn = false;
 
@@ -14,7 +13,7 @@ export default function RootLayout() {
       </Stack.Protected>
         
       {/* Redirect automatically to the login page */}
-      <Stack.Screen name = "/"/>
+      <Stack.Screen name = "signIn"/>
     </Stack>
   );
 }

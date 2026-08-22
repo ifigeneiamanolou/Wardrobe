@@ -12,6 +12,7 @@ const SignUpSchema = yup.object().shape({
     username : yup.string().required('Username is required'),
     mail : yup.string().email('Email is invalid').required('Email is required'),
     password : yup.string().min(8, 'At least 8 characters are required').required('Password is required'),
+    passwordNew : yup.string().oneOf([yup.ref('password')], 'Passwords must be the same')
 });
 
 const formik = useFormik({
@@ -19,7 +20,8 @@ const formik = useFormik({
         name : "",
         username : "",
         email : "",
-        password : ""
+        password : "",
+        passwordNew : ""
     },
     validationSchema : SignUpSchema,
     onSubmit : (values, {resetForm}) => {
@@ -43,11 +45,6 @@ const formik = useFormik({
 })
 
 export default function signUp(){
-    const [name, setName] = useState('');
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [email, setEmail] = useState('');
-    const [newPassword, setNewPassword] = useState('');
     const [visible, setVisible] = useState(false);
     const [newVisible, setNewVisible] = useState(false);
 
@@ -56,8 +53,8 @@ export default function signUp(){
             <View className = "flex flex-row">
                 <Ionicon name = "person-add" size = {24}/>
                 <TextInput 
-                    onChange = {(v) => setName(v.toString())} 
-                    value = {name}
+                    onChangeText = {formik.handleChange('name')}
+                    value = {formik.values.name}
                     placeholder='Name'
                 />
             </View>
@@ -65,8 +62,8 @@ export default function signUp(){
             <View className = "flex flex-row">
                 <Ionicon name = "profile" size = {24}/>
                 <TextInput 
-                    onChange = {(v) => setUsername(v.toString())} 
-                    value = {username}
+                    onChangeText = {formik.handleChange('username')}
+                    value = {formik.values.username}
                     placeholder='Username'
                 />
             </View>
@@ -74,8 +71,8 @@ export default function signUp(){
             <View className = "flex flex-row">
                 <Ionicon name = "email" size = {24}/>
                 <TextInput 
-                    onChange = {(v) => setEmail(v.toString())} 
-                    value = {email}
+                    onChangeText = {formik.handleChange('email')}
+                    value = {formik.values.email}
                     placeholder='Email'
                 />
             </View>
@@ -83,23 +80,31 @@ export default function signUp(){
             <View className = "flex flex-row">
                 <Ionicon name = "password" size = {24}/>
                 <TextInput 
-                    onChange = {(v) => setPassword(v.toString())} 
-                    value = {password}
+                    onChangeText = {formik.handleChange('password')}
+                    value = {formik.values.password}
                     placeholder='Password'
                     secureTextEntry={!visible}
                 />
-                <Ionicon name = {visible ? "eye" : "eye-off"} size  ={24}/>
+                <Ionicon 
+                    name = {visible ? "eye" : "eye-off"} 
+                    size = {24}
+                    onPress = {() => setVisible(!visible)}
+                />
             </View>
 
             <View className = "flex flex-row">
                 <Ionicon name = "password" size = {24}/>
                 <TextInput 
-                    onChange = {(v) => setNewPassword(v.toString())} 
-                    value = {newPassword}
+                    onChangeText = {formik.handleChange('passwordNew')}
+                    value = {formik.values.passwordNew}
                     placeholder='Retype password'
                     secureTextEntry={!newVisible}
                 />
-                <Ionicon name = {newVisible ? "eye" : "eye-off"} size = {24}/>
+                <Ionicon 
+                    name = {newVisible ? "eye" : "eye-off"} 
+                    size = {24}
+                    onPress={() => {setNewVisible(!newVisible)}}
+                />
             </View>
         </View>
     )

@@ -7,6 +7,7 @@ import constants from '../constants/app';
 import { useState } from 'react';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import { useSession } from '../ctx';
+import showAlert from '../components/alert';
 
 const LoginSchema = yup.object().shape({
     name : yup.string().required("Email is required"),
@@ -16,8 +17,6 @@ const LoginSchema = yup.object().shape({
 const url = `${constants.BACKEND_URL}/login`;
 
 export default function Login(){
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
     const togglePassword = () => {
@@ -39,9 +38,16 @@ export default function Login(){
                 body : JSON.stringify(values)
             };
             fetch(url, configObj)
-            .then(response => {
-                const dict = response.json();
-                context?.signIn();   // sign in logic
+            .then(async (response) => {
+                if(!response.ok){
+                    throw new Error('Log in failed');
+                }
+                const dict = await response.json();
+                context?.signIn();   // sign in
+            })
+            .catch((err) => {
+                console.log("Log in error", err);
+                showAlert('Error', err);
             })
             .finally(() => {
                 resetForm();
@@ -55,8 +61,8 @@ export default function Login(){
                 <Ionicon name = "person" size = {24}/>
                 <TextInput 
                     placeholder='username' 
-                    defaultValue={username} 
-                    onChange={v => setUsername(v.toString())}
+                    defaultValue={formik.values.name} 
+                    onChangeText={formik.handleChange('name')}
                     keyboardType='email-address'
                     autoCapitalize='none'
                 />
@@ -66,8 +72,8 @@ export default function Login(){
                 <Ionicon name = "person" size = {24}/>
                 <TextInput 
                     placeholder='password' 
-                    defaultValue= {password} 
-                    onChange={v => setPassword(v.toString())}
+                    defaultValue= {formik.values.password} 
+                    onChangeText={formik.handleChange('password')}
                     secureTextEntry={!isPasswordVisible}
                     autoCapitalize='none'
                />
@@ -76,7 +82,7 @@ export default function Login(){
                </TouchableOpacity>
             </View>
             
-            <TouchableOpacity onPress = {() => formik.handleSubmit}> 
+            <TouchableOpacity onPress = {() => formik.handleSubmit()}> 
                 <Text> Log in </Text>
             </TouchableOpacity>
 
