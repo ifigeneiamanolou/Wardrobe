@@ -1,4 +1,4 @@
-export const colors = {
+const colors = {
   white: "#fff",
   beigeDark: "#ed1e1e",
   beigeLight: "#f4e8e8",
@@ -6,3 +6,5 @@ export const colors = {
   pinkMedium: "#ffb5d2",
   pinkDark: "#ff7fb4",
 };
+
+export default colors;
