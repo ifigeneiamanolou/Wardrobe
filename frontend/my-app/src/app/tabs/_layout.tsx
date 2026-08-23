@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import React from 'react';
-import {colors} from '../../constants/colors'; 
+import colors from '../../constants/colors'; 
 
 export default function RootLayout() {
   return (

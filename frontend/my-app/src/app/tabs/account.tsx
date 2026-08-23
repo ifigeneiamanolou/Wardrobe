@@ -1,10 +1,14 @@
-import { Text, View} from 'react-native';
+import { Button, View} from 'react-native';
 import React from 'react';
+import { useSession } from '@/src/ctx';
 
 export default function Account() {
+    const session = useSession();
     return(
         <View>
-            <Text> Account page </Text>
+            <Button 
+                title = "press" 
+                onPress={session?.signOut}/>
         </View>
     );
 }
