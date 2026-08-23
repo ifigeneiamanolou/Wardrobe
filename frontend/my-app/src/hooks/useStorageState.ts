@@ -9,7 +9,9 @@ function useAsyncState<T>(
     initialValue : [boolean, T | null] = [true, null]
 ): UseStateHook<T>{
     return useReducer(
-        (state : [boolean, T | null], action : T | null = null) : [boolean, T | null] => [false, action],
+        (state : [boolean, T | null], action : T | null = null) : [boolean, T | null] => {
+            return [false, action]
+        },
         initialValue
     ) as UseStateHook<T>;           // Explicitly state the return type
 }
@@ -28,8 +30,13 @@ export function useStorageState(key : string) : UseStateHook<string>{
 
     // get
     useEffect(() => {
-        SecureStore.getItemAsync(key).then((value : string | null) => {
+        SecureStore.getItemAsync(key)
+        .then((value : string | null) => {
             setState(value);
+        })
+        .catch((err) => {
+            console.log('Error fetching key', err);
+            setState(null);
         })
     }, [key]);
 
