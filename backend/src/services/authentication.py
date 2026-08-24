@@ -10,6 +10,8 @@ import os
 from dotenv import load_dotenv
 from fastapi import HTTPException, status, Depends
 from typing import Annotated
+import uuid
+import redis.asyncio as redis
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 password_hash = PasswordHash.recommended()
@@ -17,6 +19,12 @@ DUMMY_HASH = password_hash.hash("password")
 ALGORITHM = "HA256"
 load_dotenv()
 SECRET_KEY = os.environ["SECRET_KEY"]
+
+# Redis client
+client = redis.from_url(
+    os.getenv("REDIS_URL", "redis://localhost:7865"),
+    decode_responses = True
+)
 
 ####################################################
 # User login
@@ -64,29 +72,30 @@ async def authenticate_user(username : str, password : str):
     return user
 
 async def create_access_token(data : dict, expire_time : timedelta):
-    """ Create an encoded JWT signed token
+    """ Create an encoded JWT signed token along with a unique JTI for revocation
 
     Args:
         data (dict): the user for which to create the token
         expire_time (timedelta): time in minutes for the token expiry
 
     Returns:
-        str : encoded JWT token
+        dict, str : dictionary with jwt, jti and expiry, and jti unique string
     """
     to_encode = data.copy()
+    jti = str(uuid.uuid4())
     if expire_time:
         expire = datetime.now(timezone.utc) + expire_time
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes = 15)
-    to_encode.update({"exp" : expire})
+    to_encode.update({"exp" : expire, "jti" : jti})
     jwt_encoded = jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
-    return jwt_encoded
+    return jwt_encoded, jti
 
 ##########################################################
 # Token access
 ##########################################################
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    """ Validates a user JWT token without checking if the user is disabled
+    """ Validates a user JWT token and JTI without checking if the user is disabled
 
     Args:
         token (Annotated[str, Depends): the encoded JWT token
@@ -106,7 +115,10 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
         username = payload.get("sub")
-        if username is None:
+        jti = payload.get("jti")
+        if username is None or jti is None:
+            raise credentials_exception
+        if await is_revoked(jti):
             raise credentials_exception
         token_data = TokenData(username)
     except (InvalidTokenError, PyJWTError):
@@ -115,6 +127,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     user = find_user(username = token_data.username)
     if user is None:
         raise credentials_exception
+    # CHANGE TO RETURNING THE USERNAME AND THE JTI
     return user
 
 async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]):
@@ -132,3 +145,29 @@ async def get_current_active_user(current_user: Annotated[User, Depends(get_curr
     if current_user.disabled:
         raise HTTPException(status_code = 400, detail = "inactive user")
     return current_user
+
+##########################################################
+# Token revocation
+##########################################################
+
+async def revoke_token(jti : str, ttl_seconds : int):
+    """ Adds a JTI into a REDIS blacklist with the token's remaining lifetime for automatic cleanup
+    when the token expires since the user is invalidated in that case by the JWT tokens
+
+    Args:
+        jti (str): the JTI to add to the blacklist
+        ttl_seconds (int): the token's remaining lifetime in seconds
+    """
+    await client.setex(f"blacklist : {jti}", ttl_seconds, "revoked")
+
+async def is_revoked(jti : str):
+    """ Returns true if the token has been revoked using the Redis blacklist
+
+    Args:
+        jti (str): the jti of the token to check
+
+    Returns:
+        bool: indicate whether the token has been revoked
+    """
+
+    return await client.exists(f"blacklist : {jti}") == 1

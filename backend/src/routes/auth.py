@@ -57,5 +57,27 @@ async def create_user(user : UserInDb):
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful account creation")
 
 
+# In production three scenarios demand server-side revocatin with JWT tokens:
+# 1) The users logs out: the token needs to be invalidated
+# 2) The user changes the password : all issued tokens need to be invalidated
+# 3) The credentials are compromised 
 
+# The mechanism used is JTI (JWT ID) claim; a unique id generated for each token
+# This is stored in a Redis SET (unordered collection of unique strings) with a TTL
+# The token is invalidated against a blacklist (a list of tokens that are invalidated)
+# When a user logs out their token is effectively added to that blacklist
+
+# Why redis :
+# It is a high-performance in memory key-value database providing
+# 1) Speed
+# 2) Distributed use : multiple servers can use one redis instance
+# 3) TTL : Redis automatically removes entries after a given time period (this needs to be set
+#    to the expiry time of the JWT token to eliminate the need for cleanup and keep Redis memory
+#    footprint bounded)
+
+# Instead of having to blacklist every single JTI when the password changes or is compromised (in case
+# the user has logged in with multiple devices), use a token version key along with the token. On each 
+# validation we compare the version stored in the database against the token version claim. To revoke 
+# all tokens increment the counter; now every token issued before fails validation. Both blacklisting
+# and token versions are used to simulate a real production environment.
 
