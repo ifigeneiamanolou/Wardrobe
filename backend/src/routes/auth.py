@@ -4,13 +4,13 @@ from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from src.models.pydantic import User, UserInDb
 from datetime import timedelta
-from src.services.authentication import get_current_active_user, authenticate_user, create_access_token, hash
+from src.services.authentication import authenticate_user, create_access_token, hash, get_current_user
 from src.services.database import find_user, find_user_by_email, create_user
 router = APIRouter()
 
-MINUTES_TO_EXPIRE = 30
+MINUTES_TO_EXPIRE = 15
 
-@router.post("token")
+@router.post("/token")
 async def login(form_data : Annotated[OAuth2PasswordRequestForm, Depends()]):
     # Find a user in the database
     user = authenticate_user(form_data.username, form_data.password)
@@ -27,14 +27,13 @@ async def login(form_data : Annotated[OAuth2PasswordRequestForm, Depends()]):
         data = {"sub" : user.username},
         expires_delta = access_token_expires
     )
-    return token
+    return {"access_token" : token, "token_type" : "bearer"}
 
-@router.get("/users/me/items")
-async def read_current_user(current_user : Annotated[User, Depends(get_current_active_user)]):
-    return [{"item_id": "Foo", "owner": current_user.username}]
-
-@router.get("/users/me")
-async def read_current_user(current_user : Annotated[User, Depends(get_current_active_user)]):
+@router.post("/users/me")
+# Sample endpoint with dependancy injection to validate the user with the JWT token provided
+# If the token is expired, tampered, missing, or lacking the sub entry yields the same error
+# avoiding leaking of information about the validation system to attackers
+async def read_users_me(current_user : Annotated[User, Depends(get_current_user)]):
     return current_user
 
 @router.post("/signup")
@@ -56,6 +55,7 @@ async def create_user(user : UserInDb):
         create_user(user = user)
     except Exception as e:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful account creation")
+
 
 
 

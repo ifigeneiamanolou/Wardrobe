@@ -14,7 +14,7 @@ const LoginSchema = yup.object().shape({
     password : yup.string().min(8, "Password must be at least 8 characters").required("Password is required")
 });
 
-const url = `${constants.BACKEND_URL}/login`;
+const url = `${constants.BACKEND_URL}/token`;
 
 export default function Login(){
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -43,7 +43,7 @@ export default function Login(){
                     throw new Error('Log in failed');
                 }
                 const dict = await response.json();
-                context?.signIn();   // sign in
+                context?.signIn(dict);   // sign in
             })
             .catch((err) => {
                 console.log("Log in error", err);
@@ -58,10 +58,10 @@ export default function Login(){
     return(
         <View className='flex-1 items-center justify-center'>
             <View className='flex flex-col border border-black bg-white w-[90%] gap-4 p-4 rounded-xl'>
-                <Text className = "text-2xl font-bold">
+                <Text className = "text-2xl font-bold px-3">
                     Log In
                 </Text>
-                <View className = "flex flex-row items-center border border-gray-300 rounded-lg px-3 h-12">
+                <View className = "flex flex-row items-center border border-gray-300 rounded-lg px-3 h-12 hover:border-sky-500">
                     <Ionicon name = "person" size = {24}/>
                     <TextInput 
                         placeholder='username' 
@@ -69,11 +69,11 @@ export default function Login(){
                         onChangeText={formik.handleChange('name')}
                         keyboardType='email-address'
                         autoCapitalize='none'
-                        className = "flex-grow"
+                        className = "flex-grow "
                     />
                 </View>
 
-                <View className = "flex-row items-center border border-gray-300 rounded-lg px-3 h-12">
+                <View className = "flex-row items-center border border-gray-300 rounded-lg px-3 h-12 hover:border-sky-500">
                     <Ionicon name = "key" size = {24}/>
                     <TextInput 
                         placeholder='password' 

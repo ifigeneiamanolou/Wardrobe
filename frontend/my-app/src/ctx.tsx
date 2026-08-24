@@ -3,9 +3,14 @@ import { useStorageState } from './hooks/useStorageState';
 import React from 'react';
 import { router } from 'expo-router';
 
+// Token dictionary
+interface Dictionary<T> {
+    [key : string] : T;
+}
+
 // Context provider
 const AuthContext = createContext<{
-    signIn: () => void;
+    signIn: (token : Dictionary<string>) => void;
     signOut : () => void;
     isLoading : boolean;
     session : string | null;
@@ -28,8 +33,8 @@ export function SessionProvider({children} : PropsWithChildren){
         // Provide context to the childer of this parent element
         <AuthContext.Provider 
             value = {{
-                signIn : () => {
-                    setSession('new');        // log in logic here
+                signIn : (token) => {
+                    setSession(token['access_token']);        // log in logic here
                 },
                 signOut : () => {
                     router.replace("/signIn");
