@@ -1,14 +1,13 @@
 from fastapi import FastAPI, asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware 
 from src.routes.auth import router as auth_router
+from src.config.cache import init_redis, close
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start up code
-
+    await init_redis()
     yield
-
-    # Shutdown code
+    await close()
 
 app = FastAPI(lifespan = lifespan) 
 

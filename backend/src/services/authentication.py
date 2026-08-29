@@ -1,9 +1,8 @@
 from fastapi.security import OAuth2PasswordBearer
-from src.services.database import find_user
-from src.models.pydantic import User, TokenData
+from src.services.database import find_user, load_cluster
+from src.models.pydantic import TokenData
 from pwdlib import PasswordHash
-from datetime import timedelta, timezone
-import datetime
+from datetime import timedelta, timezone, datetime
 import jwt
 from jwt.exceptions import InvalidTokenError, PyJWTError
 import os
@@ -11,20 +10,15 @@ from dotenv import load_dotenv
 from fastapi import HTTPException, status, Depends
 from typing import Annotated
 import uuid
-import redis.asyncio as redis
+from src.config import cache
+from pymongo import MongoClient
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 password_hash = PasswordHash.recommended()
 DUMMY_HASH = password_hash.hash("password")
-ALGORITHM = "HA256"
+ALGORITHM = "HS256"
 load_dotenv()
 SECRET_KEY = os.environ["SECRET_KEY"]
-
-# Redis client
-client = redis.from_url(
-    os.getenv("REDIS_URL", "redis://localhost:7865"),
-    decode_responses = True
-)
 
 ####################################################
 # User login
@@ -52,7 +46,7 @@ def hash(password : str):
     """
     return password_hash.hash(password)
 
-async def authenticate_user(username : str, password : str):
+async def authenticate_user(username : str, password : str, client : MongoClient):
     """ Authenticates a user given his username and password checking he exists in the system and the 
         password is correct
 
@@ -63,7 +57,7 @@ async def authenticate_user(username : str, password : str):
     Returns:
         UserInDb | bool : user details found in the database or false if authentication fails
     """
-    user = find_user(username, password)
+    user = await find_user(username, client)
     if not user:
         verify_password(password, DUMMY_HASH)
         return False
@@ -71,7 +65,7 @@ async def authenticate_user(username : str, password : str):
         return False
     return user
 
-async def create_access_token(data : dict, expire_time : timedelta):
+def create_access_token(data : dict, expires_delta : timedelta):
     """ Create an encoded JWT signed token along with a unique JTI for revocation
 
     Args:
@@ -83,18 +77,25 @@ async def create_access_token(data : dict, expire_time : timedelta):
     """
     to_encode = data.copy()
     jti = str(uuid.uuid4())
-    if expire_time:
-        expire = datetime.now(timezone.utc) + expire_time
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes = 15)
-    to_encode.update({"exp" : expire, "jti" : jti})
+
+    to_encode.update({
+        "exp" : expire, 
+        "jti" : jti
+    })
     jwt_encoded = jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
-    return jwt_encoded, jti
+    return jwt_encoded
 
 ##########################################################
 # Token access
 ##########################################################
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_current_user(
+        token: Annotated[str, Depends(oauth2_scheme)],
+        client : Annotated[MongoClient, Depends(load_cluster)]
+    ):
     """ Validates a user JWT token and JTI without checking if the user is disabled
 
     Args:
@@ -113,61 +114,54 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     )
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
+        # Extract data from the JWT token
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
         jti = payload.get("jti")
-        if username is None or jti is None:
+        token_version = payload.get("token_version")
+
+        # Check all data is preset
+        if username is None or jti is None or token_version is None:
             raise credentials_exception
-        if await is_revoked(jti):
+
+        # Check if the JTI is in the redis blacklit
+        if await cache.is_revoked(jti):
             raise credentials_exception
         token_data = TokenData(username)
     except (InvalidTokenError, PyJWTError):
         raise credentials_exception
 
-    user = find_user(username = token_data.username)
+    # Check if the user is in the database based on username
+    user = find_user(username = token_data.username, client = client)
     if user is None:
         raise credentials_exception
-    # CHANGE TO RETURNING THE USERNAME AND THE JTI
+
+    # Handle password changes and compromises
+    if user.token_version != token_version:
+        raise credentials_exception
     return user
 
-async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]):
-    """ Core authentication dependancy. Inject this in any route that requires a valid JWT token. 
+async def logout_token(token : Annotated[str, Depends(oauth2_scheme)]):
+    credentials_exception = HTTPException(
+        status_code = status.HTTP_401_UNAUTHORIZED,
+        detail = "Could not validate credentials",
+        headers = {"WWW-Authenticate" : "Bearer"}
+    )
 
-    Args:
-        current_user (Annotated[User, Depends): injected dependancy from the get_current_user function
+    try:
+        # Extract the JTI and the expiry from the token
+        payload = jwt.decode(token, key = SECRET_KEY, algorithms = [ALGORITHM])
+        jti = payload.get("jti")
+        exp = payload.get("exp")
 
-    Raises:
-        HTTPException: Exception raised when the user is inactive
+        if jti is None or exp is None:
+            raise credentials_exception
 
-    Returns:
-        User: dictionary of the current user on successful authentication
-    """
-    if current_user.disabled:
-        raise HTTPException(status_code = 400, detail = "inactive user")
-    return current_user
+        # Put the JTI in the blacklist if not expired
+        now = datetime.now(timezone.utc).timestamp()
+        ttl_seconds = max(0, now - exp)
 
-##########################################################
-# Token revocation
-##########################################################
-
-async def revoke_token(jti : str, ttl_seconds : int):
-    """ Adds a JTI into a REDIS blacklist with the token's remaining lifetime for automatic cleanup
-    when the token expires since the user is invalidated in that case by the JWT tokens
-
-    Args:
-        jti (str): the JTI to add to the blacklist
-        ttl_seconds (int): the token's remaining lifetime in seconds
-    """
-    await client.setex(f"blacklist : {jti}", ttl_seconds, "revoked")
-
-async def is_revoked(jti : str):
-    """ Returns true if the token has been revoked using the Redis blacklist
-
-    Args:
-        jti (str): the jti of the token to check
-
-    Returns:
-        bool: indicate whether the token has been revoked
-    """
-
-    return await client.exists(f"blacklist : {jti}") == 1
+        if(ttl_seconds > 0):
+            await cache.revoke_token(jti, ttl_seconds)
+    except (InvalidTokenError, PyJWTError):
+        raise credentials_exception
