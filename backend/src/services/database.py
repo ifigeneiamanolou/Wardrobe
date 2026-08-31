@@ -32,7 +32,7 @@ async def create_user(user : UserInDb, client : MongoClient):
     payload = {
         "id" : str(uuid.uuid4()),
         "username" : user.username,
-        "full_name" : user.full_name,
+        "name" : user.name,
         "password" : user.password,
         "email" : user.email,
         "token_version" : user.token_version

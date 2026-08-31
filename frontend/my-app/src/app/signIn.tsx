@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, TextInput, TouchableOpacity, Text} from 'react-native';
 import { useFormik } from 'formik';
 import { Link } from 'expo-router';
@@ -24,12 +24,12 @@ const LoginSchema = yup.object().shape({
 const url = `${constants.BACKEND_URL}/token`;
 
 export default function Login(){
-    useEffect(() => {
-        GoogleSignin.configure({
-            webClientId : "557827216767-er77mu4c9vivgv1ln9g8020e6vb2m3f5.apps.googleusercontent.com",
-            offlineAccess : true
-        });
-    }, []);
+    // useEffect(() => {
+    //     GoogleSignin.configure({
+    //         webClientId : "557827216767-er77mu4c9vivgv1ln9g8020e6vb2m3f5.apps.googleusercontent.com",
+    //         offlineAccess : true
+    //     });
+    // }, []);
     
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const togglePassword = () => {

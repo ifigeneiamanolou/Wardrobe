@@ -1,11 +1,125 @@
-import { Text, View} from 'react-native';
-import React from 'react';
-import { Camera } from 'react-native-vision-camera';
+import React, { useState, useEffect, useRef} from 'react';
+import { Text, View, Button, TouchableOpacity, Image } from 'react-native';
+import { Camera, CameraView, CameraType, FlashMode} from 'expo-camera';
+import Ionicon from 'react-native-vector-icons/Ionicons';
+import showAlert from '@/src/components/alert';
+import colors from '@/src/constants/colors';
 
-export default function Add() {
+const Add = () => {
+    const [hasPermission, setHasPermission] = useState<boolean>(false);
+    const [type, setType] = useState<CameraType>("back");
+    const [image, setImage] = useState<string | null>(null);
+    const [flash, setFlash] = useState<FlashMode>('off');
+    const cameraRef = useRef<CameraView>(null);
+    const [showPopUp, setShowPopUp] = useState<boolean>(false);
+
+    useEffect(() => {
+        async() => {
+            const {status} = await Camera.requestCameraPermissionsAsync();
+            setHasPermission(status === "granted");
+        }
+    }, []);
+
+    const requestPermission = async () => {
+        const {status} = await Camera.requestCameraPermissionsAsync();
+        setHasPermission(status == "granted");
+    };
+
+    const toggleType = () => {
+        setType(current =>
+            current === "back" ? "front" : "back"
+        );
+    };
+
+    const toggleFlash = () => {
+        setFlash( current =>
+            current === "on" ? "off" : "on"
+        );
+    };
+
+    const takePicture = async () => {
+        if(cameraRef.current){
+            try{
+                const data = await cameraRef.current.takePictureAsync();
+                setImage(data.uri);
+            } catch(err){
+                console.log('Error when taking picture', err);
+                showAlert('Error', 'Try taking a picture again!');
+            }
+        };
+    };
+
+    const saveImage = async () => {
+        // to add
+    };
+
+    if (hasPermission === null) {
+        return <View />;
+    }
+    if (hasPermission === false) {
+        return(
+            <View >
+                <Text> We need your permission to show the camera </Text>
+                <Button onPress={requestPermission} title="grant permission" />
+            </View>
+        )
+    }
+
     return(
-        <View>
-            <Text> Add item page </Text>
+        <View className='flex-1'>
+            {/* Camera or image captured */}
+            {!image ? 
+            <CameraView facing = {type} flash = {flash} ref = {cameraRef}/>
+            
+            : 
+            <Image source = {{uri : image}} className = '' />
+            }
+
+            {/* Control buttons */}
+            <View>
+                {image ? 
+                <View>
+                    <TouchableOpacity onPress = {takePicture}>
+                        <Ionicon name = "camera" size = {24} color = {colors['White']}/>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress = {toggleType}>
+                        <Ionicon 
+                            name = {type === "back" ? "contrast-sharp" : "contrast-outline"} 
+                            size = {24} 
+                            color = {colors['White']}/>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={toggleFlash}>
+                        <Ionicon 
+                            name = {flash === "on" ? "flash" : "flash-off"}
+                            size = {24} 
+                            color = {colors['White']}/>
+                    </TouchableOpacity>
+                </View>
+                : 
+                <View>
+                    <TouchableOpacity onPress = {() => setImage(null)}>
+                        <Ionicon 
+                            name = "reload" 
+                            size = {24} 
+                            color = {colors['White']}/>
+                    </TouchableOpacity>
+
+                    // TO ADD NAVIGATION
+                    <TouchableOpacity >
+                        <Ionicon 
+                            name = "save"
+                            size = {24} 
+                            color = {colors['White']}/>
+                    </TouchableOpacity>
+                </View>
+                }
+            </View>
+
+            {/* Pop up */}
         </View>
-    );
-}
+    )
+};
+
+export default Add;

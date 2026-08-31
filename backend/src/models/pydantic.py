@@ -1,10 +1,9 @@
 from pydantic import BaseModel
 
 class User(BaseModel):
-    id : str
     username : str
-    email : str | None = None
-    full_name : str | None = None
+    email : str
+    name : str 
     token_version : int = 1
 
 class UserNewPassword(BaseModel):
