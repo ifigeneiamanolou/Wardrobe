@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, Text} from 'react-native';
 import { useFormik } from 'formik';
 import { Link } from 'expo-router';
@@ -8,6 +8,13 @@ import Ionicon from 'react-native-vector-icons/Ionicons';
 import { useSession } from '../ctx';
 import showAlert from '../components/alert';
 import constants from '../constants/app';
+import '../../global.css';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import colors from '../constants/colors';
+import {
+  GoogleSignin,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
 
 const LoginSchema = yup.object().shape({
     name : yup.string().required("Email is required"),
@@ -17,14 +24,19 @@ const LoginSchema = yup.object().shape({
 const url = `${constants.BACKEND_URL}/token`;
 
 export default function Login(){
+    useEffect(() => {
+        GoogleSignin.configure({
+            webClientId : "557827216767-er77mu4c9vivgv1ln9g8020e6vb2m3f5.apps.googleusercontent.com",
+            offlineAccess : true
+        });
+    }, []);
+    
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-
     const togglePassword = () => {
         setIsPasswordVisible(!isPasswordVisible);
     };
 
     const context = useSession();
-
     const formik = useFormik({
         initialValues: {
             name : "",
@@ -55,69 +67,122 @@ export default function Login(){
         }
     });
 
+    const googleLog = async () => {
+        try{
+            // Check play services
+            await GoogleSignin.hasPlayServices();
+
+            // Sign in
+            const userInfo = await GoogleSignin.signIn();
+            console.log("User Info:", userInfo);
+        } catch (err : any){
+            console.log('Google sign in error, ', err);
+            if(err.code == statusCodes.SIGN_IN_CANCELLED){
+                showAlert('Canceled', 'User sign in cancelled');
+            } else if (err.code == statusCodes.PLAY_SERVICES_NOT_AVAILABLE){
+                showAlert('Not available', 'Google play services not available');
+            } else if (err.code == statusCodes.IN_PROGRESS){
+                showAlert('In progress', 'Sign in already in progress');
+            } else {
+                showAlert('Error', err.message);
+            }
+        }
+    };
+
     return(
-        <View className='flex-1 items-center justify-center'>
-            <View className='flex flex-col border border-black bg-white w-[90%] gap-4 p-4 rounded-xl'>
-                <Text className = "text-2xl font-bold px-3">
-                    Log In
-                </Text>
-                <View className = "flex flex-row items-center border border-gray-300 rounded-lg px-3 h-12 hover:border-sky-500">
-                    <Ionicon name = "person" size = {24}/>
-                    <TextInput 
-                        placeholder='username' 
-                        defaultValue={formik.values.name} 
-                        onChangeText={formik.handleChange('name')}
-                        keyboardType='email-address'
-                        autoCapitalize='none'
-                        className = "flex-grow "
-                    />
-                </View>
-
-                <View className = "flex-row items-center border border-gray-300 rounded-lg px-3 h-12 hover:border-sky-500">
-                    <Ionicon name = "key" size = {24}/>
-                    <TextInput 
-                        placeholder='password' 
-                        defaultValue= {formik.values.password} 
-                        onChangeText={formik.handleChange('password')}
-                        secureTextEntry={!isPasswordVisible}
-                        autoCapitalize='none'
-                        className = "flex-grow"
-                    />
-                    <TouchableOpacity onPress={togglePassword}>
-                        <Ionicon name = {isPasswordVisible ? "eye" : "eye-off"} size = {24}/>
-                    </TouchableOpacity>
-                   
-                </View>
-                
-                <View className='flex flex-row p-4 gap-4'>
-                    <TouchableOpacity 
-                        className='flex-1 border border-gray-500 rounded-lg items-center py-4' 
-                        onPress = {() => formik.handleSubmit()}
-                    > 
-                        <Text className='font-bold' > Log In </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity 
-                        className='flex-1 border border-gray-500 rounded-lg items-center py-4' 
-                        onPress = {() => console.log('pressed google')}
-                    > 
-                        <Text className = "font-bold"> Google </Text>
-                    </TouchableOpacity>
-                </View>
-
-
-                <View className='flex flex-row '>
-                    <Text>
-                        Don't have an account?
+        <SafeAreaView className = 'flex-1 bg-white'>
+            <View className='flex-1 items-center justify-start'>
+                <View className='flex flex-col w-[90%] gap-4 p-4'>
+                    {/* Top text */}
+                    <Text className = "text-2xl font-bold text-graphite py-8">
+                        Log In
                     </Text>
 
-                    <Link href = "./signUp"> 
-                        <Text className='text-blue-400'>
-                            Sign up 
-                        </Text>
-                    </Link>
+                    {/* Fields */}
+                    <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
+                        <Ionicon name = "person" size = {24} color={colors['Graphite']}/>
+                        <TextInput 
+                            placeholder='Username' 
+                            defaultValue={formik.values.name} 
+                            onChangeText={formik.handleChange('name')}
+                            keyboardType='email-address'
+                            autoCapitalize='none'
+                            className = "flex-grow text-graphite ml-2"
+                        />
+                    </View>
+
+                    <View className = "flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:border-dusty-rose">
+                        <Ionicon name = "key" size = {24} color = {colors['Graphite']}/>
+                        <TextInput 
+                            placeholder='Password' 
+                            defaultValue= {formik.values.password} 
+                            onChangeText={formik.handleChange('password')}
+                            secureTextEntry={!isPasswordVisible}
+                            autoCapitalize='none'
+                            className = "flex-grow text-graphite ml-2"
+                        />
+                        <TouchableOpacity onPress={togglePassword}>
+                            <Ionicon name = {isPasswordVisible ? "eye" : "eye-off"} size = {24} color = {colors['Graphite']}/>
+                        </TouchableOpacity>
+                    
+                    </View>
+
+                    {/* Forgot password navigation */}
+                    <View className = "flex flex-row justify-end">
+                        <TouchableOpacity className = "">
+                            
+                            <Link href = "./forgotPassword"> 
+                                <Text className = 'text-link font-bold'> Forgot Password? </Text>
+                            </Link>
+                        </TouchableOpacity>
+                    </View>
+                    
+                    {/* Log in button */}
+                    <View className='flex flex-row py-4'>
+                        <TouchableOpacity 
+                            className='flex-1 bg-rose rounded-lg items-center py-4' 
+                            onPress = {() => formik.handleSubmit()}
+                        > 
+                            <Text className='font-bold text-white' > Continue </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Divider */}
+                    <View className = 'flex flex-row items-center gap-3'>
+                        <View className = 'flex-1 h-[1px] bg-border' />
+                        <Text className = 'w-50 text-center text-slate-gray'> or </Text>
+                        <View className = 'flex-1 h-[1px] bg-border' />
+                    </View>
+
+                    {/* Sign in with google or apple */}
+                    <View className='flex flex-col gap-4'>
+                        <TouchableOpacity 
+                            className='border border-slate-gray rounded-lg items-center py-4' 
+                            onPress = {() => googleLog()}
+                        > 
+                            <Ionicon name="logo-google" color={colors['Graphite']} size={24} />
+                            <Text className='font-bold text-graphite' > Log in with Google </Text>
+                        </TouchableOpacity>
+        
+                        <TouchableOpacity 
+                            className='border border-slate-gray rounded-lg items-center py-4' 
+                            onPress = {() => formik.handleSubmit()}
+                        > 
+                            <Ionicon name="logo-apple" color={colors['Graphite']} size={24} />
+                            <Text className='font-bold text-graphite' > Log in with Apple </Text>
+                        </TouchableOpacity>
+                    </View>
+                    
+                    {/* Sign up navigation */}
+                    <View className='flex flex-row justify-center gap-2'>
+                        <Text> Don't have an account? </Text>
+
+                        <Link href = "./signUp"> 
+                            <Text className='text-dusty-rose'> Sign up </Text>
+                        </Link>
+                    </View>
                 </View>
             </View>
-        </View>
+        </SafeAreaView>
     );
 }

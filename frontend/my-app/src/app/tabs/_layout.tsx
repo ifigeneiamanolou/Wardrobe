@@ -6,18 +6,17 @@ import colors from '../../constants/colors';
 export default function RootLayout() {
   return (
     <Tabs screenOptions={{
-        tabBarActiveTintColor: colors['pinkDark'],
+        tabBarActiveTintColor: colors['Dusty rose'],
         headerStyle: {
-            backgroundColor: colors['pinkLight'],
+            backgroundColor: colors['Rose'],
         },
         headerShadowVisible: false,
-        headerTintColor: colors['white'],
+        headerTintColor: colors['White'],
         tabBarStyle: {
-            backgroundColor: colors['pinkLight'],
+            backgroundColor: colors['Rose'],
         },
-        tabBarInactiveTintColor : colors['white']
+        tabBarInactiveTintColor : colors['White']
     }}>
-
       <Tabs.Screen 
         name="index" 
         options={{ 
@@ -25,6 +24,7 @@ export default function RootLayout() {
             tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />
         }} 
       />
+
       <Tabs.Screen 
         name="account" 
         options={{
@@ -33,6 +33,7 @@ export default function RootLayout() {
 
         }} 
       />
+
       <Tabs.Screen 
         name="add" 
         options={{ 
@@ -40,6 +41,7 @@ export default function RootLayout() {
             tabBarIcon: ({ color }) => <FontAwesome size={28} name="plus" color={color} />
         }} 
       />
+
       <Tabs.Screen 
         name="friends" 
         options={{ 
@@ -47,6 +49,7 @@ export default function RootLayout() {
             tabBarIcon: ({ color }) => <FontAwesome size={28} name="address-book" color={color} />
         }} 
       />
+      
       <Tabs.Screen 
         name="outfit" 
         options={{ 

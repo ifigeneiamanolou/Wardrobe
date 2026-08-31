@@ -8,7 +8,7 @@ const PlaceholderImage3 = require("@/assets/images/Outfit4.jpg");
 
 export default function Home() {
     return(
-        <View className = "grid ">
+        <View className = "flex-1 ">
             <Outfit image = {PlaceholderImage1}></Outfit>
             <Outfit image = {PlaceholderImage2}></Outfit>
             <Outfit image = {PlaceholderImage3}></Outfit>
