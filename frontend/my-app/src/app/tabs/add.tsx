@@ -4,8 +4,9 @@ import { Camera, CameraView, CameraType, FlashMode} from 'expo-camera';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import showAlert from '@/src/components/alert';
 import colors from '@/src/constants/colors';
+import EditImage from '../../components/editImage';
 
-const Add = () => {
+function Add(){
     const [hasPermission, setHasPermission] = useState<boolean>(false);
     const [type, setType] = useState<CameraType>("back");
     const [image, setImage] = useState<string | null>(null);
@@ -19,6 +20,10 @@ const Add = () => {
             setHasPermission(status === "granted");
         }
     }, []);
+
+    const changePopUp = () => {
+        setShowPopUp(!showPopUp);
+    };
 
     const requestPermission = async () => {
         const {status} = await Camera.requestCameraPermissionsAsync();
@@ -49,10 +54,6 @@ const Add = () => {
         };
     };
 
-    const saveImage = async () => {
-        // to add
-    };
-
     if (hasPermission === null) {
         return <View />;
     }
@@ -70,7 +71,6 @@ const Add = () => {
             {/* Camera or image captured */}
             {!image ? 
             <CameraView facing = {type} flash = {flash} ref = {cameraRef}/>
-            
             : 
             <Image source = {{uri : image}} className = '' />
             }
@@ -106,8 +106,7 @@ const Add = () => {
                             color = {colors['White']}/>
                     </TouchableOpacity>
 
-                    // TO ADD NAVIGATION
-                    <TouchableOpacity >
+                    <TouchableOpacity onPress = {changePopUp}>
                         <Ionicon 
                             name = "save"
                             size = {24} 
@@ -118,6 +117,7 @@ const Add = () => {
             </View>
 
             {/* Pop up */}
+            <EditImage onPress = {changePopUp} showPopUp = {showPopUp} uri = {image} />
         </View>
     )
 };

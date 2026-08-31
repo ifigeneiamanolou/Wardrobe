@@ -1,10 +1,12 @@
 import * as yup from 'yup';
 import { View, TextInput, TouchableOpacity,Text} from 'react-native';
 import {useFormik} from 'formik';
-import React, { useState } from 'react';
+import React from 'react';
 import ScrollDown from './scrolldown';
 import size from '../constants/sizes';
 import Checkbox from './CheckBox';
+import constants from '../constants/app';
+import showAlert from './alert';
 
 const editSchema = yup.object().shape({
     name : yup.string().required('Please enter a name for the image'),
@@ -19,7 +21,15 @@ const data = size.map((c) => ({
     "label" : c.label
 }));
 
-const editImage = () => {
+type props = {
+    onPress : any;
+    showPopUp : boolean;
+    uri : string | null;
+}
+
+function EditImage({onPress, showPopUp, uri} : props){
+    const url = `${constants.BACKEND_URL}\save\item`;
+    
     const formik = useFormik({
         initialValues : {
             name : "",
@@ -30,9 +40,32 @@ const editImage = () => {
         },
         validationSchema : editSchema,
         onSubmit : (values, {resetForm}) => {
-            
+            const data = {...values, "uri" : uri};
+            const requestObj = {
+                method : "POST",
+                headers : {"Content-Type" : "application/json"},
+                body : JSON.stringify(data)
+            };
+            fetch(url, requestObj)
+            .then(async (response) => {
+                if(!response.ok){
+                    throw new Error('Upload failed');
+                }
+                showAlert('Success', 'Image was uploaded');
+            })
+            .catch((err) => {
+                console.log("Log in error", err);
+                showAlert('Error', err);
+            })
+            .finally(() => {
+                resetForm();
+            })
         },
     });
+
+    if(!showPopUp){
+        return null;
+    };
 
     return(
         <View>
@@ -72,7 +105,7 @@ const editImage = () => {
             <ScrollDown 
                 data = {data} 
                 onChange = {
-                    (value) => {formik.setFieldValue("size",value)} 
+                    (value : string) => {formik.setFieldValue("size", value)} 
                 }
                 placeholder = "Select size"
             />
@@ -94,7 +127,7 @@ const editImage = () => {
                 <View className='flex flex-row py-4'>
                     <TouchableOpacity 
                         className='flex-1 bg-rose rounded-lg items-center py-4' 
-                        onPress = {}> 
+                        onPress = {onPress}> 
                         <Text className='font-bold text-white' > Back </Text>
                     </TouchableOpacity>
                 </View>
@@ -107,8 +140,8 @@ const editImage = () => {
                     </TouchableOpacity>
                 </View>
             </View>
-        </View>
+        </View> 
     );  
 };
 
-export default editImage;
+export default EditImage;
