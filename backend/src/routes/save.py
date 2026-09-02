@@ -4,7 +4,8 @@ from pymongo import MongoClient
 from src.models.pydantic import ClothingItem, User
 from src.services.authentication import get_current_user
 from src.services.database import load_cluster, save_clothing
-from src.services.predictions import predict_category, predict_color, predict_occasion
+from src.services.predictions import predict_category, predict_color, predict_occasion, read_image
+from src.services.s3storage import upload_file_to_bucket
 
 router = APIRouter()
 
@@ -14,15 +15,19 @@ async def save_item(
     cluster : Annotated[MongoClient, Depends(load_cluster)],
     user : Annotated[User, Depends(get_current_user)]
 ):
+    # Decode the image
+    img, path = await read_image(item.uri)
+
+    # Save the image in an S3 bucket
+    url = await upload_file_to_bucket(path)
+
     # Predict the category of the clothing item
-    category = await predict_category(item.uri)
+    category = await predict_category(img)
 
     # Predict the color of the item
-    color = await predict_color(item.uri)
+    color = await predict_color(img)
 
-    # Predict the occasion for the item
-    occasion = await predict_occasion(item.uri)
 
     # Save the item in the database
-    await save_clothing(cluster, item, occasion, color, category)
-    return {"message" : "Item saved successfully!"}
+    id = await save_clothing(cluster, item, color, category, user.username, url)
+    return {"message" : f"Item saved successfully with id {id}!"}

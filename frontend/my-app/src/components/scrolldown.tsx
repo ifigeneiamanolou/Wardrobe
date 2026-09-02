@@ -1,5 +1,5 @@
 import React from "react";
-import {View, TouchableOpacity, FlatList, Text, Modal, TouchableWithoutFeedback} from 'react-native';
+import {View, TouchableOpacity, FlatList, Text, Modal, TouchableWithoutFeedback, Platform} from 'react-native';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import {useState, useCallback, useRef} from 'react';
 import colors from "../constants/colors";
@@ -15,48 +15,56 @@ export default function ScrollDown({data, onChange, placeholder} : props){
     const [value, setValue] = useState<string>("");
     const buttonRef = useRef<View>(null);
     const [top, setTop] = useState(0);
+    const [width, setWidth] = useState(0);
+    const [left, setLeft] = useState(0);
 
     const onSelect = useCallback((item : {value : string, label : string}) => {
         setValue(item.value);
         onChange(item.value);
         setExpanded(false);
     }, []);
-    const toggleExpanded = () => {
-        setExpanded(!expanded);
+
+    const openMenu = () => {
+        buttonRef.current?.measureInWindow((x, y, width, height) => {
+            setTop(y + height);         // position the menu
+            setWidth(width);
+            setLeft(x);
+            setExpanded(true);          // open the menu
+        })
     };
 
     return(
         <View 
-            className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose"
+            className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose" 
             ref = {buttonRef}
-            onLayout={(event) => {
-                const layout = event.nativeEvent.layout;
-                const height = layout.height;
-                const top = layout.y;
-                const finalValue = top + height;
-                setTop(finalValue);
-            }}  
         >
-            <TouchableOpacity onPress = {() => {setExpanded(!expanded)}} className="flex flex-row items-center"> 
-                <Text className = "flex-grow"> {value || placeholder} </Text>
+            <TouchableOpacity onPress = {openMenu} className="flex flex-row items-center"> 
+                <Text className = "flex-grow text-graphite ml-2"> {value || placeholder} </Text>
                 <Ionicon name = "chevron-down" color = {colors['Graphite']} size = {24} />
             </TouchableOpacity>
 
             {expanded ? 
             <View className = "">
                 <Modal transparent visible = {expanded}>
-                    <View className="flex-1 justify-center align-middle p-20">
-                        <View className = "absolute bg-white p-10 border-r-8" style = {{'top' : top}}>
-                            <TouchableWithoutFeedback onPress = {toggleExpanded}>
+                    <View className="flex-1">
+                        <View 
+                            className = "absolute bg-white rounded-lg w-full p-4 border border-border" 
+                            style = {{
+                                'top' : top,
+                                'left' : left,
+                                'width' : width
+                            }}>
+                            <TouchableWithoutFeedback onPress = {() => setExpanded(false)}>
                                 <FlatList
                                     keyExtractor={(item) => item.value}
                                     data = {data}
                                     renderItem = {({item}) => (
-                                        <TouchableOpacity onPress = {() => onSelect(item)}>
-                                            <Text>{item.label}</Text>
+                                        <TouchableOpacity 
+                                            onPress = {() => onSelect(item)}
+                                            className="">
+                                            <Text className = 'text-graphite'>{item.label}</Text>
                                         </TouchableOpacity>
                                     )}
-                                    ItemSeparatorComponent={() => (<View className=''/> )}
                                     className = "flex flex-col bg-white"
                                 />
                             </TouchableWithoutFeedback>

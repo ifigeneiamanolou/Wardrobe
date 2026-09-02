@@ -4,7 +4,7 @@ import os
 import uuid
 import time
 from pymongo.errors import DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
-from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError
+from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError, ItemExists
 from src.utils.db_backoff import with_retry
 from src.config.conf import mongodb_key
 
@@ -123,5 +123,35 @@ async def change_password(username : str, password : str, client : MongoClient):
 
 # Save the uploaded photo of a clothing item along with metadata in the db
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def save_clothing(client : MongoClient, item : ClothingItem, occasion : str, color : str, category : str):
-    pass
+async def save_clothing(client : MongoClient, item : ClothingItem, color : str, 
+                        category : str, username : str, url : str):
+    favorite = "yes" if item.favorite == True else "no"
+    payload = {
+        "_id" : str(uuid.uuid4()),
+        "name" : item.name,
+        "favorite" : favorite,
+        "shop" : item.shop,
+        "price" : item.price,
+        "size" : item.size,
+        "color" : color,
+        "category" : category,
+        "username" : username,
+        "url" : url             # URL to the stored image in the S3 bucket
+    }
+    
+    try:
+        items_collection = client["Clothing"]["Items"]
+
+        # Check if such an item exists
+        document_to_find = {"name" : item.name}
+        result = items_collection.find_one(document_to_find)
+        if result is not None:
+            raise ItemExists()
+
+        # Insert the item in the database
+        result = items_collection.insert_one(payload)
+        return result.inserted_id
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+            raise DatabaseError() from exc

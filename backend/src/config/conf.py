@@ -12,3 +12,6 @@ mongodb_key = os.getenv("MONGO_KEY")
 
 # Token expiration
 MINUTES_TO_EXPIRE = 15
+
+# Bucket
+bucket_name = "3770-0286-8561-bucket"

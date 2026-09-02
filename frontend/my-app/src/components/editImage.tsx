@@ -7,6 +7,7 @@ import size from '../constants/sizes';
 import Checkbox from './CheckBox';
 import constants from '../constants/app';
 import showAlert from './alert';
+import { router } from 'expo-router';
 
 const editSchema = yup.object().shape({
     name : yup.string().required('Please enter a name for the image'),
