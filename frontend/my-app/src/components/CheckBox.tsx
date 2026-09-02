@@ -1,6 +1,6 @@
 import React from "react";
 import {View, TouchableOpacity, Text} from 'react-native';
-import Ionicon from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import colors from "../constants/colors";
 
 type props = {
@@ -10,12 +10,12 @@ type props = {
 };
 
 export default function Checkbox({label, isChecked, onPress} : props){
-    const icon = isChecked ? "checkbox-active" : "checkbox-passive"
+    const icon = isChecked ? "check-box" : "check-box-outline-blank"
     return (
-        <View className = "flex-1 align-middle justify-center mt-5 mx-5">
-            <Text className = "ml-5"> {label} </Text>
+        <View className = "flex flex-row items-center w-full mx-2">
+            <Text className = "flex flex-grow text-graphite"> {label} </Text>
             <TouchableOpacity onPress={onPress}>
-                <Ionicon name = {icon} size = {24} color = {colors['Graphite']} />
+                <MaterialIcons name = {icon} size = {24} color = {colors['Graphite']} />
             </TouchableOpacity>
         </View>
     );

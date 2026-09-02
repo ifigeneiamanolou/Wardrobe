@@ -34,7 +34,8 @@ export function SessionProvider({children} : PropsWithChildren){
         <AuthContext.Provider 
             value = {{
                 signIn : (token) => {
-                    setSession(token['access_token']);        // log in logic here
+                    router.replace("/tabs");
+                    setSession(token['access_token']);        
                 },
                 signOut : () => {
                     router.replace("/signIn");

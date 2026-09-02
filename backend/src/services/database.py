@@ -45,6 +45,26 @@ async def find_user(username : str, client : MongoClient):
     except Exception as exc:
         raise DatabaseError() from exc
 
+# Get an incremented counter number given its name and key
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def get_counter(client : MongoClient, name : str, key : str):
+    try:
+        counters_collection = client["Authentication"]["counters"]
+        sequence_document = counters_collection.find_one_and_update(
+            {'_id' : name, 'key' : key},
+            {'$inc' : {'sequence_number' : 1}},
+            return_document = True,
+            upsert = True               # Insert a document if non-existing
+        )
+
+        return sequence_document['sequence_number']
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except (OperationFailure) as exc:
+        raise DatabaseError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
 # Create a new user in the database
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def create_user(user : UserInDb, client : MongoClient):
@@ -54,6 +74,7 @@ async def create_user(user : UserInDb, client : MongoClient):
         "name" : user.name,
         "password" : user.password,
         "email" : user.email,
+        "token_version" : await get_counter(client, 'token_version', user.username),
     }
 
     try:

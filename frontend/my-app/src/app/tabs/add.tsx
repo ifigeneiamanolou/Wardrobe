@@ -5,6 +5,8 @@ import Ionicon from 'react-native-vector-icons/Ionicons';
 import showAlert from '@/src/components/alert';
 import colors from '@/src/constants/colors';
 import EditImage from '../../components/editImage';
+import PopUp from '@/src/components/popUp';
+
 
 function Add(){
     const [hasPermission, setHasPermission] = useState<boolean>(false);
@@ -15,10 +17,8 @@ function Add(){
     const [showPopUp, setShowPopUp] = useState<boolean>(false);
 
     useEffect(() => {
-        async() => {
-            const {status} = await Camera.requestCameraPermissionsAsync();
-            setHasPermission(status === "granted");
-        }
+        // FIX THE APPEARANCE OF THE BUTTON
+        requestPermission();
     }, []);
 
     const changePopUp = () => {
@@ -27,6 +27,7 @@ function Add(){
 
     const requestPermission = async () => {
         const {status} = await Camera.requestCameraPermissionsAsync();
+        console.log('Permission status:', status);
         setHasPermission(status == "granted");
     };
 
@@ -67,49 +68,53 @@ function Add(){
     }
 
     return(
-        <View className='flex-1'>
+        <View className = "flex-1 bg-white">
             {/* Camera or image captured */}
             {!image ? 
-            <CameraView facing = {type} flash = {flash} ref = {cameraRef}/>
+            <CameraView style = {{'flex' : 1}} facing = {type} flash = {flash} ref = {cameraRef}/>
             : 
-            <Image source = {{uri : image}} className = '' />
+            <Image className = "flex-1" source = {{uri : image}} />
             }
 
             {/* Control buttons */}
-            <View>
-                {image ? 
-                <View>
+            <View className = "absolute bottom-10 left-0 right-0 items-center">
+                {!image ? 
+                <View className = "flex flex-row gap-10">
                     <TouchableOpacity onPress = {takePicture}>
-                        <Ionicon name = "camera" size = {24} color = {colors['White']}/>
+                        <Ionicon 
+                            name = "camera" 
+                            size = {48} 
+                            color = {colors['White']}
+                        />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress = {toggleType}>
                         <Ionicon 
                             name = {type === "back" ? "contrast-sharp" : "contrast-outline"} 
-                            size = {24} 
+                            size = {48} 
                             color = {colors['White']}/>
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={toggleFlash}>
                         <Ionicon 
                             name = {flash === "on" ? "flash" : "flash-off"}
-                            size = {24} 
+                            size = {48} 
                             color = {colors['White']}/>
                     </TouchableOpacity>
                 </View>
                 : 
-                <View>
+                <View className = "flex flex-row gap-10">
                     <TouchableOpacity onPress = {() => setImage(null)}>
                         <Ionicon 
                             name = "reload" 
-                            size = {24} 
+                            size = {48} 
                             color = {colors['White']}/>
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress = {changePopUp}>
                         <Ionicon 
                             name = "save"
-                            size = {24} 
+                            size = {48} 
                             color = {colors['White']}/>
                     </TouchableOpacity>
                 </View>
@@ -117,7 +122,9 @@ function Add(){
             </View>
 
             {/* Pop up */}
-            <EditImage onPress = {changePopUp} showPopUp = {showPopUp} uri = {image} />
+            <PopUp visible = {showPopUp}>
+                <EditImage onPress = {changePopUp} uri = {image} />
+            </PopUp>
         </View>
     )
 };

@@ -17,11 +17,11 @@ import {
 } from "@react-native-google-signin/google-signin";
 
 const LoginSchema = yup.object().shape({
-    username : yup.string().required("Username is required"),
-    password : yup.string().min(8, "Password must be at least 8 characters").required("Password is required")
+    username : yup.string()
+        .required("Username is required"),
+    password : yup.string()
+        .required("Password is required")
 });
-
-const url = `${constants.BACKEND_URL}/auth/token`;
 
 export default function Login(){
     // useEffect(() => {
@@ -44,6 +44,7 @@ export default function Login(){
         },
         validationSchema : LoginSchema,
         onSubmit(values, {resetForm}){       // Post request on form submit
+            const url = `${constants.BACKEND_URL}/auth/token`;
             const data = new URLSearchParams({
                 "username" : values.username,
                 "password" : values.password
@@ -105,31 +106,40 @@ export default function Login(){
                     </Text>
 
                     {/* Fields */}
-                    <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
-                        <Ionicon name = "person" size = {24} color={colors['Graphite']}/>
-                        <TextInput 
-                            placeholder='Username' 
-                            defaultValue={formik.values.username} 
-                            onChangeText={formik.handleChange('username')}
-                            autoCapitalize='none'
-                            className = "flex-grow text-graphite ml-2"
-                        />
+                    <View className='flex flex-col'>
+                        <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
+                            <Ionicon name = "person" size = {24} color={colors['Graphite']}/>
+                            <TextInput 
+                                placeholder='Username' 
+                                defaultValue={formik.values.username} 
+                                onChangeText={formik.handleChange('username')}
+                                autoCapitalize='none'
+                                className = "flex-grow text-graphite ml-2"
+                            />
+                        </View>
+                        {formik.errors.username && formik.touched.username && 
+                            <Text className = "font-bold text-error ml-2">{formik.errors.username}</Text>
+                        }
                     </View>
 
-                    <View className = "flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:border-dusty-rose">
-                        <Ionicon name = "key" size = {24} color = {colors['Graphite']}/>
-                        <TextInput 
-                            placeholder='Password' 
-                            defaultValue= {formik.values.password} 
-                            onChangeText={formik.handleChange('password')}
-                            secureTextEntry={!isPasswordVisible}
-                            autoCapitalize='none'
-                            className = "flex-grow text-graphite ml-2"
-                        />
-                        <TouchableOpacity onPress={togglePassword}>
-                            <Ionicon name = {isPasswordVisible ? "eye" : "eye-off"} size = {24} color = {colors['Graphite']}/>
-                        </TouchableOpacity>
-                    
+                    <View className = "flex flex-col">
+                        <View className = "flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:border-dusty-rose">
+                            <Ionicon name = "key" size = {24} color = {colors['Graphite']}/>
+                            <TextInput 
+                                placeholder='Password' 
+                                defaultValue= {formik.values.password} 
+                                onChangeText={formik.handleChange('password')}
+                                secureTextEntry={!isPasswordVisible}
+                                autoCapitalize='none'
+                                className = "flex-grow text-graphite ml-2"
+                            />
+                            <TouchableOpacity onPress={togglePassword}>
+                                <Ionicon name = {isPasswordVisible ? "eye" : "eye-off"} size = {24} color = {colors['Graphite']}/>
+                            </TouchableOpacity>
+                        </View>
+                        {formik.errors.password && formik.touched.password && 
+                            <Text className = "font-bold text-error ml-2">{formik.errors.password}</Text>
+                        }
                     </View>
 
                     {/* Forgot password navigation */}
@@ -148,7 +158,9 @@ export default function Login(){
                             className='flex-1 bg-rose rounded-lg items-center py-4' 
                             onPress = {() => formik.handleSubmit()}
                         > 
-                            <Text className='font-bold text-white' > Continue </Text>
+                            <Text className='font-bold text-white' > 
+                                {formik.isSubmitting ? 'Logging in ...' : 'Continue' }
+                            </Text>
                         </TouchableOpacity>
                     </View>
 

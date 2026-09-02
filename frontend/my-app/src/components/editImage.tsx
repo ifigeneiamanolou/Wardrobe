@@ -23,11 +23,10 @@ const data = size.map((c) => ({
 
 type props = {
     onPress : any;
-    showPopUp : boolean;
     uri : string | null;
 }
 
-function EditImage({onPress, showPopUp, uri} : props){
+function EditImage({onPress, uri} : props){
     const url = `${constants.BACKEND_URL}\save\item`;
     
     const formik = useFormik({
@@ -35,8 +34,8 @@ function EditImage({onPress, showPopUp, uri} : props){
             name : "",
             favorite : false,
             size : null,
-            price : null,
-            shop : null,
+            price : "",
+            shop : "",
         },
         validationSchema : editSchema,
         onSubmit : (values, {resetForm}) => {
@@ -63,12 +62,13 @@ function EditImage({onPress, showPopUp, uri} : props){
         },
     });
 
-    if(!showPopUp){
-        return null;
-    };
-
     return(
-        <View>
+        <View className = "w-full justify-center items-center gap-4">
+            {/* Page title */}
+            <View className = "flex">
+                <Text className = "text-graphite font-bold text-2xl"> Image details </Text>
+            </View>
+
             {/* Form */}
             <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
                 <TextInput 
@@ -83,7 +83,7 @@ function EditImage({onPress, showPopUp, uri} : props){
             <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
                 <TextInput 
                     placeholder='Price' 
-                    defaultValue={formik.values.name} 
+                    defaultValue={formik.values.price} 
                     onChangeText={formik.handleChange('price')}
                     keyboardType= 'number-pad'
                     autoCapitalize='none'
@@ -94,7 +94,7 @@ function EditImage({onPress, showPopUp, uri} : props){
             <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
                 <TextInput 
                     placeholder='Shop' 
-                    defaultValue={formik.values.name} 
+                    defaultValue={formik.values.shop} 
                     onChangeText={formik.handleChange('shop')}
                     autoCapitalize='none'
                     className = "flex-grow text-graphite ml-2"
@@ -123,18 +123,18 @@ function EditImage({onPress, showPopUp, uri} : props){
             />
 
             {/* Bottom navigation buttons */}
-            <View className = "flex-1 flex-row align-middle justify-center mx-4">
-                <View className='flex flex-row py-4'>
+            <View className = "flex flex-row items-center justify-around mx-4 gap-4">
+                <View>
                     <TouchableOpacity 
-                        className='flex-1 bg-rose rounded-lg items-center py-4' 
+                        className='flex bg-rose rounded-lg items-center justify-center p-4' 
                         onPress = {onPress}> 
                         <Text className='font-bold text-white' > Back </Text>
                     </TouchableOpacity>
                 </View>
 
-                <View className='flex flex-row py-4'>
+                <View className='py-4'>
                     <TouchableOpacity 
-                        className='flex-1 bg-rose rounded-lg items-center py-4' 
+                        className='flex bg-rose rounded-lg items-center justify-center p-4' 
                         onPress = {() => formik.handleSubmit()}> 
                         <Text className='font-bold text-white' > Continue </Text>
                     </TouchableOpacity>
