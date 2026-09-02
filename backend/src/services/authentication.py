@@ -1,12 +1,12 @@
 from fastapi.security import OAuth2PasswordBearer
 from src.services.database import find_user, load_cluster
 from src.models.pydantic import TokenData
+from src.config.conf import secret_key
 from pwdlib import PasswordHash
 from datetime import timedelta, timezone, datetime
 import jwt
 from jwt.exceptions import InvalidTokenError, PyJWTError
 import os
-from dotenv import load_dotenv
 from fastapi import HTTPException, status, Depends
 from typing import Annotated
 import uuid
@@ -17,8 +17,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 password_hash = PasswordHash.recommended()
 DUMMY_HASH = password_hash.hash("password")
 ALGORITHM = "HS256"
-load_dotenv()
-SECRET_KEY = os.environ["SECRET_KEY"]
 
 ####################################################
 # User login
@@ -86,7 +84,7 @@ def create_access_token(data : dict, expires_delta : timedelta):
         "exp" : expire, 
         "jti" : jti
     })
-    jwt_encoded = jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
+    jwt_encoded = jwt.encode(to_encode, secret_key, ALGORITHM)
     return jwt_encoded
 
 ##########################################################
@@ -115,7 +113,7 @@ async def get_current_user(
 
     try:
         # Extract data from the JWT token
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
         username = payload.get("sub")
         jti = payload.get("jti")
         token_version = payload.get("token_version")
@@ -141,7 +139,10 @@ async def get_current_user(
         raise credentials_exception
     return user
 
-async def logout_token(token : Annotated[str, Depends(oauth2_scheme)]):
+##########################################################
+# Log out from the application
+##########################################################
+async def logout_token(token : str):
     credentials_exception = HTTPException(
         status_code = status.HTTP_401_UNAUTHORIZED,
         detail = "Could not validate credentials",
@@ -150,7 +151,7 @@ async def logout_token(token : Annotated[str, Depends(oauth2_scheme)]):
 
     try:
         # Extract the JTI and the expiry from the token
-        payload = jwt.decode(token, key = SECRET_KEY, algorithms = [ALGORITHM])
+        payload = jwt.decode(token, key = secret_key, algorithms = [ALGORITHM])
         jti = payload.get("jti")
         exp = payload.get("exp")
 

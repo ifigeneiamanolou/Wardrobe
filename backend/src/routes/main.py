@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware 
 from src.routes.auth import router as auth_router
+from src.routes.save import router as save_router
 from src.config.cache import init_redis, close
 
 @asynccontextmanager
@@ -22,6 +23,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(save_router, prefix = "/save", tags = ["save"])
 
 if __name__ == "__main__":
     import uvicorn

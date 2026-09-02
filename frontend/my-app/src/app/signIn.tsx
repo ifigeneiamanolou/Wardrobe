@@ -17,11 +17,11 @@ import {
 } from "@react-native-google-signin/google-signin";
 
 const LoginSchema = yup.object().shape({
-    name : yup.string().required("Email is required"),
+    username : yup.string().required("Username is required"),
     password : yup.string().min(8, "Password must be at least 8 characters").required("Password is required")
 });
 
-const url = `${constants.BACKEND_URL}/token`;
+const url = `${constants.BACKEND_URL}/auth/token`;
 
 export default function Login(){
     // useEffect(() => {
@@ -39,15 +39,21 @@ export default function Login(){
     const context = useSession();
     const formik = useFormik({
         initialValues: {
-            name : "",
+            username : "",
             password : ""
         },
         validationSchema : LoginSchema,
         onSubmit(values, {resetForm}){       // Post request on form submit
+            const data = new URLSearchParams({
+                "username" : values.username,
+                "password" : values.password
+            })
             const configObj = {
                 method : "POST",
-                headers : {"Content-Type" : "application/json"},
-                body : JSON.stringify(values)
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body : data.toString()
             };
             fetch(url, configObj)
             .then(async (response) => {
@@ -59,7 +65,7 @@ export default function Login(){
             })
             .catch((err) => {
                 console.log("Log in error", err);
-                showAlert('Error', err);
+                showAlert('Error', err.message);
             })
             .finally(() => {
                 resetForm();
@@ -68,25 +74,25 @@ export default function Login(){
     });
 
     const googleLog = async () => {
-        try{
-            // Check play services
-            await GoogleSignin.hasPlayServices();
+        // try{
+        //     // Check play services
+        //     await GoogleSignin.hasPlayServices();
 
-            // Sign in
-            const userInfo = await GoogleSignin.signIn();
-            console.log("User Info:", userInfo);
-        } catch (err : any){
-            console.log('Google sign in error, ', err);
-            if(err.code == statusCodes.SIGN_IN_CANCELLED){
-                showAlert('Canceled', 'User sign in cancelled');
-            } else if (err.code == statusCodes.PLAY_SERVICES_NOT_AVAILABLE){
-                showAlert('Not available', 'Google play services not available');
-            } else if (err.code == statusCodes.IN_PROGRESS){
-                showAlert('In progress', 'Sign in already in progress');
-            } else {
-                showAlert('Error', err.message);
-            }
-        }
+        //     // Sign in
+        //     const userInfo = await GoogleSignin.signIn();
+        //     console.log("User Info:", userInfo);
+        // } catch (err : any){
+        //     console.log('Google sign in error, ', err);
+        //     if(err.code == statusCodes.SIGN_IN_CANCELLED){
+        //         showAlert('Canceled', 'User sign in cancelled');
+        //     } else if (err.code == statusCodes.PLAY_SERVICES_NOT_AVAILABLE){
+        //         showAlert('Not available', 'Google play services not available');
+        //     } else if (err.code == statusCodes.IN_PROGRESS){
+        //         showAlert('In progress', 'Sign in already in progress');
+        //     } else {
+        //         showAlert('Error', err.message);
+        //     }
+        // }
     };
 
     return(
@@ -103,9 +109,8 @@ export default function Login(){
                         <Ionicon name = "person" size = {24} color={colors['Graphite']}/>
                         <TextInput 
                             placeholder='Username' 
-                            defaultValue={formik.values.name} 
-                            onChangeText={formik.handleChange('name')}
-                            keyboardType='email-address'
+                            defaultValue={formik.values.username} 
+                            onChangeText={formik.handleChange('username')}
                             autoCapitalize='none'
                             className = "flex-grow text-graphite ml-2"
                         />
@@ -157,7 +162,7 @@ export default function Login(){
                     {/* Sign in with google or apple */}
                     <View className='flex flex-col gap-4'>
                         <TouchableOpacity 
-                            className='border border-slate-gray rounded-lg items-center py-4' 
+                            className='flex flex-row border border-slate-gray rounded-lg items-center justify-center py-4' 
                             onPress = {() => googleLog()}
                         > 
                             <Ionicon name="logo-google" color={colors['Graphite']} size={24} />
@@ -165,7 +170,7 @@ export default function Login(){
                         </TouchableOpacity>
         
                         <TouchableOpacity 
-                            className='border border-slate-gray rounded-lg items-center py-4' 
+                            className='flex flex-row border border-slate-gray rounded-lg items-center py-4 justify-center' 
                             onPress = {() => formik.handleSubmit()}
                         > 
                             <Ionicon name="logo-apple" color={colors['Graphite']} size={24} />

@@ -5,6 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from pymongo import MongoClient
 from src.models.pydantic import User
 
+# Decorator used to search through Redis Cache. If not found the function is executed and the result cached
 def cache_response(key_func, ttl = 300):
     def decorater(func):
         @wraps(func)

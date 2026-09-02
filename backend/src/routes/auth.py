@@ -29,11 +29,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from src.models.pydantic import User, UserInDb, UserNewPassword
 from datetime import timedelta
 from pymongo import MongoClient
-from src.services.authentication import authenticate_user, create_access_token, hash, get_current_user, logout_token
+from src.services.authentication import authenticate_user, create_access_token, hash, get_current_user, logout_token, oauth2_scheme
 from src.services.database import find_user, find_user_by_email, create_user, load_cluster, change_password
+from src.exceptions.database import DatabaseError, DatabaseUnavailableError, UserAlreadyExistsError
+from src.config.conf import MINUTES_TO_EXPIRE
 router = APIRouter()
-
-MINUTES_TO_EXPIRE = 15
 
 @router.post("/token")
 async def login(
@@ -41,17 +41,23 @@ async def login(
     client : Annotated[MongoClient, Depends(load_cluster)]
 ):
     # Find a user in the database
-    user = await authenticate_user(form_data.username, form_data.password, client)
+    try:
+        user = await authenticate_user(form_data.username, form_data.password, client)
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+
     if not user:
         raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED,
-            detail = "incorrect username or password",
+            detail = "Incorrect username or password",
             headers = {"WWW-Authenticate" : "Bearer"}
         )
 
     # Generate an access token
     access_token_expires = timedelta(minutes = MINUTES_TO_EXPIRE)
-    token = await create_access_token(
+    token = create_access_token(
         data = {"sub" : user.username, "token_version" : user.token_version},
         expires_delta = access_token_expires
     )
@@ -65,14 +71,26 @@ async def read_users_me(current_user : Annotated[User, Depends(get_current_user)
     return current_user
 
 @router.post("/signup")
-async def signup(user : UserInDb):
+async def signup(user : UserInDb, cluster : Annotated[MongoClient, Depends(load_cluster)]):
     # Verify that there is no such user in the system otherwise raise an exception
-    if await find_user(user.username) is not None:
-        raise HTTPException(status_code = 400, detail = "Another user with the same username in the system")
+    try:
+        existing_user = await find_user(user.username, cluster)
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    if existing_user is not None:
+        raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail = "Another user with the same username")
 
     # Verify that there is no such email in the system otherwise raise an exception
-    if await find_user_by_email(user.email) is not None:
-        raise HTTPException(status_code = 400, detail = "Another user with the same username in the system")
+    try:
+        existing_user_email = await find_user_by_email(user.email, cluster)
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search by email")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    if existing_user_email is not None:
+        raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail = "Another user with the same email")
 
     # Hash the password
     password_hash = hash(user.password)
@@ -80,19 +98,29 @@ async def signup(user : UserInDb):
 
     # Enter the user in the database
     try:
-        await create_user(user = user)
-    except Exception as e:
+        await create_user(user, cluster)
+    except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful account creation")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    except UserAlreadyExistsError:
+        raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail = "User conflict")
 
 @router.post("/logout")
-async def logout():
-    await logout_token()
+async def logout(token : Annotated[str, Depends(oauth2_scheme)]):
+    await logout_token(token)
 
 @router.post("/change/password")
 async def forgot_password(user : UserNewPassword, client : Annotated[MongoClient, Depends(load_cluster)]):
     # Verify that there is such a user in the system otherwise raise an exception
-    if await find_user(user.username) is not None:
-        raise HTTPException(status_code = 400, detail = "No user with this username exists in the system")
+    try:
+        existing_user = await find_user(user.username)
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    if existing_user is None:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No user with this username exists in the system")
 
     # Hash the password
     password_hash = hash(user.password)
@@ -101,6 +129,8 @@ async def forgot_password(user : UserNewPassword, client : Annotated[MongoClient
     # Change the password
     try:
         await change_password(user.username, user.password, client)
-    except Exception as e:
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful password change")
     
