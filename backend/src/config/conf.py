@@ -9,6 +9,9 @@ redis_db = int(os.getenv("REDIS_DB"))
 redis_password = os.getenv("REDIS_PASSWORD")
 secret_key = os.getenv("SECRET_KEY")
 mongodb_key = os.getenv("MONGO_KEY")
+aws_key = os.getenv("AWS_ACCESS_KEY")
+aws_secret_key = os.getenv("AWS_SECRET_KEY")
+aws_region = 'us-east-1'
 
 # Token expiration
 MINUTES_TO_EXPIRE = 15

@@ -119,27 +119,22 @@ async def get_current_user(
 
         # Check all data is preset
         if username is None or jti is None or token_version is None:
-            print(f'username or jti or token version is none')
             raise credentials_exception
 
         # Check if the JTI is in the redis blacklit
         if await cache.is_revoked(jti):
-            print('jti issue')
             raise credentials_exception
         token_data = TokenData(username = username)
     except (InvalidTokenError, PyJWTError) as e:
-        print(f'token validation : {e}')
         raise credentials_exception
 
     # Check if the user is in the database based on username
     user = await find_user(username = token_data.username, client = client)
     if user is None:
-        print(f"user not found")
         raise credentials_exception
 
     # Handle password changes and compromises
     if user.token_version != token_version:
-        print(f"wrong token of {user.token_version} and {token_version}")
         raise credentials_exception
     return user
 

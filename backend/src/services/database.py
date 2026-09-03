@@ -12,6 +12,7 @@ MONGO_URI = f"mongodb+srv://ifigeneiamanolou26_db_user:{mongodb_key}@closetclust
 # Attempt connecting to the MongoDB cluster for a set number of times
 async def load_cluster(retries : int = 10, delay : int = 3):
     for i in range(1, retries + 1):
+        client = None
         try:
             client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
             client.admin.command("ping")
