@@ -65,7 +65,6 @@ export default function signUp(){
                 }
                 showAlert('Success', 'Successful sign up');
                 router.replace('/signIn');
-
             })
             .catch((reason) => {
                 console.log(`Error from the server during sign up with reason ${reason.name} and message ${reason.message}`);

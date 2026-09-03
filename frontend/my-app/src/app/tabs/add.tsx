@@ -23,6 +23,7 @@ function Add(){
 
     const changePopUp = () => {
         setShowPopUp(!showPopUp);
+        setImage("");
     };
 
     const requestPermission = async () => {
@@ -107,7 +108,7 @@ function Add(){
                 </View>
                 : 
                 <View className = "flex flex-row gap-10">
-                    <TouchableOpacity onPress = {() => setImage("")}>
+                    <TouchableOpacity onPress = {() => {setImage("")}}>
                         <Ionicon 
                             name = "reload" 
                             size = {48} 

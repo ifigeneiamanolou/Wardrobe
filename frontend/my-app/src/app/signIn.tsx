@@ -195,7 +195,7 @@ export default function Login(){
                         <Text> Don't have an account? </Text>
 
                         <Link href = "./signUp"> 
-                            <Text className='text-dusty-rose'> Sign up </Text>
+                            <Text className='text-link font-bold'> Sign up </Text>
                         </Link>
                     </View>
                 </View>

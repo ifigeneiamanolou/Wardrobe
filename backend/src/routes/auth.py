@@ -114,7 +114,7 @@ async def logout(token : Annotated[str, Depends(oauth2_scheme)]):
 async def forgot_password(user : UserNewPassword, client : Annotated[MongoClient, Depends(load_cluster)]):
     # Verify that there is such a user in the system otherwise raise an exception
     try:
-        existing_user = await find_user(user.username)
+        existing_user = await find_user(user.username, client)
     except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
     except DatabaseUnavailableError:

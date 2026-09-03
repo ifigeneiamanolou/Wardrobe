@@ -12,3 +12,6 @@ class ItemExists(DatabaseError):
 
 class S3UploadError(Exception):
     pass
+
+class PasswordIsIdentical(DatabaseError):
+    pass

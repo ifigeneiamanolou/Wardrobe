@@ -20,7 +20,7 @@ export default function RootLayout() {
       <Tabs.Screen 
         name="index" 
         options={{ 
-            title: 'Home',
+            title: 'Outfits',
             tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />
         }} 
       />

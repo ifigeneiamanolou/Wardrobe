@@ -3,7 +3,7 @@ from src.models.pydantic import ClothingItem, UserInDb, UserWithToken
 import uuid
 import time
 from pymongo.errors import DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
-from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError, ItemExists
+from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical
 from src.utils.db_backoff import with_retry
 from src.config.conf import mongodb_key
 
@@ -22,8 +22,6 @@ async def load_cluster(retries : int = 10, delay : int = 3):
             print(f"Attempt {i}/{retries}")
             if i < retries:
                 time.sleep(delay)
-        finally:
-            client.close()
     raise RuntimeError("Cound not connect to mongoDB server")
 
 # Find whether a user exists in the database based on username
@@ -110,9 +108,16 @@ async def change_password(username : str, password : str, client : MongoClient):
     try:
         users_collection = client["Authentication"]["Users"]
         query_filter = {'username' : username}
+
+        # Check if the password is the same
+        result = users_collection.find_one(query_filter)
+
+        if result["password"] == password:
+            raise PasswordIsIdentical()
+         
         update_operation = {
             '$set' : {'password' : password},
-            '$inc' : {'token_version' : 1}
+            '$inc' : {'token_version' : await get_counter(client, 'token_version', username)}
         }
         users_collection.update_one(query_filter, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
