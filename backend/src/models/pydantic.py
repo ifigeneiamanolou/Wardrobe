@@ -1,4 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
+from typing import Literal, Optional
+from fastapi import UploadFile
 
 class User(BaseModel):
     username : str
@@ -24,8 +26,9 @@ class TokenData(BaseModel):
 
 class ClothingItem(BaseModel):
     name : str
-    uri : str
-    favorite : bool
+    file : UploadFile
+    favorite : str
     shop : str
-    price : float
-    size : str = Field(["XS", "S", "M", "L", "XL"])
+    price : str
+    size : Optional[Literal["XS", "S", "M", "L", "XL"]] = None
+    model_config = ConfigDict(arbitrary_types_allowed=True)

@@ -44,4 +44,26 @@ Redis is used to cache JTI (JWT ids) to invalidate the JWT tokens used for authe
 2) the user changes their password
 3) password compromise occurs
 
-This is implemented using a Python redis client, which is a Python redis library allowing the application to communicate with a redis server. The latter runs locally on port 7865.
+This is implemented using a Python redis client, which is a Python redis library allowing the application to communicate with a redis server. The latter runs locally on port 6379. To start a redis server locally follow 
+these steps:
+
+1. Install Redis using WSL
+
+   ```bash
+   sudo apt-add-repository ppa:redislabs/redis
+   sudo apt-get update
+   sudo apt-get upgrade
+   sudo apt-get install redis-server
+   ```
+
+2. Restart the server
+
+   ```bash
+   sudo service redis-server restart
+   ```
+
+3. Verify the server is running
+
+   ```bash
+   redis-cli
+   ```

@@ -12,7 +12,7 @@ async def upload_file_to_bucket(file_name : str, bucket : str = bucket_name):
     obj = bucket.Object(key)
     try:
         # Upload the file
-        obj.upload_file(file_name, key)
+        obj.upload_file(file_name)
         print(
             f"Uploaded file {file_name} into bucket {bucket.name} with key {obj.key}."
         )

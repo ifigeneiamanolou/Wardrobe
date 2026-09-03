@@ -11,7 +11,7 @@ import PopUp from '@/src/components/popUp';
 function Add(){
     const [hasPermission, setHasPermission] = useState<boolean>(false);
     const [type, setType] = useState<CameraType>("back");
-    const [image, setImage] = useState<string | null>(null);
+    const [image, setImage] = useState<string>("");
     const [flash, setFlash] = useState<FlashMode>('off');
     const cameraRef = useRef<CameraView>(null);
     const [showPopUp, setShowPopUp] = useState<boolean>(false);
@@ -46,7 +46,10 @@ function Add(){
     const takePicture = async () => {
         if(cameraRef.current){
             try{
-                const data = await cameraRef.current.takePictureAsync();
+                const data = await cameraRef.current.takePictureAsync({
+                    quality: 0.8,
+                    skipProcessing: false,
+                });
                 setImage(data.uri);
             } catch(err){
                 console.log('Error when taking picture', err);
@@ -104,7 +107,7 @@ function Add(){
                 </View>
                 : 
                 <View className = "flex flex-row gap-10">
-                    <TouchableOpacity onPress = {() => setImage(null)}>
+                    <TouchableOpacity onPress = {() => setImage("")}>
                         <Ionicon 
                             name = "reload" 
                             size = {48} 

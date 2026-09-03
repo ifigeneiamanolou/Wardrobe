@@ -1,6 +1,5 @@
 from pymongo import MongoClient
 from src.models.pydantic import ClothingItem, UserInDb, UserWithToken
-import os
 import uuid
 import time
 from pymongo.errors import DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
@@ -23,8 +22,7 @@ async def load_cluster(retries : int = 10, delay : int = 3):
             if i < retries:
                 time.sleep(delay)
         finally:
-            if client is not None:
-                client.close()
+            client.close()
     raise RuntimeError("Cound not connect to mongoDB server")
 
 # Find whether a user exists in the database based on username
@@ -125,18 +123,17 @@ async def change_password(username : str, password : str, client : MongoClient):
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def save_clothing(client : MongoClient, item : ClothingItem, color : str, 
                         category : str, username : str, url : str):
-    favorite = "yes" if item.favorite == True else "no"
     payload = {
         "_id" : str(uuid.uuid4()),
         "name" : item.name,
-        "favorite" : favorite,
+        "favorite" : item.favorite,
         "shop" : item.shop,
-        "price" : item.price,
+        "price" : float(item.price),
         "size" : item.size,
         "color" : color,
         "category" : category,
         "username" : username,
-        "url" : url             # URL to the stored image in the S3 bucket
+        "url" : url                     # URL to the stored image in the S3 bucket
     }
     
     try:
