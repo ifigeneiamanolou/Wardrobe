@@ -1,11 +1,58 @@
-import { Text, View, TouchableOpacity} from 'react-native';
+import { Text, View, TouchableOpacity, FlatList, TouchableHighlight} from 'react-native';
 import React from 'react';
 import Animated from 'react-native-reanimated';
 import { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
+import constants from '@/src/constants/app';
+import { useEffect, useState } from 'react';
+import useStreaming from '@/src/hooks/useStreaming';
+import FlipCard from '@/src/components/flipCard';
+import ImageContainer from '@/src/components/imageContainer';
+import ImageMetadata from '@/src/components/imageMetadata';
+
+type Item = {
+    shop : string;
+    favorite : boolean;
+    size : string;
+    price : string;
+    category : string;
+    color : string;
+    name : string;
+    image : string;
+};
 
 export default function Home() {
-    const valueOutfits = useSharedValue(1);
-    const valueItems = useSharedValue(0);
+    const valueOutfits = useSharedValue(0);
+    const valueItems = useSharedValue(1);
+    const {receiveStreamingMessage} = useStreaming();
+    const [items, setItems] = useState<Item[]>([]);
+    const [flipped, setFlipped] = useState<boolean>(false);
+
+    useEffect(() => {
+
+    }, [])
+
+    const onChunk = (chunk : string) => {
+        const dict = JSON.parse(chunk);
+        const item : Item = {
+            shop : dict['shop'],
+            favorite : dict['favorite'],
+            size : dict['size'],
+            price : dict['price'],
+            category : dict['category'],
+            name : dict['name'],
+            color : dict['color'],
+            image : dict['image']
+        };
+        setItems(prev => [...prev, item]);
+    }
+
+    const fetchItems = async () => {
+        await receiveStreamingMessage(
+            `${constants['BACKEND_URL']}/load/items`,
+            onChunk,
+            () => {}
+        )
+    }
 
     const styleItems = useAnimatedStyle(() => ({
         opacity : valueItems.value,
@@ -29,6 +76,7 @@ export default function Home() {
             valueItems.value = withTiming(1, {duration : 700, easing : Easing.in(Easing.cubic)});
             valueOutfits.value = withTiming(0, {duration : 700, easing : Easing.in(Easing.cubic)});
         };
+        fetchItems();
     };
 
     return(
@@ -56,6 +104,41 @@ export default function Home() {
             </View>
 
             {/* Elements */}
+            <FlatList
+                ItemSeparatorComponent={<View/>}
+                data = {items}
+                horizontal = {false}
+                numColumns = {2}
+                className='flex flex-wrap'
+                renderItem={({item}) => (
+                    <TouchableHighlight 
+                        key = {item.name}
+                        onPress={() => setFlipped(!flipped)}
+                    >
+                        <FlipCard 
+                            isFlipped = {flipped}
+                            flippedContent = {
+                                <ImageContainer
+                                    image = {item.image}
+                                    name = {item.name}
+                                />
+                            }
+                            reguralContent = {
+                                <ImageMetadata
+                                    price = {item.price}
+                                    shop = {item.shop}
+                                    size = {item.size}
+                                    color = {item.color}
+                                    category = {item.category}
+                                    favorite = {item.favorite}
+                                />
+                            }
+                            duration = {500}
+                            direction = 'y'
+                        />
+                    </TouchableHighlight>
+                )}
+            />
         </View>
     );
 }

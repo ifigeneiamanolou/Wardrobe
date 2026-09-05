@@ -158,3 +158,34 @@ async def save_clothing(client : MongoClient, item : ClothingItem, color : str,
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
             raise DatabaseError() from exc
+
+# Find all items of a user
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def load_items(client : MongoClient, username : str):
+    try:
+        items_collection = client["Clothing"]["Items"]
+        document_to_find = {'username' : username}
+        results = items_collection.find(document_to_find, projection = {'_id' : False})
+        return results
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except (OperationFailure) as exc:
+        raise DatabaseError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+# Find all items of a user
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def load_outfits(client : MongoClient, username : str):
+    try:
+        items_collection = client["Clothing"]["Outfits"]
+        document_to_find = {'username' : username}
+        results = items_collection.find(document_to_find, projection = {'_id' : False})
+        return results
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except (OperationFailure) as exc:
+        raise DatabaseError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+    

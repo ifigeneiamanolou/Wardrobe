@@ -28,6 +28,7 @@ The application is containerized fully using Docker. Instructions on running the
 2) All routes are protected using an authentication context and a custom hook, storing all sensitive user information in expo-secure-store
 3) Custom consistent color pallette applied in the app
 4) Custom splash screen displayed when the frontend waits for a backend operation to finish such as an image upload
+5) Dynamic loading of stored outfits/items using the XMLHttpRequest object
 
 ## Backend features
 1) Authentication using JWT tokens, password hashing and cached JTI IDs in Redis, along with a token version key in the database to handle password changes and credentials compromises
