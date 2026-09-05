@@ -6,10 +6,13 @@ import showAlert from '@/src/components/alert';
 import colors from '@/src/constants/colors';
 import EditImage from '../../components/editImage';
 import PopUp from '@/src/components/popUp';
+import * as ImagePicker from 'expo-image-picker';
+import { File, Paths } from 'expo-file-system';
 
 
 function Add(){
-    const [hasPermission, setHasPermission] = useState<boolean>(false);
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+    const [mediaPermission, setMediaPermission] = useState<boolean | null>(null)
     const [type, setType] = useState<CameraType>("back");
     const [image, setImage] = useState<string>("");
     const [flash, setFlash] = useState<FlashMode>('off');
@@ -18,11 +21,17 @@ function Add(){
     const [fadeBackground, setFadeBackground] = useState<boolean>(false);
 
     useEffect(() => {
-        // FIX THE APPEARANCE OF THE BUTTON
+        // FIX THE APPEARANCE OF THE BUTTON     !!!!!!!!!!!!
         requestPermission();
+        requestMedia();
     }, []);
 
-    const changePopUp = () => {
+    const openPopUp = () => {
+        setShowPopUp(!showPopUp);
+        setFadeBackground(!fadeBackground);
+    };
+
+    const closePopUp = () => {
         setShowPopUp(!showPopUp);
         setFadeBackground(!fadeBackground);
         setImage("");
@@ -33,6 +42,12 @@ function Add(){
         console.log('Permission status:', status);
         setHasPermission(status == "granted");
     };
+
+    const requestMedia = async () => {
+        const {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        console.log('Media status: ', status);
+        setMediaPermission(status ==  "granted");
+    }   
 
     const toggleType = () => {
         setType(current =>
@@ -53,7 +68,10 @@ function Add(){
                     quality: 0.8,
                     skipProcessing: false,
                 });
-                setImage(data.uri);
+                const source = new File(data.uri);
+                const dest = new File(Paths.cache, `photo_${Date.now()}.jpg`);
+                await source.copy(dest);
+                setImage(dest.uri);
             } catch(err){
                 console.log('Error when taking picture', err);
                 showAlert('Error', 'Try taking a picture again!');
@@ -61,14 +79,24 @@ function Add(){
         };
     };
 
-    if (hasPermission === null) {
+    if (hasPermission === null || mediaPermission === null) {
         return <View />;
     }
-    if (hasPermission === false) {
+
+    if (hasPermission === false ) {
         return(
             <View >
                 <Text> We need your permission to show the camera </Text>
-                <Button onPress={requestPermission} title="grant permission" />
+                <Button onPress={requestPermission} title="Grant permission" />
+            </View>
+        )
+    }
+
+    if(mediaPermission === false){
+        return(
+            <View >
+                <Text> We need your permission to access the filesystem </Text>
+                <Button onPress={requestMedia} title="Grant permission" />
             </View>
         )
     }
@@ -117,7 +145,7 @@ function Add(){
                             color = {colors['White']}/>
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress = {changePopUp}>
+                    <TouchableOpacity onPress = {openPopUp}>
                         <Ionicon 
                             name = "save"
                             size = {48} 
@@ -129,7 +157,7 @@ function Add(){
 
             {/* Pop up */}
             <PopUp visible = {showPopUp} modalVisible = {fadeBackground}>
-                <EditImage onPress = {changePopUp} uri = {image} />
+                <EditImage onPress = {closePopUp} uri = {image} />
             </PopUp>
         </View>
     )

@@ -20,17 +20,8 @@ export default function RootLayout() {
       <Tabs.Screen 
         name="index" 
         options={{ 
-            title: 'Outfits',
+            title: 'Library',
             tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />
-        }} 
-      />
-
-      <Tabs.Screen 
-        name="account" 
-        options={{
-            title: 'Account',
-            tabBarIcon: ({ color }) => <FontAwesome size={28} name="user" color={color} />
-
         }} 
       />
 
@@ -43,10 +34,10 @@ export default function RootLayout() {
       />
 
       <Tabs.Screen 
-        name="friends" 
+        name="feed" 
         options={{ 
-            title: 'Friends',
-            tabBarIcon: ({ color }) => <FontAwesome size={28} name="address-book" color={color} />
+            title: 'Feed',
+            tabBarIcon: ({ color }) => <FontAwesome size={28} name="caret-down" color={color} />
         }} 
       />
       
@@ -55,6 +46,15 @@ export default function RootLayout() {
         options={{ 
             title: 'New Outfit',
             tabBarIcon: ({ color }) => <FontAwesome size={28} name="suitcase" color={color} />
+        }} 
+      />
+
+      <Tabs.Screen 
+        name="account" 
+        options={{
+            title: 'Account',
+            tabBarIcon: ({ color }) => <FontAwesome size={28} name="user" color={color} />
+
         }} 
       />
     </Tabs>

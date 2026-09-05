@@ -84,7 +84,7 @@ function EditImage({onPress, uri} : props){
                 onPress();
             })
             .catch((err) => {
-                console.log("Log in error", err.details);
+                console.log("Upload error", err.details);
                 showAlert('Error', err.message);
             })
             .finally(() => {

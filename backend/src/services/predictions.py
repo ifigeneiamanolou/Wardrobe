@@ -40,7 +40,7 @@ async def predict_color(img, n_colors = 5):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     # Reshape to a flat list of pixels
-    pixels = img.reshape(shape = (-1, 3)).astype(np.float32)
+    pixels = np.reshape(img, (-1, 3)).astype(np.float32)
 
     # Run k-means
     kmeans = KMeans(
@@ -53,7 +53,7 @@ async def predict_color(img, n_colors = 5):
 
     # Sort by dominant colors and their proportions
     colors = kmeans.cluster_centers_.astype(int)
-    labels, counts = np.unique(kmeans.labels_, return_counts = True)
+    _, counts = np.unique(kmeans.labels_, return_counts = True)
     proportions = counts / counts.sum()
 
     # Extract the dominant color
@@ -71,7 +71,8 @@ def color_to_label(color : list):
 
     # Build the kd tree
     tree = KDTree(color_values)
-    value = tree.query(tuple(color))
+    _, ii = tree.query(tuple(color))
+    value = tree[ii[0]]
     index = np.where(color_values == value)[0]
     label = color_names[index]
     return label
