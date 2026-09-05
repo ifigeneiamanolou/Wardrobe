@@ -33,6 +33,7 @@ from src.services.authentication import authenticate_user, create_access_token, 
 from src.services.database import find_user, find_user_by_email, create_user, load_cluster, change_password
 from src.exceptions.database import DatabaseError, DatabaseUnavailableError, UserAlreadyExistsError
 from src.config.conf import MINUTES_TO_EXPIRE
+
 router = APIRouter()
 
 @router.post("/token")
