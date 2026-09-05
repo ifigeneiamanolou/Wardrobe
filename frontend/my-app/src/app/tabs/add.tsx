@@ -15,6 +15,7 @@ function Add(){
     const [flash, setFlash] = useState<FlashMode>('off');
     const cameraRef = useRef<CameraView>(null);
     const [showPopUp, setShowPopUp] = useState<boolean>(false);
+    const [fadeBackground, setFadeBackground] = useState<boolean>(false);
 
     useEffect(() => {
         // FIX THE APPEARANCE OF THE BUTTON
@@ -23,6 +24,7 @@ function Add(){
 
     const changePopUp = () => {
         setShowPopUp(!showPopUp);
+        setFadeBackground(!fadeBackground);
         setImage("");
     };
 
@@ -126,7 +128,7 @@ function Add(){
             </View>
 
             {/* Pop up */}
-            <PopUp visible = {showPopUp}>
+            <PopUp visible = {showPopUp} modalVisible = {fadeBackground}>
                 <EditImage onPress = {changePopUp} uri = {image} />
             </PopUp>
         </View>

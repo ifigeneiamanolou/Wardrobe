@@ -36,3 +36,4 @@ The application is containerized fully using Docker. Instructions on running the
 4) Robust error handling with custom exceptions and centralized logging to avoid crashing the frontend
 5) Redis used for storing both for JTI IDs and all expensive functions' results through a custom function decorator
 6) Looping connection to the MongoDB database with exponential backoff
+7) Centralized configuration files for easier development

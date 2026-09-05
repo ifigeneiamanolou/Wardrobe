@@ -24,7 +24,7 @@ bucket_name = "3770-0286-8561-bucket"
 image_dir = '../../data/image.jpg'
 
 # Model loading
-classifier_dir = '../../data/models/classifier.keras'
+model_dir = '../../data/models/classifier.keras'
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Color labels for classification

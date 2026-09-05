@@ -10,7 +10,7 @@ from scipy.spatial import KDTree
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGE_DIR = os.path.join(BASE_DIR, image_dir)
-MODEL_DIR = os.path.joiN(BASE_DIR, model_dir)
+MODEL_DIR = os.path.join(BASE_DIR, model_dir)
 
 CATEGORY_LABELS = [
     "T-shirt / Top",
@@ -26,12 +26,13 @@ CATEGORY_LABELS = [
 ]
 
 async def predict_category(img):
-    loaded_model = load_model(MODEL_DIR)
-    loaded_model.to(device)
-    img.to(device)
-    preds = loaded_model(img)
-    predicted = preds.argmax(dim = 1)
-    return CATEGORY_LABELS[predicted]
+    # loaded_model = load_model(MODEL_DIR)
+    # loaded_model.to(device)
+    # img.to(device)
+    # preds = loaded_model(img)
+    # predicted = preds.argmax(dim = 1)
+    # return CATEGORY_LABELS[predicted]
+    return "default"
 
 # K-means clustering is used for detecting the dominant colors with 5 clusters
 async def predict_color(img, n_colors = 5):
