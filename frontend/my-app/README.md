@@ -23,4 +23,5 @@ To start a development server run:
 All forms are built using Formik and Yup. Formik is a lightweight library that simplifies form management in React. Yup is a Javascript validation schema library, easy to integrate with Formik.
 
 # to do
-migrate fully to react native vector icons
+centralize all exceptions coming from the backend
+

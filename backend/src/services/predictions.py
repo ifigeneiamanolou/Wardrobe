@@ -71,10 +71,8 @@ def color_to_label(color : list):
 
     # Build the kd tree
     tree = KDTree(color_values)
-    _, ii = tree.query(tuple(color))
-    value = tree[ii[0]]
-    index = np.where(color_values == value)[0]
-    label = color_names[index]
+    _, idx = tree.query(color)
+    label = color_names[idx]
     return label
 
 async def read_image(path : str):

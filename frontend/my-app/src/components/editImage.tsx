@@ -50,7 +50,7 @@ function EditImage({onPress, uri} : props){
             shop : "",
         },
         validationSchema : editSchema,
-        onSubmit : async(values, {resetForm}) => {
+        onSubmit : async (values, {resetForm}) => {
             const form = new FormData();
             const file = new File(uri);
             const favorite = values.favorite ? "yes" : "no";

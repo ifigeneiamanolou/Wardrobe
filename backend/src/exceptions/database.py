@@ -10,8 +10,5 @@ class UserAlreadyExistsError(DatabaseError):
 class ItemExists(DatabaseError):
     pass
 
-class S3UploadError(Exception):
-    pass
-
 class PasswordIsIdentical(DatabaseError):
     pass

@@ -64,7 +64,7 @@ async def login(
     )
     return {"access_token" : token, "token_type" : "bearer"}
 
-@router.post("/users/me")
+@router.get("/users/me")
 # Sample endpoint with dependancy injection to validate the user with the JWT token provided
 # If the token is expired, tampered, missing, or lacking the sub entry yields the same error
 # avoiding leaking of information about the validation system to attackers

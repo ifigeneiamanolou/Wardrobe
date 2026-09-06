@@ -12,7 +12,7 @@ type Props = {
     color : string;
 }
 
-export default function ImageMetadata({shop, favorite, size, price, category, color} : Props){
+export default function ItemMetadata({shop, favorite, size, price, category, color} : Props){
     return(
         <View className = "flex-1 flex-col">
             <Ionicon 
@@ -40,6 +40,11 @@ export default function ImageMetadata({shop, favorite, size, price, category, co
             <View className="flex flex-row">
                 <Text className="font-bold text-white"> Category: </Text>
                 <Text className="text-white"> {category} </Text>
+            </View>
+
+            <View className="flex flex-row">
+                <Text className="font-bold text-white"> Color: </Text>
+                <Text className="text-white"> {color} </Text>
             </View>
 
         </View>

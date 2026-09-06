@@ -9,7 +9,6 @@ import PopUp from '@/src/components/popUp';
 import * as ImagePicker from 'expo-image-picker';
 import { File, Paths } from 'expo-file-system';
 
-
 function Add(){
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [mediaPermission, setMediaPermission] = useState<boolean | null>(null)

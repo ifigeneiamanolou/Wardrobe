@@ -10,7 +10,7 @@ import { useFormik } from "formik";
 import showAlert from "../components/alert";
 import colors from "../constants/colors";
 import {router} from 'expo-router';
-
+import { useSession } from "../ctx";
 const forgotSchema = yup.object().shape({
     username : yup.string()
         .required('Username is required')
@@ -30,6 +30,7 @@ const forgotSchema = yup.object().shape({
 })
 
 export default function changePassword(){
+    const session = useSession();
     // Password toggles
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isPasswordNewVisible, setIsPasswordNewVisible] = useState(false);
@@ -62,6 +63,7 @@ export default function changePassword(){
                 if(!res.ok){
                     throw new Error('Server rejected request');
                 }
+                session?.signOut();
                 showAlert('Success', 'Password has successfully changed');
                 router.replace('/signIn');
             })

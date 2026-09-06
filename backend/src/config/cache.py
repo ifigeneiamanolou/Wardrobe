@@ -2,6 +2,7 @@
 
 from src.config import conf
 from redis.asyncio import Redis
+from fastapi import HTTPException, status
 
 async def init_redis():
     # Initialize a redis connection on application startup
@@ -22,17 +23,28 @@ async def close():
 async def get_cache(key : str):
     if not redis:
         raise RuntimeError("Redis is not initialized")
-    return await redis.get(key)
+    try:
+        return await redis.get(key)
+    except ConnectionError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Unavailable")
 
 async def set_cache(key : str, value : str, ttl : int = 300):
     if not redis:
         raise RuntimeError("Redis is not initialized")
-    await redis.set(key, value, ttl)
+    try:
+        await redis.set(key, value, ttl)
+    except ConnectionError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Unavailable")
+    
 
 async def delete_cache(key : str):
     if not redis:
         raise RuntimeError("Redis is not initialized")
-    await redis.delete(key)
+    try:
+        await redis.delete(key)
+    except ConnectionError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Unavailable")
+    
 
 async def revoke_token(jti : str, ttl_seconds : int):
     """ Adds a JTI into a REDIS blacklist with the token's remaining lifetime for automatic cleanup
@@ -44,7 +56,11 @@ async def revoke_token(jti : str, ttl_seconds : int):
     """
     if not redis:
         raise RuntimeError("Redis is not initialized")
-    await redis.set(f"blacklist:{jti}", "revoked", ttl_seconds)
+    try:    
+        await redis.set(f"blacklist:{jti}", "revoked", ttl_seconds)
+    except ConnectionError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Unavailable")
+
 
 async def is_revoked(jti : str):
     """ Returns true if the token has been revoked using the Redis blacklist
@@ -55,5 +71,10 @@ async def is_revoked(jti : str):
     Returns:
         bool: indicate whether the token has been revoked
     """
-
-    return await redis.exists(f"blacklist:{jti}") == 1
+    if not redis:   
+        raise RuntimeError("Redis is not initialized")
+    try:
+        return await redis.exists(f"blacklist:{jti}") == 1
+    except ConnectionError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Unavailable")
+    

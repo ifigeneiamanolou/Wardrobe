@@ -1,13 +1,14 @@
 import { Int32 } from "react-native/Libraries/Types/CodegenTypes";
-import { View } from "react-native";
+import { StyleProp, View, FlexStyle } from "react-native";
 import React from "react";
 import Animated, { interpolate } from "react-native-reanimated";
-import { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import { SharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 
 type Props = {
-    isFlipped : boolean;
+    isFlipped : SharedValue<boolean>;
     direction : string;
     duration : number;
+    cardStyle?: StyleProp<FlexStyle>;
     reguralContent : React.ReactNode;   // image
     flippedContent : React.ReactNode;   // metadata
 }
@@ -16,13 +17,14 @@ export default function FlipCard({
     isFlipped, 
     direction ='y',
     duration = 500,
+    cardStyle,
     flippedContent,
     reguralContent
 } : Props){
     const isDirectionX = direction === 'x';         // axis of rotation
 
     const reguralStyle = useAnimatedStyle(() => {
-        const spinValue = interpolate(Number(isFlipped.valueOf()), [0, 1], [0, 180]);
+       const spinValue = interpolate(Number(isFlipped.value), [0, 1], [0, 180]);
        const rotate = withTiming(`${spinValue}deg`, {duration : duration});
         return {
             transform : [
@@ -34,7 +36,7 @@ export default function FlipCard({
     });
 
     const flippedStyle = useAnimatedStyle(() => {
-        const spinValue = interpolate(Number(isFlipped.valueOf()), [0, 1], [180, 360]);
+        const spinValue = interpolate(Number(isFlipped.value), [0, 1], [180, 360]);
         const rotate = withTiming(`${spinValue}deg`, {duration : duration});
         return {
             transform : [
@@ -46,19 +48,19 @@ export default function FlipCard({
     });
 
     return(
-        <View>
+        <View className="flex-1 w-full h-full">
             {/* Front */}
             <Animated.View
-                style = {reguralStyle}
-                className = "absolute z-10"
+                style = {[reguralStyle, cardStyle]}
+                className = "absolute z-10 inset-0"
             >
                 {reguralContent}
             </Animated.View>
 
             {/* Back */}
             <Animated.View
-                style = {flippedStyle}
-                className = "absolute z-20"
+                style = {[flippedStyle, cardStyle]}
+                className = "absolute z-20 inset-0"
             >
                 {flippedContent}
             </Animated.View>

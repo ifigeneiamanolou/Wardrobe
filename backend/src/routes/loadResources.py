@@ -15,14 +15,12 @@ async def get_outfits(
     client : Annotated[MongoClient, Depends(load_cluster)]
 ):
     # Extract all outfits from the database for the current user
-    results = load_outfits(client, user.username)
+    results = await load_outfits(client, user.username)
 
     if results == []:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No outfits")
 
     # Load the images from AWS S3 and return one by one in the frontend
-    for result in results:
-        pass
     pass
 
 @router.get("/items")
@@ -31,10 +29,10 @@ async def get_items(
     client : Annotated[MongoClient, Depends(load_cluster)]
 ):
     # Extract all items from the database for the current user
-    results = load_items(client, user.username)
+    results = await load_items(client, user.username)
 
     if results == []:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No items")
 
     # Load the images from AWS S3 and return one by one in the frontend
-    return StreamingResponse(format_output_items)
+    return StreamingResponse(format_output_items(results),  media_type="application/x-ndjson")
