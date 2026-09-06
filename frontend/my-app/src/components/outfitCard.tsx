@@ -1,6 +1,7 @@
 import { Outfit } from "../types/cards";
-import React, { useState } from 'react';
+import React from 'react';
 import { TouchableHighlight } from "react-native";
+import { useSharedValue } from "react-native-reanimated";
 import FlipCard from "./flipCard";
 import OutfitMetadata from "./outfitMetadata";
 import ImageContainer from "./imageContainer";
@@ -10,11 +11,11 @@ type props = {
 }
 
 export default function ItemCard({outfit} : props){
-    const [flipped, setFlipped] = useState<boolean>(false);
+    const flipped = useSharedValue<boolean>(false);
     return(
         <TouchableHighlight 
             key = {outfit.image}
-            onPress={() => setFlipped(!flipped)}
+            onPress={() => { flipped.value = !flipped.value; }}
         >
             <FlipCard 
                 isFlipped = {flipped}
@@ -22,6 +23,8 @@ export default function ItemCard({outfit} : props){
                     <ImageContainer
                         image = {outfit.image}
                         name = {outfit.name}
+                        type = "Outfits"
+                        _id = {outfit.id}
                     />
                 }
                 reguralContent = {

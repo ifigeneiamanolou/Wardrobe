@@ -2,16 +2,43 @@ import React from "react";
 import { Image, View, Text, TouchableOpacity } from "react-native";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import colors from "../constants/colors";
+import constants from "../constants/app";
+import showAlert from "./alert";
+import { useSession } from "../ctx";
 
 type Props = {
     image : string;
     name : string;
+    type : string;
+    _id : string;
 }
 
-export default function ImageContainer({image, name} : Props){
+export default function ImageContainer({image, name, type, _id} : Props){
+    const session = useSession();
+
     const deleteItem = () => {
-        //database query
-        console.log('bin');
+        fetch(`${constants['BACKEND_URL']}/edit/delete`, {
+            method : "POST",
+            headers : {'Authorization' : `Bearer ${session?.session}`},
+            body : JSON.stringify({
+                '_id' : _id,
+                'collection' : type,
+            })
+        })
+        .then((async (res) => {
+            if(res.status == 401){
+                session?.signOut();
+                return;
+            }
+
+            if(!res.ok){
+                showAlert('Error', 'Error when changing favorite status');
+            }
+        }))
+        .catch((err) => {
+            console.log("Log in error", err);
+            showAlert('Error', err.message);
+        })
     };
 
     return(

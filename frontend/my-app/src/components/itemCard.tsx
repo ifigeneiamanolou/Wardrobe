@@ -1,12 +1,11 @@
 import { Item } from "../types/cards";
 import React from 'react';
-import { Pressable, View } from "react-native";
+import { Pressable} from "react-native";
 import FlipCard from "./flipCard";
 import ImageMetadata from "./itemMetadata";
 import ImageContainer from "./imageContainer";
 import { useSharedValue } from "react-native-reanimated";
 import { StyleSheet } from "react-native";
-import colors from "../constants/colors";
 
 type props = {
     item : Item
@@ -27,11 +26,14 @@ export default function ItemCard({item} : props){
                     <ImageContainer
                         image = {item.image}
                         name = {item.name}
+                        type = "Items"
+                        _id = {item.id}
                     />
                 }
                 cardStyle = {styles.flipCard}
                 reguralContent = {
                     <ImageMetadata
+                        _id = {item.id}
                         price = {item.price}
                         shop = {item.shop}
                         size = {item.size}
