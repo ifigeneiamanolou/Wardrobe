@@ -1,25 +1,25 @@
 import { Item } from "../types/cards";
 import React from 'react';
-import { TouchableHighlight } from "react-native";
+import { Pressable, View } from "react-native";
 import FlipCard from "./flipCard";
 import ImageMetadata from "./itemMetadata";
 import ImageContainer from "./imageContainer";
 import { useSharedValue } from "react-native-reanimated";
 import { StyleSheet } from "react-native";
+import colors from "../constants/colors";
 
 type props = {
     item : Item
 }
 
 export default function ItemCard({item} : props){
-    const isFlipped = useSharedValue(false);
+    const isFlipped = useSharedValue(true);
     return(
-        <TouchableHighlight 
-            key = {item.name}
+        <Pressable 
             onPress={() => {
                 isFlipped.value = !isFlipped.value;
             }}
-            className="flex-1 aspect-square bg-graphite"
+            className = "flex-1 active:opacity-80"
         >
             <FlipCard 
                 isFlipped = {isFlipped}
@@ -43,14 +43,14 @@ export default function ItemCard({item} : props){
                 duration = {500}
                 direction = 'y'
             />
-        </TouchableHighlight>
+        </Pressable>
     );      
 }
 
 const styles = StyleSheet.create({
     flipCard: {
-        width : 170,
-        height : 140,
+        width : '100%',
+        height : 200,
         backfaceVisibility : 'hidden',
     }
 })

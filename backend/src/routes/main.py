@@ -5,6 +5,7 @@ from src.routes.auth import router as auth_router
 from src.routes.save import router as save_router
 from src.routes.loadResources import router as load_router
 from src.config.cache import init_redis, close
+from src.routes.edit import router as edit_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,6 +27,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(save_router, prefix = "/save", tags = ["save"])
 app.include_router(load_router, prefix = "/load", tags = ["load"])
+app.include_router(edit_router, prefix = "/edit", tags = ["edit"])
 
 if __name__ == "__main__":
     import uvicorn

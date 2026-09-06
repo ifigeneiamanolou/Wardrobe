@@ -32,3 +32,10 @@ class ClothingItem(BaseModel):
     price : str
     size : Optional[Literal["XS", "S", "M", "L", "XL"]] = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+class deleteData(BaseModel):
+    _id : str
+    collection : Literal["Items", "Outfits"]
+
+class editFavorite(deleteData):
+    favorite : bool

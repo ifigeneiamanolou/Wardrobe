@@ -48,11 +48,11 @@ export default function FlipCard({
     });
 
     return(
-        <View className="flex-1 w-full h-full">
+        <View className="flex-1">
             {/* Front */}
             <Animated.View
-                style = {[reguralStyle, cardStyle]}
-                className = "absolute z-10 inset-0"
+                style = {[reguralStyle, cardStyle]}   
+                className = "absolute z-10"
             >
                 {reguralContent}
             </Animated.View>
@@ -60,7 +60,7 @@ export default function FlipCard({
             {/* Back */}
             <Animated.View
                 style = {[flippedStyle, cardStyle]}
-                className = "absolute z-20 inset-0"
+                className = "z-20"
             >
                 {flippedContent}
             </Animated.View>

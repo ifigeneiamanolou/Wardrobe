@@ -6,6 +6,7 @@ from pymongo.errors import DuplicateKeyError, OperationFailure, ConnectionFailur
 from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical
 from src.utils.db_backoff import with_retry
 from src.config.conf import mongodb_key
+from src.utils.redis_utilities import cache_response
 
 MONGO_URI = f"mongodb+srv://ifigeneiamanolou26_db_user:{mongodb_key}@closetcluster.6sudtpr.mongodb.net/Authentication"
 
@@ -159,13 +160,13 @@ async def save_clothing(client : MongoClient, item : ClothingItem, color : str,
     except Exception as exc:
             raise DatabaseError() from exc
 
-# Find all items of a user
+# Find all items/outfits of a user                               
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def load_items(client : MongoClient, username : str):
+async def load_outfits_items(client : MongoClient, username : str, collection : str = "Items"):
     try:
-        items_collection = client["Clothing"]["Items"]
+        items_collection = client["Clothing"][collection]
         document_to_find = {'username' : username}
-        results = items_collection.find(document_to_find, projection = {'_id' : False})
+        results = items_collection.find(document_to_find)
         return results
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
@@ -174,18 +175,32 @@ async def load_items(client : MongoClient, username : str):
     except Exception as exc:
         raise DatabaseError() from exc
 
-# Find all items of a user
+# Update the value under the key 'favorite' in the items table for the item with the corresponding id                             
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def load_outfits(client : MongoClient, username : str):
+async def change_favorite(client : MongoClient, id : str, favorite : bool, collection : str = "Items"):
     try:
-        items_collection = client["Clothing"]["Outfits"]
-        document_to_find = {'username' : username}
-        results = items_collection.find(document_to_find, projection = {'_id' : False})
-        return results
+        items_collection = client["Clothing"][collection]
+        document_to_find = {'_id' : id}
+        update_operation = {
+            '$set' : 
+                {
+                    'favorite' : 'yes' if favorite else 'no'
+                }
+        }
+        items_collection.update_one(document_to_find, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
-    except (OperationFailure) as exc:
-        raise DatabaseError() from exc
     except Exception as exc:
         raise DatabaseError() from exc
-    
+
+# Delete the item/outfit with the corresponding id
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def delete_item_outfit(client : MongoClient, id : str, collection : str = "Items"):
+    try:
+        items_collection = client["Clothing"][collection]
+        document_to_find = {'_id' : id}
+        items_collection.delete_one(document_to_find)
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc

@@ -229,29 +229,33 @@ export default function Home() {
             {/* Elements */} 
             {showItems ?
                 (noItems ? 
-                    <Text className = "text-dusty-rose font-bold text-xl justify-center items-center">
+                    <Text className = "flex text-dusty-rose font-bold text-xl justify-center items-center">
                         No items found
                     </Text> :
                     <FlatList
-                        ItemSeparatorComponent={<View/>}
+                        ItemSeparatorComponent={<View className = "h-2"/>}
                         data = {items}
                         numColumns = {2}
                         horizontal = {false}
-                        className='flex-1 bg-dusty-rose'
+                        className='flex-1 bg-white'
                         renderItem={({item}) => (<ItemCard item = {item}/>)}
+                        contentContainerStyle = {{padding : 10}}                        // Padding around the list
+                        columnWrapperStyle = {{justifyContent : 'space-between'}}       // Space between the columns
                    
                 />) :
                 (noOutfits ? 
-                    <Text className = "text-white font-bold text-xl justify-center items-center">
+                    <Text className = "flex text-dusty-rose font-bold text-xl justify-center items-center">
                         No outfits found
                     </Text> :
                     <FlatList
-                        ItemSeparatorComponent={<View/>}
+                        ItemSeparatorComponent={<View className = "h-2"/>}              // Space between the rows
+                        contentContainerStyle = {{padding : 10}}                        // Padding around the list
                         data = {outfits}
                         horizontal = {false}
                         numColumns = {2}
-                        className='flex-1 flex-wrap'
+                        className='flex-1 bg-white'
                         renderItem={({item}) => (<OutfitCard outfit = {item}/>)}
+                        columnWrapperStyle = {{justifyContent : 'space-between'}}       // Space between the columns
                     />
                 )}
         </View> 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from src.services.authentication import get_current_user
-from src.services.database import load_cluster, load_items, load_outfits
+from src.services.database import load_cluster, load_outfits_items
 from src.services.formatOutput import format_output_items
 from src.models.pydantic import User
 from pymongo import MongoClient
@@ -15,7 +15,7 @@ async def get_outfits(
     client : Annotated[MongoClient, Depends(load_cluster)]
 ):
     # Extract all outfits from the database for the current user
-    results = await load_outfits(client, user.username)
+    results = await load_outfits_items(client, user.username, "Outfits")
 
     if results == []:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No outfits")
@@ -29,7 +29,7 @@ async def get_items(
     client : Annotated[MongoClient, Depends(load_cluster)]
 ):
     # Extract all items from the database for the current user
-    results = await load_items(client, user.username)
+    results = await load_outfits_items(client, user.username)
 
     if results == []:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No items")

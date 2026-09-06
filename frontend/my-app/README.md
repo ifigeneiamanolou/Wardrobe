@@ -18,9 +18,7 @@ To start a development server run:
    npx expo start
    ```
 
-# User forms
-
-All forms are built using Formik and Yup. Formik is a lightweight library that simplifies form management in React. Yup is a Javascript validation schema library, easy to integrate with Formik.
+The app can be previewed using Expo Go (built for Expo 57).
 
 # to do
 centralize all exceptions coming from the backend
