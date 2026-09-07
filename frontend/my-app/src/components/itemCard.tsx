@@ -18,7 +18,7 @@ export default function ItemCard({item} : props){
     }
 
     return(
-        <View className = "flex-1">
+        <View className = "flex-1 mx-2" >
             <FlipCard 
                 isFlipped = {isFlipped}
                 flippedContent = {

@@ -24,7 +24,7 @@ export default function ItemCard({outfit} : props){
                         image = {outfit.image}
                         name = {outfit.name}
                         type = "Outfits"
-                        _id = {outfit.id}
+                        _id = {outfit._id}
                         onFlip = {flip}
                     />
                 }

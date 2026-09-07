@@ -45,16 +45,16 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
             previous = priceValue;
             onChangePrice('Loading ...');
         } else if(type == "size"){
-            previous = priceValue;
+            previous = sizeValue;
             onChangeSize('Loading ...');
         } else if(type == "shop"){
-            previous = priceValue;
+            previous = shopValue;
             onChangeShop('Loading ...');
         } else if(type == "category"){
-            previous = priceValue;
+            previous = categoryValue;
             onChangeCategory('Loading ...');
         } else {
-            previous = priceValue;
+            previous = colorValue;
             onChangeColor('Loading ...');
         }
 
