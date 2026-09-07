@@ -1,6 +1,6 @@
 import { Item } from "../types/cards";
 import React from 'react';
-import { Pressable} from "react-native";
+import { View} from "react-native";
 import FlipCard from "./flipCard";
 import ImageMetadata from "./itemMetadata";
 import ImageContainer from "./imageContainer";
@@ -13,13 +13,12 @@ type props = {
 
 export default function ItemCard({item} : props){
     const isFlipped = useSharedValue(true);
+    const flip = () => {
+        isFlipped.value = !isFlipped.value;
+    }
+
     return(
-        <Pressable 
-            onPress={() => {
-                isFlipped.value = !isFlipped.value;
-            }}
-            className = "flex-1 active:opacity-80"
-        >
+        <View className = "flex-1">
             <FlipCard 
                 isFlipped = {isFlipped}
                 flippedContent = {
@@ -28,6 +27,7 @@ export default function ItemCard({item} : props){
                         name = {item.name}
                         type = "Items"
                         _id = {item.id}
+                        onFlip = {flip}
                     />
                 }
                 cardStyle = {styles.flipCard}
@@ -40,19 +40,20 @@ export default function ItemCard({item} : props){
                         color = {item.color}
                         category = {item.category}
                         favorite = {item.favorite}
+                        onFlip = {flip}
                     />
                 }
                 duration = {500}
                 direction = 'y'
             />
-        </Pressable>
+        </View>
     );      
 }
 
 const styles = StyleSheet.create({
     flipCard: {
         width : '100%',
-        height : 200,
+        height : 230,
         backfaceVisibility : 'hidden',
     }
 })

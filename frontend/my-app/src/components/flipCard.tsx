@@ -1,6 +1,5 @@
-import { Int32 } from "react-native/Libraries/Types/CodegenTypes";
 import { StyleProp, View, FlexStyle } from "react-native";
-import React from "react";
+import React, {useState} from "react";
 import Animated, { interpolate } from "react-native-reanimated";
 import { SharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 
@@ -21,6 +20,7 @@ export default function FlipCard({
     flippedContent,
     reguralContent
 } : Props){
+    const [fliped, setFliped] = useState(isFlipped);
     const isDirectionX = direction === 'x';         // axis of rotation
 
     const reguralStyle = useAnimatedStyle(() => {
@@ -53,6 +53,7 @@ export default function FlipCard({
             <Animated.View
                 style = {[reguralStyle, cardStyle]}   
                 className = "absolute z-10"
+                pointerEvents={fliped ? 'none' : 'auto'}
             >
                 {reguralContent}
             </Animated.View>
@@ -61,6 +62,8 @@ export default function FlipCard({
             <Animated.View
                 style = {[flippedStyle, cardStyle]}
                 className = "z-20"
+                // Make sure that the backface is able to receive touches since it is behind the front view
+                pointerEvents={fliped ? 'auto' : 'none'}  
             >
                 {flippedContent}
             </Animated.View>

@@ -1,6 +1,6 @@
 import { Outfit } from "../types/cards";
 import React from 'react';
-import { TouchableHighlight } from "react-native";
+import {View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import FlipCard from "./flipCard";
 import OutfitMetadata from "./outfitMetadata";
@@ -12,11 +12,11 @@ type props = {
 
 export default function ItemCard({outfit} : props){
     const flipped = useSharedValue<boolean>(false);
+    const flip = () => {
+        flipped.value = !flipped.value
+    }
     return(
-        <TouchableHighlight 
-            key = {outfit.image}
-            onPress={() => { flipped.value = !flipped.value; }}
-        >
+        <View className = "flex-1">
             <FlipCard 
                 isFlipped = {flipped}
                 flippedContent = {
@@ -25,16 +25,18 @@ export default function ItemCard({outfit} : props){
                         name = {outfit.name}
                         type = "Outfits"
                         _id = {outfit.id}
+                        onFlip = {flip}
                     />
                 }
                 reguralContent = {
                     <OutfitMetadata
                         favorite = {outfit.favorite}
+                        onFlip = {flip}
                     />
                 }
                 duration = {500}
                 direction = 'y'
             />
-        </TouchableHighlight>
+        </View>
     );      
 }

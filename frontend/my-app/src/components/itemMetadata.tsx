@@ -15,9 +15,10 @@ type Props = {
     category : string;
     color : string;
     _id : string;
+    onFlip : () => void;
 }
 
-export default function ItemMetadata({shop, favorite, size, price, category, color, _id} : Props){
+export default function ItemMetadata({shop, favorite, size, price, category, color, _id, onFlip} : Props){
     const session = useSession();
     const [isFavorite, setIsFavorite] = useState(favorite);
     const [editShop, setEditShop] = useState<boolean>(false);
@@ -118,9 +119,12 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
 
     return(
         <View className="flex-1 bg-blush p-4 rounded-2xl">
-            <View className = "flex-1 overflow-hidden w-full items-start gap-2">
+            <View className = "flex-1 overflow-hidden w-full gap-2">
                 <View className="flex flex-row">
-                    <View className="flex flex-grow"/>
+                    <Text className="flex flex-grow font-bold text-dusty-rose text-2xl">Details </Text>
+                    <TouchableOpacity onPress = {onFlip}>
+                        <Feather name = "refresh-cw" size = {22} color = {colors['White']} className = "pr-4" />
+                    </TouchableOpacity> 
                     <TouchableOpacity onPress={changeFavorite}>
                         <Ionicon 
                             name = {isFavorite ? "heart" : "heart-outline"} 
@@ -133,10 +137,10 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
 
                 <View className="flex flex-row items-center">
                     <Text className="font-bold text-white text-lg">Shop: </Text>
-                    {editShop ?
+                    {!editShop ?
                         <Text className="text-white flex-grow"> {shopValue} </Text>: 
                         <TextInput 
-                            className = "text-graphite border border-border rounded-lg px-3 h-12"
+                            className = "text-graphite border border-white rounded-lg px-3 mx-3 h-6 flex-grow"
                             value = {shopValue}
                             onChangeText = {onChangeShop}
                             onSubmitEditing = {() => handleSubmit('shop', shopValue)}
@@ -154,10 +158,10 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
 
                 <View className="flex flex-row items-center">
                     <Text className="font-bold text-white">Size: </Text>
-                    {editSize ?
+                    {!editSize ?
                         <Text className="text-white flex-grow"> {sizeValue} </Text>: 
                         <TextInput 
-                            className = "text-graphite border border-border rounded-lg px-3 h-12"
+                            className = "text-graphite border border-white rounded-lg px-3 mx-3 h-6 flex-grow"
                             value = {sizeValue}
                             onChangeText = {onChangeSize}
                             onSubmitEditing = {() => handleSubmit('size', size)}
@@ -175,10 +179,10 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
 
                 <View className="flex flex-row items-center"> 
                     <Text className="font-bold text-white">Price: </Text>
-                    {editPrice ?
+                    {!editPrice ?
                         <Text className="text-white flex-grow"> {priceValue} </Text>: 
                         <TextInput 
-                            className = "text-graphite border border-border rounded-lg px-3 h-12"
+                            className = "text-graphite border border-white rounded-lg px-3 h-6 mx-3 flex-grow"
                             value = {priceValue}
                             onChangeText = {onChangePrice}
                             inputMode="numeric"
@@ -197,10 +201,10 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
 
                 <View className="flex flex-row items-center">
                     <Text className="font-bold text-white">Category: </Text>
-                    {editCategory ?
+                    {!editCategory ?
                         <Text className="text-white flex-grow"> {categoryValue} </Text>: 
                         <TextInput 
-                            className = "text-graphite border border-border rounded-lg px-3 h-12"
+                            className = "text-graphite border border-white rounded-lg px-3 mx-3 h-6 flex-grow"
                             value = {categoryValue}
                             onChangeText = {onChangeCategory}
                             onSubmitEditing = {() => handleSubmit('category', category)}
@@ -218,10 +222,10 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
 
                 <View className="flex flex-row items-center">
                     <Text className="font-bold text-white ">Color: </Text>
-                    {editColor ?
+                    {!editColor ?
                         <Text className="text-white flex-grow"> {colorValue} </Text>: 
                         <TextInput 
-                            className = "text-graphite border border-border rounded-lg px-3 h-12"
+                            className = "text-graphite border border-white rounded-lg px-3 h-6 mx-3 flex-grow"
                             value = {colorValue}
                             onChangeText = {onChangeColor}
                             onSubmitEditing = {() => handleSubmit('color', color)}

@@ -1,6 +1,7 @@
 import React from "react";
 import { Image, View, Text, TouchableOpacity } from "react-native";
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
 import colors from "../constants/colors";
 import constants from "../constants/app";
 import showAlert from "./alert";
@@ -11,9 +12,10 @@ type Props = {
     name : string;
     type : string;
     _id : string;
+    onFlip : () => void;
 }
 
-export default function ImageContainer({image, name, type, _id} : Props){
+export default function ImageContainer({image, name, type, _id, onFlip} : Props){
     const session = useSession();
 
     const deleteItem = () => {
@@ -49,6 +51,9 @@ export default function ImageContainer({image, name, type, _id} : Props){
                     <Text className= "flex flex-grow text-lg text-white font-bold">{name}</Text>
                     <TouchableOpacity onPress = {deleteItem}>
                         <Ionicons name = "trash" size = {24} color = {colors['White']} className = "pr-4" />
+                    </TouchableOpacity> 
+                    <TouchableOpacity onPress = {onFlip}>
+                        <Feather name = "refresh-cw" size = {22} color = {colors['White']} className = "pr-2" />
                     </TouchableOpacity> 
                 </View>
             </View>
