@@ -182,10 +182,7 @@ async def change_favorite(client : MongoClient, id : str, favorite : bool, colle
         items_collection = client["Clothing"][collection]
         document_to_find = {'_id' : id}
         update_operation = {
-            '$set' : 
-                {
-                    'favorite' : 'yes' if favorite else 'no'
-                }
+            '$set' : {'favorite' : 'yes' if favorite else 'no'}
         }
         items_collection.update_one(document_to_find, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
@@ -200,6 +197,21 @@ async def delete_item_outfit(client : MongoClient, id : str, collection : str = 
         items_collection = client["Clothing"][collection]
         document_to_find = {'_id' : id}
         items_collection.delete_one(document_to_find)
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+# Edit the value of a key of an outfit
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def edit_value(client : MongoClient, id : str, value : str, category : str, collection : str = "Items"):
+    try:
+        items_collection = client["Clothing"][collection]
+        document_to_find = {'_id' : id}
+        update_operation = {
+            '$set' : {category : value}
+        }
+        items_collection.update_one(document_to_find, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:

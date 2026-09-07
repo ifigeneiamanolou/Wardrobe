@@ -29,6 +29,7 @@ export default function Home() {
     const onItemChunk = (chunk : string) => {
         const dict = JSON.parse(chunk);
         const item : Item = {
+            id : dict['_id'],
             shop : dict['shop'],
             favorite : dict['favorite'] == "yes" ? true : false,
             size : dict['size'],
@@ -45,6 +46,7 @@ export default function Home() {
         const dict = JSON.parse(chunk);
         const outfit : Outfit = {
             image : dict['image'],
+            id : dict['_id'],
             name : dict['name'],
             favorite : dict['favorite'] == "yes" ? true : false
         };

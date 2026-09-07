@@ -39,3 +39,7 @@ class deleteData(BaseModel):
 
 class editFavorite(deleteData):
     favorite : bool
+
+class editData(deleteData):
+    value : str
+    category : Literal["shop", "category", "color", "price", "size"]
