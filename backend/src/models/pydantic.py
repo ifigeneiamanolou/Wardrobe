@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal, Optional
 from fastapi import UploadFile
 
@@ -34,7 +34,7 @@ class ClothingItem(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 class deleteData(BaseModel):
-    _id : str
+    id: str
     collection : Literal["Items", "Outfits"]
 
 class editFavorite(deleteData):

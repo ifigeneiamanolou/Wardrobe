@@ -33,26 +33,38 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
     const [sizeValue, onChangeSize] = useState<string>(size);
 
     const handleSubmit = (type : string, value : string) => {
+        let temp = "";
         if(type == "price"){
+            temp = priceValue;
             onChangePrice('Loading ...');
         } else if(type == "size"){
+            temp = sizeValue;
             onChangeSize('Loading ...');
         } else if(type == "shop"){
+            temp = shopValue;
             onChangeShop('Loading ...');
         } else if(type == "category"){
+            temp = categoryValue;
             onChangeCategory('Loading ...');
         } else {
+            temp = colorValue;
             onChangeColor('Loading ...');
         }
 
+        console.log(_id);
+        console.log(type);
+        console.log(value);
         fetch(`${constants['BACKEND_URL']}/edit/value`, {
             method : "POST", 
-            headers : {'Authorization' : `Bearer ${session?.session}`},
+            headers : {
+                'Authorization' : `Bearer ${session?.session}`,
+                'Content-Type': 'application/json'
+            },
             body : JSON.stringify({
-                '_id' : _id,
+                'id' : _id,
                 'collection' : 'Items',
                 'value' : value,
-                'type' : type
+                'category' : type
             })
         }).then((async (res) => {
             if(res.status == 401){
@@ -61,9 +73,9 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
             }
 
             if(!res.ok){
-                showAlert('Error', 'Error when changing favorite status');
-                return;
-            } 
+                showAlert('Error', 'Error when changing the item details');
+                value = temp;        // Change the displayed value to the previous one
+            }
 
             if(type == "price"){
                 onChangePrice(value);
@@ -80,6 +92,20 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
         .catch((err) => {
             console.log("Log in error", err);
             showAlert('Error', err.message);
+
+            // Change the displayed value to the previous one
+            value = temp;
+            if(type == "price"){
+                onChangePrice(value);
+            } else if(type == "size"){
+                onChangeSize(value);
+            } else if(type == "shop"){
+                onChangeShop(value);
+            } else if(type == "category"){
+                onChangeCategory(value);
+            } else {
+                onChangeColor(value);
+            }
         })
         .finally(() => {
             setEditPrice(false);
@@ -94,9 +120,12 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
         setIsFavorite(!isFavorite);
         fetch(`${constants['BACKEND_URL']}/edit/favorite`, {
             method : "POST",
-            headers : {'Authorization' : `Bearer ${session?.session}`},
+            headers : {
+                'Content-Type': 'application/json',
+                'Authorization' : `Bearer ${session?.session}`
+            },
             body : JSON.stringify({
-                '_id' : _id,
+                'id' : _id,     
                 'favorite' : isFavorite,
                 'collection' : 'Items',
             })
@@ -140,8 +169,9 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                     {!editShop ?
                         <Text className="text-white flex-grow"> {shopValue} </Text>: 
                         <TextInput 
-                            className = "text-graphite border border-white rounded-lg px-3 mx-3 h-6 flex-grow"
+                            className = "text-white border border-white rounded-lg mx-3 px-1 h-7 flex-grow"
                             value = {shopValue}
+                            style = {{paddingVertical : 5}}
                             onChangeText = {onChangeShop}
                             onSubmitEditing = {() => handleSubmit('shop', shopValue)}
                         />
@@ -161,9 +191,10 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                     {!editSize ?
                         <Text className="text-white flex-grow"> {sizeValue} </Text>: 
                         <TextInput 
-                            className = "text-graphite border border-white rounded-lg px-3 mx-3 h-6 flex-grow"
+                            className = "text-white border border-white rounded-lg px-1 mx-3 h-7 flex-grow"
                             value = {sizeValue}
                             onChangeText = {onChangeSize}
+                            style = {{paddingVertical : 5}}
                             onSubmitEditing = {() => handleSubmit('size', size)}
                         />
                     }
@@ -182,8 +213,9 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                     {!editPrice ?
                         <Text className="text-white flex-grow"> {priceValue} </Text>: 
                         <TextInput 
-                            className = "text-graphite border border-white rounded-lg px-3 h-6 mx-3 flex-grow"
+                            className = "text-white border border-white rounded-lg px-1 h-7 mx-3 flex-grow"
                             value = {priceValue}
+                            style = {{paddingVertical : 5}}
                             onChangeText = {onChangePrice}
                             inputMode="numeric"
                             onSubmitEditing = {() => handleSubmit('price', price)}
@@ -204,9 +236,10 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                     {!editCategory ?
                         <Text className="text-white flex-grow"> {categoryValue} </Text>: 
                         <TextInput 
-                            className = "text-graphite border border-white rounded-lg px-3 mx-3 h-6 flex-grow"
+                            className = "text-white border border-white rounded-lg px-1 mx-3 h-7 flex-grow"
                             value = {categoryValue}
                             onChangeText = {onChangeCategory}
+                            style = {{paddingVertical : 5}}
                             onSubmitEditing = {() => handleSubmit('category', category)}
                         />
                     }
@@ -225,9 +258,10 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                     {!editColor ?
                         <Text className="text-white flex-grow"> {colorValue} </Text>: 
                         <TextInput 
-                            className = "text-graphite border border-white rounded-lg px-3 h-6 mx-3 flex-grow"
+                            className = "text-white border border-white rounded-lg px-1 h-7 mx-3 flex-grow"
                             value = {colorValue}
                             onChangeText = {onChangeColor}
+                            style = {{paddingVertical : 5}}
                             onSubmitEditing = {() => handleSubmit('color', color)}
                         />
                     }

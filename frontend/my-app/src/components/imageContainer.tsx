@@ -21,9 +21,12 @@ export default function ImageContainer({image, name, type, _id, onFlip} : Props)
     const deleteItem = () => {
         fetch(`${constants['BACKEND_URL']}/edit/delete`, {
             method : "POST",
-            headers : {'Authorization' : `Bearer ${session?.session}`},
+            headers : {
+                'Authorization' : `Bearer ${session?.session}`,
+                'Content-Type': 'application/json'
+            },
             body : JSON.stringify({
-                '_id' : _id,
+                'id' : _id,
                 'collection' : type,
             })
         })

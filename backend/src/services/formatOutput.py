@@ -8,6 +8,7 @@ async def format_output_items(results : list):
         b = base64.b64encode(bytes(image))
         b64_image = b.decode('utf-8')
         data = {
+            "_id" : result['_id'],
             "image" : b64_image,
             "name" : result['name'],
             "favorite" : result['favorite'],

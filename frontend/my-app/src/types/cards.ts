@@ -7,14 +7,14 @@ type Item = {
     color : string;
     name : string;
     image : string;
-    id : string;
+    _id : string;
 };
 
 type Outfit = {
     image : string;
     name : string;
     favorite : boolean;
-    id : string;
+    _id : string;
 }
 
 export {Item, Outfit};

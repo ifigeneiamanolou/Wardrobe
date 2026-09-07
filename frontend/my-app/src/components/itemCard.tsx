@@ -26,14 +26,14 @@ export default function ItemCard({item} : props){
                         image = {item.image}
                         name = {item.name}
                         type = "Items"
-                        _id = {item.id}
+                        _id = {item._id}
                         onFlip = {flip}
                     />
                 }
                 cardStyle = {styles.flipCard}
                 reguralContent = {
                     <ImageMetadata
-                        _id = {item.id}
+                        _id = {item._id}
                         price = {item.price}
                         shop = {item.shop}
                         size = {item.size}

@@ -1,7 +1,8 @@
 import { StyleProp, View, FlexStyle } from "react-native";
 import React, {useState} from "react";
 import Animated, { interpolate } from "react-native-reanimated";
-import { SharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import { SharedValue, useAnimatedStyle, withTiming, useAnimatedReaction } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 
 type Props = {
     isFlipped : SharedValue<boolean>;
@@ -20,8 +21,18 @@ export default function FlipCard({
     flippedContent,
     reguralContent
 } : Props){
-    const [fliped, setFliped] = useState(isFlipped);
+    const [fliped, setFliped] = useState(true);
     const isDirectionX = direction === 'x';         // axis of rotation
+
+    // Change fliped whenever isFlipped changes
+    useAnimatedReaction(
+        () => {return isFlipped.value},
+        (currentValue, previousValue) => {
+            if(currentValue !== previousValue){
+                scheduleOnRN(setFliped, currentValue);
+            }
+        }
+    )
 
     const reguralStyle = useAnimatedStyle(() => {
        const spinValue = interpolate(Number(isFlipped.value), [0, 1], [0, 180]);

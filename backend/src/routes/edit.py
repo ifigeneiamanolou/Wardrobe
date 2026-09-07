@@ -12,7 +12,7 @@ async def toggle_favorite(
     client : Annotated[MongoClient, Depends(load_cluster)],
     data : editFavorite
 ):
-    await change_favorite(client, data._id, data.favorite, data.collection)
+    await change_favorite(client, data.id, data.favorite, data.collection)
 
 @router.post("/delete")
 async def delete_item(
@@ -20,7 +20,7 @@ async def delete_item(
     client : Annotated[MongoClient, Depends(load_cluster)],
     data : deleteData
 ):
-    await delete_item_outfit(client, data._id, data.collection)
+    await delete_item_outfit(client, data.id, data.collection)
 
 @router.post("/value")
 async def edit_item_value(
@@ -28,5 +28,5 @@ async def edit_item_value(
     client : Annotated[MongoClient, Depends(load_cluster)],
     data : editData
 ):
-    await edit_value(client, data._id, data.value, data.category, data.collection)
+    await edit_value(client, data.id, data.value, data.category, data.collection)
     
