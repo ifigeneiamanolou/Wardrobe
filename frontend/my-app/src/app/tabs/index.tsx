@@ -134,9 +134,11 @@ export default function Home() {
             {/* Elements */} 
             {showItems ?
                 (noItems ? 
-                    <Text className = "flex-1 text-dusty-rose font-bold text-xl justify-center items-center">
-                        No items found
-                    </Text> :
+                    <View className='flex-1 flex-grow'>
+                        <Text className = "flex-1 text-dusty-rose font-bold text-xl ">
+                            No items found
+                        </Text> 
+                    </View> :
                     <FlatList
                         ItemSeparatorComponent={() => <View className = "h-2"/>}
                         data = {items}
@@ -150,9 +152,11 @@ export default function Home() {
                         }}       // Space between the columns
                 />) :
                 (noOutfits ? 
-                    <Text className = "flex text-dusty-rose font-bold text-xl justify-center items-center">
-                        No outfits found
-                    </Text> :
+                    <View className = "flex-1 flex-grow">
+                        <Text className = "flex text-dusty-rose font-bold text-xl justify-center items-center">
+                            No outfits found
+                        </Text> 
+                    </View> :
                     <FlatList
                         ItemSeparatorComponent={<View className = "h-2"/>}              // Space between the rows
                         contentContainerStyle = {{padding : 10}}                        // Padding around the list
