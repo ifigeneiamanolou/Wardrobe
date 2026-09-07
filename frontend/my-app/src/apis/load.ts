@@ -1,0 +1,134 @@
+
+import constants from "../constants/app";
+import { Session } from "../ctx";
+
+type ItemProps = {
+    cleanup : () => void;
+    onItemChunk : (line : string) => void;
+    session : Session
+}
+
+type OutfitProps = {
+    cleanup : () => void;
+    onOutfitChunk : (line : string) => void;
+    session : Session
+}
+
+export async function fetchItems ({cleanup, onItemChunk, session} : ItemProps) {
+    if(session?.session === null || session?.session === undefined){
+        console.log('Token is null');
+        session?.signOut();
+        return;
+    }
+        
+    const resp = await fetch(`${constants['BACKEND_URL']}/load/items`, {
+        headers : {
+            'Accept' : 'text/event-stream',
+            'Authorization' : `Bearer ${session.session}`
+        }
+    });
+
+    // Handle unauthorized requests
+    if(resp.status == 401){
+        session.signOut();
+        return;
+    };
+
+    // Handle no items present in the db
+    if(resp.status == 404){
+        cleanup();
+        return;
+    }
+
+    if(!resp.ok){
+        throw new Error('Loading failed');
+    };
+
+    const reader = resp.body?.getReader();
+    let buffer = "";                                // Handle image data
+    const decoder = new TextDecoder();              // Decode bytes into JS string
+    cleanup();
+
+    const processText = ({value, done, } : ReadableStreamReadResult<Uint8Array>) : Promise<void> | void => {
+        // Handle the end of data
+        if(done){
+            console.log('done');
+            return;
+        }
+
+        const text = decoder.decode(value, {stream : true});
+        buffer += text;
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? "";
+        for(const line of lines){
+            if(line.trim()){
+                onItemChunk(line.trim());
+            }
+        }
+        return reader?.read().then(processText);  // continue reading
+    }
+
+    if(reader){
+        reader.read().then(processText);
+    }
+}
+
+export async function fetchOutfits ({cleanup, onOutfitChunk, session} : OutfitProps){
+    if(session?.session === null || session?.session === undefined){
+        console.log('Token is null');
+        session?.signOut();
+        return;
+    }
+
+    const resp = await fetch(`${constants['BACKEND_URL']}/load/outfits`, {
+        headers : {
+            'Accept' : 'text/event-stream',
+            'Authorization' : `Bearer ${session.session}`
+        }
+    });
+
+    // Handle unauthorized requests
+    if(resp.status == 401){
+        session.signOut();
+        return;
+    };
+
+    // Handle no outfits present in the db
+    if(resp.status == 404){
+        cleanup();
+        return;
+    }
+
+    if(!resp.ok){
+        throw new Error('Loading failed');
+    };
+
+    const reader = resp.body?.getReader();
+    let buffer = "";
+    const decoder = new TextDecoder();  // Decode bytes into JS string
+    cleanup();
+
+    const processText = ({value, done} : ReadableStreamReadResult<Uint8Array>) : Promise<void> | void => {
+        if(done){
+            console.log('done');
+            return;
+        }
+
+        const text = decoder.decode(value, {stream : true});
+        buffer += text;
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? "";
+        for(const line of lines){
+            if(line.trim()){
+                console.log(line.trim())
+                onOutfitChunk(line.trim());
+            }
+        }
+            
+        return reader?.read().then(processText);  // continue reading
+    }
+
+    if(reader){
+        reader.read().then(processText);
+    }
+}

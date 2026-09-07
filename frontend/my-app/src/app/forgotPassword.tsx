@@ -5,12 +5,11 @@ import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as yup from "yup";
 import { useState } from "react";
-import constants from "../constants/app";
 import { useFormik } from "formik";
-import showAlert from "../components/alert";
 import colors from "../constants/colors";
-import {router} from 'expo-router';
+import { changePasswordCall } from "../apis/auth";
 import { useSession } from "../ctx";
+
 const forgotSchema = yup.object().shape({
     username : yup.string()
         .required('Username is required')
@@ -31,6 +30,7 @@ const forgotSchema = yup.object().shape({
 
 export default function changePassword(){
     const session = useSession();
+    
     // Password toggles
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isPasswordNewVisible, setIsPasswordNewVisible] = useState(false);
@@ -52,31 +52,11 @@ export default function changePassword(){
         validationSchema : forgotSchema,
         onSubmit : (values, {resetForm}) => {
             const {passwordNew, ...data} = values;
-            const requestObj = {
-                "method" : "POST",
-                "headers" : {"Content-Type" : "application/json"},
-                "body" : JSON.stringify(data),
-            }
-            const url = `${constants['BACKEND_URL']}/auth/change/password`;
-            fetch(url, requestObj)
-            .then((res) => {
-                if(!res.ok){
-                    throw new Error('Server rejected request');
-                }
-                session?.signOut();
-                showAlert('Success', 'Password has successfully changed');
-                router.replace('/signIn');
-            })
-            .catch((reason : any) => {
-                if(reason.name == "PasswordIsIdentical"){
-                    console.log(`Identical password`);
-                    showAlert('Error', 'A different password needs to be selected');
-                }
-                console.log(`Error from the server during sign up with reason ${reason}`);
-                showAlert('Error', 'Server error ... Try again');
-            })
-            .finally(() => {
-                resetForm();
+            changePasswordCall({
+                username : values.username,
+                password : values.password,
+                onEnd : () => formik.resetForm(),
+                session : session
             })
         },
     })

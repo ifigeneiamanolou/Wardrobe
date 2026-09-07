@@ -8,13 +8,15 @@ interface Dictionary<T> {
     [key : string] : T;
 }
 
-// Context provider
-const AuthContext = createContext<{
+export type Session = {
     signIn: (token : Dictionary<string>) => void;
     signOut : () => void;
     isLoading : boolean;
     session : string | null;
-} | null>(null);
+} | null;
+
+// Context provider
+const AuthContext = createContext<Session>(null);
 
 // Use this to access user information
 export function useSession(){

@@ -9,7 +9,7 @@ import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import colors from '../constants/colors';
-import { router } from 'expo-router';
+import { signup } from '../apis/auth';
 
 const SignUpSchema = yup.object().shape({
     name : yup.string().
@@ -51,27 +51,12 @@ export default function signUp(){
         validationSchema : SignUpSchema,
         onSubmit : (values, {resetForm}) => {
             const {passwordNew, ...data} = values;
-            const requestObj = {
-                method : "POST",
-                headers : {'Content-Type' : 'application/json'},
-                body : JSON.stringify(data)
-            }
-
-            const url = `${constants.BACKEND_URL}/auth/signup`;
-            return fetch(url, requestObj)
-            .then((res) => {
-                if(!res.ok){
-                    throw new Error('Server rejected request');
-                }
-                showAlert('Success', 'Successful sign up');
-                router.replace('/signIn');
-            })
-            .catch((reason) => {
-                console.log(`Error from the server during sign up with reason ${reason.name} and message ${reason.message}`);
-                showAlert('Error', 'Server error ... Try again');
-            })
-            .finally(() => {
-                resetForm();
+            signup({
+                name : data.name,
+                username : data.username,
+                password : data.password,
+                email : data.email,
+                onEnd : () => formik.resetForm()
             })
         },
     });

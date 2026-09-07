@@ -21,5 +21,6 @@ To start a development server run:
 The app can be previewed using Expo Go (built for Expo 57).
 
 # to do
+add authentication before rendering first page instead of checking in the page itself
 centralize all exceptions coming from the backend
 

@@ -2,10 +2,9 @@ import React, {useState} from "react";
 import { View, Text, TouchableOpacity,TextInput } from "react-native";
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import colors from "../constants/colors";
-import { useSession } from "../ctx";
-import constants from "../constants/app";
-import showAlert from "./alert";
 import Feather from 'react-native-vector-icons/Feather';
+import { useSession } from "../ctx";
+import { submit, changeFavorite } from "../apis/edit";
 
 type Props = {
     shop : string;
@@ -19,8 +18,8 @@ type Props = {
 }
 
 export default function ItemMetadata({shop, favorite, size, price, category, color, _id, onFlip} : Props){
-    const session = useSession();
     const [isFavorite, setIsFavorite] = useState(favorite);
+    const session = useSession();
     const [editShop, setEditShop] = useState<boolean>(false);
     const [editSize, setEditSize] = useState<boolean>(false);
     const [editPrice, setEditPrice] = useState<boolean>(false);
@@ -31,119 +30,58 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
     const [categoryValue, onChangeCategory] = useState<string>(category);
     const [colorValue, onChangeColor] = useState<string>(color);
     const [sizeValue, onChangeSize] = useState<string>(size);
+    const [temp, setTemp] = useState<string>('');
 
-    const handleSubmit = (type : string, value : string) => {
-        let temp = "";
+    const onEnd = () => {
+        setEditPrice(false);
+        setEditCategory(false);
+        setEditColor(false);
+        setEditShop(false);
+        setEditSize(false);
+    }
+
+    const handleSubmit = (type : string) : string => {
         if(type == "price"){
-            temp = priceValue;
+            setTemp(priceValue);
             onChangePrice('Loading ...');
         } else if(type == "size"){
-            temp = sizeValue;
+            setTemp(sizeValue);
             onChangeSize('Loading ...');
         } else if(type == "shop"){
-            temp = shopValue;
+            setTemp(shopValue);
             onChangeShop('Loading ...');
         } else if(type == "category"){
-            temp = categoryValue;
+            setTemp(categoryValue);
             onChangeCategory('Loading ...');
         } else {
-            temp = colorValue;
+            setTemp(colorValue);
             onChangeColor('Loading ...');
         }
 
-        console.log(_id);
-        console.log(type);
-        console.log(value);
-        fetch(`${constants['BACKEND_URL']}/edit/value`, {
-            method : "POST", 
-            headers : {
-                'Authorization' : `Bearer ${session?.session}`,
-                'Content-Type': 'application/json'
-            },
-            body : JSON.stringify({
-                'id' : _id,
-                'collection' : 'Items',
-                'value' : value,
-                'category' : type
-            })
-        }).then((async (res) => {
-            if(res.status == 401){
-                session?.signOut();
-                return;
-            }
+        return temp;
+    }
 
-            if(!res.ok){
-                showAlert('Error', 'Error when changing the item details');
-                value = temp;        // Change the displayed value to the previous one
-            }
+    const handleChange = (value : string, type : string) => {
+        if(type == "price"){
+            onChangePrice(value);
+        } else if(type == "size"){
+            onChangeSize(value);
+        } else if(type == "shop"){
+            onChangeShop(value);
+        } else if(type == "category"){
+            onChangeCategory(value);
+        } else {
+            onChangeColor(value);
+        }
+    }
 
-            if(type == "price"){
-                onChangePrice(value);
-            } else if(type == "size"){
-                onChangeSize(value);
-            } else if(type == "shop"){
-                onChangeShop(value);
-            } else if(type == "category"){
-                onChangeCategory(value);
-            } else {
-                onChangeColor(value);
-            }
-        }))
-        .catch((err) => {
-            console.log("Log in error", err);
-            showAlert('Error', err.message);
-
-            // Change the displayed value to the previous one
-            value = temp;
-            if(type == "price"){
-                onChangePrice(value);
-            } else if(type == "size"){
-                onChangeSize(value);
-            } else if(type == "shop"){
-                onChangeShop(value);
-            } else if(type == "category"){
-                onChangeCategory(value);
-            } else {
-                onChangeColor(value);
-            }
-        })
-        .finally(() => {
-            setEditPrice(false);
-            setEditCategory(false);
-            setEditColor(false);
-            setEditShop(false);
-            setEditSize(false);
-        })
-    };
-
-    const changeFavorite = () => {
+    const toggleFavorite = () => {
         setIsFavorite(!isFavorite);
-        fetch(`${constants['BACKEND_URL']}/edit/favorite`, {
-            method : "POST",
-            headers : {
-                'Content-Type': 'application/json',
-                'Authorization' : `Bearer ${session?.session}`
-            },
-            body : JSON.stringify({
-                'id' : _id,     
-                'favorite' : isFavorite,
-                'collection' : 'Items',
-            })
-        })
-        .then((async (res) => {
-            if(res.status == 401){
-                session?.signOut();
-                return;
-            }
-
-            if(!res.ok){
-                showAlert('Error', 'Error when changing favorite status');
-            }
-        }))
-        .catch((err) => {
-            console.log("Log in error", err);
-            showAlert('Error', err.message);
-        })
+        changeFavorite({
+            _id : _id,
+            isFavorite : isFavorite,
+            session : session
+        });
     };
 
     return(
@@ -154,7 +92,7 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                     <TouchableOpacity onPress = {onFlip}>
                         <Feather name = "refresh-cw" size = {22} color = {colors['White']} className = "pr-4" />
                     </TouchableOpacity> 
-                    <TouchableOpacity onPress={changeFavorite}>
+                    <TouchableOpacity onPress={toggleFavorite}>
                         <Ionicon 
                             name = {isFavorite ? "heart" : "heart-outline"} 
                             color = {isFavorite ? `${colors['Dusty rose']}` : `${colors['White']}`} 
@@ -173,7 +111,15 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                             value = {shopValue}
                             style = {{paddingVertical : 5}}
                             onChangeText = {onChangeShop}
-                            onSubmitEditing = {() => handleSubmit('shop', shopValue)}
+                            onSubmitEditing = {() => submit({
+                                type : 'shop',
+                                value : shopValue,
+                                onEnd : onEnd,
+                                handleChange : handleChange,
+                                handleSubmit : handleSubmit,
+                                _id : _id,
+                                session : session
+                            })}
                         />
                     }
                     <TouchableOpacity onPress={() => {setEditShop(!editShop)}}>
@@ -195,7 +141,15 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                             value = {sizeValue}
                             onChangeText = {onChangeSize}
                             style = {{paddingVertical : 5}}
-                            onSubmitEditing = {() => handleSubmit('size', size)}
+                            onSubmitEditing = {() => submit({
+                                type : 'size',
+                                value : sizeValue,
+                                onEnd : onEnd,
+                                handleChange : handleChange,
+                                handleSubmit : handleSubmit,
+                                _id : _id,
+                                session : session
+                            })}
                         />
                     }
                     <TouchableOpacity onPress = {() => {setEditSize(!editSize)}}>
@@ -218,7 +172,15 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                             style = {{paddingVertical : 5}}
                             onChangeText = {onChangePrice}
                             inputMode="numeric"
-                            onSubmitEditing = {() => handleSubmit('price', price)}
+                            onSubmitEditing = {() => submit({
+                                type : 'price',
+                                value : priceValue,
+                                onEnd : onEnd,
+                                handleChange : handleChange,
+                                handleSubmit : handleSubmit,
+                                _id : _id,
+                                session : session
+                            })}
                         />
                     }
                     <TouchableOpacity onPress = {() => {setEditPrice(!editPrice)}}>
@@ -240,7 +202,15 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                             value = {categoryValue}
                             onChangeText = {onChangeCategory}
                             style = {{paddingVertical : 5}}
-                            onSubmitEditing = {() => handleSubmit('category', category)}
+                            onSubmitEditing = {() => submit({
+                                type : 'category',
+                                value : categoryValue,
+                                onEnd : onEnd,
+                                handleChange : handleChange,
+                                handleSubmit : handleSubmit,
+                                _id : _id,
+                                session : session
+                            })}
                         />
                     }
                     <TouchableOpacity onPress={() => setEditCategory(!editCategory)}>
@@ -262,7 +232,15 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                             value = {colorValue}
                             onChangeText = {onChangeColor}
                             style = {{paddingVertical : 5}}
-                            onSubmitEditing = {() => handleSubmit('color', color)}
+                            onSubmitEditing = {() => submit({
+                                type : 'color',
+                                value : colorValue,
+                                onEnd : onEnd,
+                                handleChange : handleChange,
+                                handleSubmit : handleSubmit,
+                                _id : _id,
+                                session : session
+                            })}
                         />
                     }
                     <TouchableOpacity onPress = {() => {setEditColor(!editColor)}}>

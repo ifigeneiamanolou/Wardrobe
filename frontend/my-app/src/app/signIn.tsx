@@ -5,16 +5,15 @@ import { Link } from 'expo-router';
 import * as yup from 'yup';
 import { useState } from 'react';
 import Ionicon from 'react-native-vector-icons/Ionicons';
-import { useSession } from '../ctx';
-import showAlert from '../components/alert';
-import constants from '../constants/app';
 import '../../global.css';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import colors from '../constants/colors';
+import { login } from '../apis/auth';
 import {
   GoogleSignin,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
+import { useSession } from '../ctx';
 
 const LoginSchema = yup.object().shape({
     username : yup.string()
@@ -31,12 +30,12 @@ export default function Login(){
     //     });
     // }, []);
     
+    const session = useSession();
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const togglePassword = () => {
         setIsPasswordVisible(!isPasswordVisible);
     };
 
-    const context = useSession();
     const formik = useFormik({
         initialValues: {
             username : "",
@@ -44,32 +43,11 @@ export default function Login(){
         },
         validationSchema : LoginSchema,
         onSubmit(values, {resetForm}){       // Post request on form submit
-            const url = `${constants.BACKEND_URL}/auth/token`;
-            const data = new URLSearchParams({
-                "username" : values.username,
-                "password" : values.password
-            })
-            const configObj = {
-                method : "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body : data.toString()
-            };
-            fetch(url, configObj)
-            .then(async (response) => {
-                if(!response.ok){
-                    throw new Error('Log in failed');
-                }
-                const dict = await response.json();
-                context?.signIn(dict);   // sign in
-            })
-            .catch((err) => {
-                console.log("Log in error", err);
-                showAlert('Error', err.message);
-            })
-            .finally(() => {
-                resetForm();
+            login({
+                username : values.username,
+                password : values.password,
+                onEnd : () => formik.resetForm(),
+                session : session
             })
         }
     });
