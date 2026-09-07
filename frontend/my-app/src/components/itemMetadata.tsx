@@ -30,7 +30,6 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
     const [categoryValue, onChangeCategory] = useState<string>(category);
     const [colorValue, onChangeColor] = useState<string>(color);
     const [sizeValue, onChangeSize] = useState<string>(size);
-    const [temp, setTemp] = useState<string>('');
 
     const onEnd = () => {
         setEditPrice(false);
@@ -41,27 +40,28 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
     }
 
     const handleSubmit = (type : string) : string => {
+        let previous = "";
         if(type == "price"){
-            setTemp(priceValue);
+            previous = priceValue;
             onChangePrice('Loading ...');
         } else if(type == "size"){
-            setTemp(sizeValue);
+            previous = priceValue;
             onChangeSize('Loading ...');
         } else if(type == "shop"){
-            setTemp(shopValue);
+            previous = priceValue;
             onChangeShop('Loading ...');
         } else if(type == "category"){
-            setTemp(categoryValue);
+            previous = priceValue;
             onChangeCategory('Loading ...');
         } else {
-            setTemp(colorValue);
+            previous = priceValue;
             onChangeColor('Loading ...');
         }
 
-        return temp;
+        return previous;
     }
 
-    const handleChange = (value : string, type : string) => {
+    const handleChange = (type : string, value : string) => {
         if(type == "price"){
             onChangePrice(value);
         } else if(type == "size"){

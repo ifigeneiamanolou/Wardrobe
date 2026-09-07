@@ -1,4 +1,5 @@
 
+import showAlert from "../components/alert";
 import constants from "../constants/app";
 import { Session } from "../ctx";
 
@@ -43,7 +44,8 @@ export async function fetchItems ({cleanup, onItemChunk, session, onEmpty} : Ite
     }
 
     if(!resp.ok){
-        throw new Error('Loading failed');
+        showAlert('Error', 'Load of items failed');
+        return;
     };
 
     const reader = resp.body?.getReader();
@@ -102,7 +104,8 @@ export async function fetchOutfits ({cleanup, onOutfitChunk, session, onEmpty} :
     }
 
     if(!resp.ok){
-        throw new Error('Loading failed');
+        showAlert('Error', 'Load of outfits failed');
+        return;
     };
 
     const reader = resp.body?.getReader();

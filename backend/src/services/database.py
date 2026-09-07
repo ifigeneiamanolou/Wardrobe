@@ -155,6 +155,8 @@ async def save_clothing(client : MongoClient, item : ClothingItem, color : str,
         # Insert the item in the database
         result = items_collection.insert_one(payload)
         return result.inserted_id
+    except ItemExists:
+        raise
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:

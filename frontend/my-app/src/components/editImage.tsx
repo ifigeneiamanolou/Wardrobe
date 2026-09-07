@@ -77,8 +77,9 @@ function EditImage({onPress, uri} : props){
                 }
 
                 if(!response.ok){
-                    throw new Error('Upload failed');
-                }
+                    showAlert('Error', 'Upload of image failed');
+                    return;
+                };
 
                 showAlert('Success', 'Image was uploaded');
                 onPress();

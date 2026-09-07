@@ -49,8 +49,9 @@ export const changePasswordCall = async ({username, password, onEnd, session} : 
     fetch(url, requestObj)
     .then((res) => {
         if(!res.ok){
-            throw new Error('Server rejected request');
-        }
+            showAlert('Error', 'Change of password failed');
+            return;
+        };
         session?.signOut();
         showAlert('Success', 'Password has successfully changed');
         router.replace('/signIn');
@@ -84,8 +85,9 @@ export async function login({username, password, onEnd, session} : changePasswor
     fetch(url, configObj)
     .then(async (response) => {
         if(!response.ok){
-            throw new Error('Log in failed');
-        }
+            showAlert('Error', 'Log in failed');
+            return;
+        };
         const dict = await response.json();
         session?.signIn(dict);  
     })
@@ -114,7 +116,8 @@ export async function signup({name, username, password, email, onEnd} : signUpPa
     fetch(url, requestObj)
     .then((res) => {
         if(!res.ok){
-            throw new Error('Server rejected request');
+            showAlert('Error', 'Sign up failed');
+            return;
         }
         showAlert('Success', 'Successful sign up');
         router.replace('/signIn');

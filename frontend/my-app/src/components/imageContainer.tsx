@@ -24,16 +24,15 @@ export default function ImageContainer({image, name, type, _id, onFlip} : Props)
         setEditName(false);
     }
 
-    const handleSubmit = () => {
+    const handleSubmit = (type : string) => {
         const previous = nameValue
         onChangeName('Loading ...');
         return previous;
     }
 
-    const handleChange = (value : string) => {
+    const handleChange = (type : string, value : string) => {
         onChangeName(value);
     }
-
 
     return(
         <View className="flex-1 justify-center items-center bg-blush p-4 rounded-2xl">
