@@ -24,7 +24,8 @@ export default function Home() {
             fetchItems({
                 cleanup : cleanupItems,
                 onItemChunk : onItemChunk,
-                session : session
+                session : session,
+                onEmpty : () => setNoItems(true)
             });
         }
     }, [session?.session]);
@@ -87,7 +88,8 @@ export default function Home() {
         await fetchOutfits({
             onOutfitChunk : onOutfitChunk,
             cleanup : cleanupOutfits,
-            session : session
+            session : session,
+            onEmpty : () => setNoOutfits(true)
         });
     };
 
@@ -100,7 +102,8 @@ export default function Home() {
         await fetchItems({
             onItemChunk : onItemChunk,
             cleanup : cleanupItems,
-            session : session
+            session : session,
+            onEmpty : () => setNoItems(true)
         });
     };
 
@@ -131,7 +134,7 @@ export default function Home() {
             {/* Elements */} 
             {showItems ?
                 (noItems ? 
-                    <Text className = "flex text-dusty-rose font-bold text-xl justify-center items-center">
+                    <Text className = "flex-1 text-dusty-rose font-bold text-xl justify-center items-center">
                         No items found
                     </Text> :
                     <FlatList
@@ -143,7 +146,6 @@ export default function Home() {
                         renderItem={({item}) => (<ItemCard item = {item}/>)}
                         contentContainerStyle = {{padding : 10}}                        // Padding around the list
                         columnWrapperStyle = {{justifyContent : 'space-between'}}       // Space between the columns
-                   
                 />) :
                 (noOutfits ? 
                     <Text className = "flex text-dusty-rose font-bold text-xl justify-center items-center">

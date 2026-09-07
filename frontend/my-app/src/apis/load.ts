@@ -6,15 +6,17 @@ type ItemProps = {
     cleanup : () => void;
     onItemChunk : (line : string) => void;
     session : Session
+    onEmpty : () => void;
 }
 
 type OutfitProps = {
     cleanup : () => void;
     onOutfitChunk : (line : string) => void;
     session : Session
+    onEmpty : () => void;
 }
 
-export async function fetchItems ({cleanup, onItemChunk, session} : ItemProps) {
+export async function fetchItems ({cleanup, onItemChunk, session, onEmpty} : ItemProps) {
     if(session?.session === null || session?.session === undefined){
         console.log('Token is null');
         session?.signOut();
@@ -36,7 +38,7 @@ export async function fetchItems ({cleanup, onItemChunk, session} : ItemProps) {
 
     // Handle no items present in the db
     if(resp.status == 404){
-        cleanup();
+        onEmpty();
         return;
     }
 
@@ -73,7 +75,7 @@ export async function fetchItems ({cleanup, onItemChunk, session} : ItemProps) {
     }
 }
 
-export async function fetchOutfits ({cleanup, onOutfitChunk, session} : OutfitProps){
+export async function fetchOutfits ({cleanup, onOutfitChunk, session, onEmpty} : OutfitProps){
     if(session?.session === null || session?.session === undefined){
         console.log('Token is null');
         session?.signOut();
@@ -95,7 +97,7 @@ export async function fetchOutfits ({cleanup, onOutfitChunk, session} : OutfitPr
 
     // Handle no outfits present in the db
     if(resp.status == 404){
-        cleanup();
+        onEmpty();
         return;
     }
 

@@ -18,7 +18,6 @@ type Props = {
 export default function ImageContainer({image, name, type, _id, onFlip} : Props){
     const [editName, setEditName] = useState<boolean>(false);
     const [nameValue, onChangeName] = useState<string>(name);
-    const [temp, setTemp] = useState<string>('');
     const session = useSession();
 
     const onEnd = () => {
@@ -26,9 +25,9 @@ export default function ImageContainer({image, name, type, _id, onFlip} : Props)
     }
 
     const handleSubmit = () => {
-        setTemp(nameValue);
+        const previous = nameValue
         onChangeName('Loading ...');
-        return temp;
+        return previous;
     }
 
     const handleChange = (value : string) => {
@@ -64,7 +63,7 @@ export default function ImageContainer({image, name, type, _id, onFlip} : Props)
                             name = "edit" 
                             size = {24} 
                             color = {colors['White']} 
-                            className = "flex" 
+                            className = "flex pr-2" 
                         />
                     </TouchableOpacity>
                     <TouchableOpacity onPress = {() =>deleteItem({
@@ -72,7 +71,7 @@ export default function ImageContainer({image, name, type, _id, onFlip} : Props)
                         type : type,
                         session : session
                     })}>
-                    <Ionicons name = "trash" size = {24} color = {colors['White']} className = "pr-4" />
+                    <Ionicons name = "trash" size = {24} color = {colors['White']} className = "pr-2" />
                     </TouchableOpacity> 
                     <TouchableOpacity onPress = {onFlip}>
                         <Feather name = "refresh-cw" size = {22} color = {colors['White']} className = "pr-2" />

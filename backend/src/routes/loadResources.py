@@ -16,8 +16,9 @@ async def get_outfits(
 ):
     # Extract all outfits from the database for the current user
     results = await load_outfits_items(client, user.username, "Outfits")
+    results = list(results)
 
-    if results == []:
+    if not results:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No outfits")
 
     # Load the images from AWS S3 and return one by one in the frontend
@@ -30,8 +31,9 @@ async def get_items(
 ):
     # Extract all items from the database for the current user
     results = await load_outfits_items(client, user.username)
+    results = list(results)
 
-    if results == []:
+    if not results:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No items")
 
     # Load the images from AWS S3 and return one by one in the frontend

@@ -42,4 +42,4 @@ class editFavorite(deleteData):
 
 class editData(deleteData):
     value : str
-    category : Literal["shop", "category", "color", "price", "size"]
+    category : Literal["shop", "category", "color", "price", "size", "name"]

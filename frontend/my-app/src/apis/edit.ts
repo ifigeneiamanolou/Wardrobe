@@ -54,7 +54,6 @@ export const deleteItem = ({_id, type, session} : deleteType) => {
 
 export const submit = ({type, value, _id, onEnd, handleChange, handleSubmit, session} : submitProps) => {
     let temp = handleSubmit(type);
-        
     fetch(`${constants['BACKEND_URL']}/edit/value`, {
         method : "POST", 
         headers : {
