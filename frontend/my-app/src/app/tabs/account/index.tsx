@@ -1,11 +1,10 @@
-import { View, Text, TouchableOpacity} from 'react-native';
+import { View, Text, TouchableOpacity, Image} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {logOut} from '@/src/apis/auth';
 import { useSession } from '@/src/ctx';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import colors from '@/src/constants/colors';
 import { useRouter } from 'expo-router';
-import { Image } from 'expo-image';
 import { fetchProfile } from '@/src/apis/load';
 import LoadingDots from "react-native-loading-dots";
 
@@ -15,7 +14,7 @@ export default function Account() {
     const [username, setUsername] = useState<string | null>(null);
     const [email, setEmail] = useState<string | null>(null);
     const [url, setUrl] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     useEffect(() => {
         setIsLoading(true);
@@ -24,7 +23,7 @@ export default function Account() {
             if(response){
                 setEmail(response['email']);
                 setUsername(response['username']);
-                setUrl(response['image']);
+                setUrl(response['url']);
             };
             setIsLoading(false);
         };
@@ -50,10 +49,11 @@ export default function Account() {
             {/* User details */}
             <View className = "flex items-center">
                 {url ? 
-                <Image
-                    className="rounded-full"
-                    style={{ width: '60%', aspectRatio: 1 }}
-                    source = {{uri : url}}
+                <Image source = {{uri : url}} className="flex h-10 w-10 rounded-2xl" 
+                    onError={(error) => {
+                        console.log(error.nativeEvent.error);
+                        setUrl(null);
+                    }}
                 />
                 : <Ionicon name = "person-circle" size = {150} color = {colors['Blush']} />
                 }

@@ -48,7 +48,7 @@ async def get_counter(client : MongoClient, name : str, key : str):
     try:
         counters_collection = client["Authentication"]["counters"]
         sequence_document = counters_collection.find_one_and_update(
-            {'_id' : name, 'key' : key},
+            {'_id': f"{name}:{key}"},
             {'$inc' : {'sequence_number' : 1}},
             return_document = True,
             upsert = True               # Insert a document if non-existing
@@ -227,7 +227,7 @@ async def edit_profile_picture(client : MongoClient, username : str, image : str
         update_operation = {
             '$set' : {'image' : image}
         }
-        await collection.update_one(document_to_find, update_operation)
+        collection.update_one(document_to_find, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
@@ -258,5 +258,18 @@ async def edit_profile_details(
         raise DatabaseError() from exc
 
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def find_all_users(client : MongoClient, username : str):
+    try:
+        collection = client["Authentication"]["Users"]
+        result = collection.find(
+            filter = {'username' : {'$ne' : username}}, 
+            projection = {'username' : 1, 'email' : 1, 'image' : 1, '_id' : 0},
+        )
+        return result
+    except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
+        raise DatabaseUnavailableError(exc) from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
 
 

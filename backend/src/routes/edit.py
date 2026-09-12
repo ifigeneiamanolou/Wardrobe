@@ -55,11 +55,11 @@ async def toggle_favorite(
     data : UploadFile = File(...)
 ):  
     # Save the uploaded image temporarily in local storage
-    ext = data.image.filename.rsplit('.', 1)[1] or ".jpg"
+    ext = data.filename.rsplit('.', 1)[1] or ".jpg"
     name = f"{uuid.uuid4()}.{ext}"
     path = os.path.join(TEMP_DIR, name)
     with open(path, "wb") as buffer:
-        shutil.copyfileobj(data.image.file, buffer)
+        shutil.copyfileobj(data.file, buffer)
 
     url = None
     try:

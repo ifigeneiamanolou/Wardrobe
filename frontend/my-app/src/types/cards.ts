@@ -17,4 +17,10 @@ type Outfit = {
     _id : string;
 }
 
-export {Item, Outfit};
+type User = {
+    image : string;
+    username : string;
+    email : string;
+}
+
+export {Item, Outfit, User};

@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from src.services.authentication import get_current_user
-from src.services.database import load_cluster, load_outfits_items
-from src.services.formatOutput import format_output_items
+from src.services.database import load_cluster, load_outfits_items, find_all_users
+from src.services.formatOutput import format_output_items, format_user_output, format_image
+from src.exceptions.database import DatabaseError, DatabaseUnavailableError
 from src.models.pydantic import User
 from pymongo import MongoClient
 from typing import Annotated
@@ -43,9 +44,24 @@ async def get_items(
 async def get_profile(
     user : Annotated[User, Depends(get_current_user)],
 ):
+    formatted_image = await format_image(user.image)
     return {
        "username" : user.username,
        "email" : user.email,
-       "url" : user.image 
+       "url" : formatted_image
     }
+
+@router.get("/users")
+async def get_profile(
+    user : Annotated[User, Depends(get_current_user)],
+    client : Annotated[MongoClient, Depends(load_cluster)]
+):
+    try:
+        result = await find_all_users(client, user.username)
+        formatted_result = await format_user_output(list(result))
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful loading")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    return {'users' : formatted_result}
 

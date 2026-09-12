@@ -24,13 +24,13 @@ export default function ImageContainer({image, name, type, _id, onFlip} : Props)
         setEditName(false);
     }
 
-    const handleSubmit = (type : string) => {
+    const handleSubmit = (_ : string) => {
         const previous = nameValue
         onChangeName('Loading ...');
         return previous;
     }
 
-    const handleChange = (type : string, value : string) => {
+    const handleChange = (_ : string, value : string) => {
         onChangeName(value);
     }
 

@@ -66,11 +66,7 @@ async def delete_item_from_bucket(url : str, bucket_name_param : str = bucket_na
 
     # Delete the image from s3
     try:
-        response = s3.delete_object(Bucket = bucket_name_param, Key = file_name)
-        result = bool(response['ResponseMetadata']['DeleteMarker'])
-
-        if result is False:
-          raise S3DeleteError(f"Could not load image {file_name} from {bucket_name_param}: {e}") 
+        s3.delete_object(Bucket = bucket_name_param, Key = file_name)
     except ClientError as e:
         raise S3DeleteError(f"Could not load image {file_name} from {bucket_name_param}: {e}") from e
         

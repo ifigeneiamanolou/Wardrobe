@@ -2,6 +2,7 @@
 import showAlert from "../components/alert";
 import constants from "../constants/app";
 import { Session } from "../ctx";
+import { User } from "../types/cards";
 
 type ItemProps = {
     cleanup : () => void;
@@ -19,6 +20,11 @@ type OutfitProps = {
 
 type loadDetailsProps = {
     session : Session;
+}
+
+type loadUsersProps = {
+    session : Session;
+    onEnd : (users : User[]) => void;
 }
 
 export async function fetchItems ({cleanup, onItemChunk, session, onEmpty} : ItemProps) {
@@ -167,6 +173,35 @@ export async function fetchProfile({session} : loadDetailsProps) : Promise<any>{
 
         return await response.json();
     }catch(err){
+        console.log("Loading error", err);
+        showAlert('Error', 'Loading of user details failed!');
+        return null;
+    }
+}
+
+export async function fetchUsers({session, onEnd} : loadUsersProps){
+    try{
+        const response = await fetch(`${constants['BACKEND_URL']}/load/users`, {
+            method : 'GET',
+            headers : {
+                'Authorization' : `Bearer ${session?.session}`
+            }
+        });
+        
+        if(response.status == 401){
+            session?.signOut();
+            return;
+        };
+
+        if(!response.ok){
+            showAlert('Error', 'Loading of users failed!');
+            return;
+        };
+
+        const result = await response.json();
+        const users = result['users'];
+        onEnd(users);
+    } catch(err){
         console.log("Loading error", err);
         showAlert('Error', 'Loading of user details failed!');
         return null;
