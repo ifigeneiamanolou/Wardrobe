@@ -10,6 +10,7 @@ import showAlert from './alert';
 import { useSession } from '../ctx';
 import {File} from 'expo-file-system';
 import {fetch} from 'expo/fetch';
+import { saveItem } from '../apis/save';
 
 const editSchema = yup.object().shape({
     name : yup.string()
@@ -38,7 +39,6 @@ type props = {
 }
 
 function EditImage({onPress, uri} : props){
-    const url = `${constants.BACKEND_URL}/save/item`;
     const session = useSession();
     
     const formik = useFormik({
@@ -51,45 +51,16 @@ function EditImage({onPress, uri} : props){
         },
         validationSchema : editSchema,
         onSubmit : async (values, {resetForm}) => {
-            const form = new FormData();
-            const file = new File(uri);
-            const favorite = values.favorite ? "yes" : "no";
-            form.append('name', values.name);
-            form.append('favorite', favorite);
-            if(values.size)
-                form.append('size', values.size);
-            form.append('price', String(values.price));
-            form.append('shop', values.shop);
-            form.append('file', file);
-
-            const requestObj = {
-                method : "POST",
-                headers : {
-                    "Authorization" : `Bearer ${session?.session}`
-                },
-                body : form
-            };
-            fetch(url, requestObj)
-            .then(async (response) => {
-                if(response.status == 401){
-                    session?.signOut();
-                    return;     // Avoid the catch block
-                }
-
-                if(!response.ok){
-                    showAlert('Error', 'Upload of image failed');
-                    return;
-                };
-
-                showAlert('Success', 'Image was uploaded');
-                onPress();
-            })
-            .catch((err) => {
-                console.log("Upload error", err.details);
-                showAlert('Error', err.message);
-            })
-            .finally(() => {
-                resetForm();
+            await saveItem({
+                favorite : values.favorite,
+                name : values.name,
+                size : values.size ?? "",
+                shop : values.shop,
+                session : session,
+                onEnd : resetForm,
+                onChange : onPress,
+                uri : uri,
+                price : values.price
             })
         },
     });

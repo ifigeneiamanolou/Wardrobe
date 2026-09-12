@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from "react"
-import { View, TextInput, FlatList, Text, TextInputChangeEvent } from "react-native"
+import { View, TextInput, FlatList, Text, TouchableOpacity } from "react-native"
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import colors from "@/src/constants/colors";
 import UserCard from "@/src/components/userCard";
@@ -42,6 +42,7 @@ export default function AddFriend(){
         }
     };
 
+
     return(
         <View className="flex-1 flex-col p-2 gap-8 bg-white">
             {/* Search bar */}
@@ -52,12 +53,14 @@ export default function AddFriend(){
                     value = {searchItem ?? ''}
                     onChangeText = {handleChange}
                 />
-                <Ionicon 
-                    name = "cross" 
+                <TouchableOpacity onPress={() => handleChange("")}>
+                    <Ionicon 
+                    name = "close-sharp" 
                     size = {24} 
                     color = {colors['Graphite']} 
                     className = "p-4"
-                />
+                    />
+                </TouchableOpacity>
             </View>
 
             {/* List of users*/}

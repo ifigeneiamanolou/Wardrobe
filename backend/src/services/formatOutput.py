@@ -41,7 +41,10 @@ async def format_user_output(results : list):
     return results
 
 async def format_image(image : str):
-    image = await load_photo(image)
-    b = base64.b64encode(bytes(image))
-    b64_image = b.decode('utf-8')
-    return b64_image
+    if image is not None:
+        image = await load_photo(image)
+        b = base64.b64encode(bytes(image))
+        b64_image = b.decode('utf-8')
+        return b64_image
+    
+    return ""

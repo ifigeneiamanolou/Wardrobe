@@ -49,7 +49,10 @@ export default function Account() {
             {/* User details */}
             <View className = "flex items-center">
                 {url ? 
-                <Image source = {{uri : url}} className="flex h-10 w-10 rounded-2xl" 
+                <Image 
+                    source = {{uri : `data:image/png;base64,${url}`}} 
+                    className="rounded-2xl"
+                    style = {{width : 150, height : 150}} 
                     onError={(error) => {
                         console.log(error.nativeEvent.error);
                         setUrl(null);
