@@ -9,6 +9,10 @@ type deleteType = {
     session : Session
 }
 
+interface Dictionary<T> {
+    [key: string]: T;
+}
+
 type toggleType = {
     _id : string;
     isFavorite : boolean;
@@ -28,6 +32,14 @@ type submitProps = {
 type changePictureProps = {
     session : Session;
     image : string;
+}
+
+type changeUserDetailsProps = {
+    session : Session;
+    name : string;
+    username : string;
+    password : string;
+    email : string;
 }
 
 export async function deleteItem({_id, type, session} : deleteType){
@@ -156,5 +168,42 @@ export async function changeProfilePicture({session, image} : changePictureProps
     .catch((err) => {
         console.log("Upload error", err);
         showAlert('Error', 'Change of profile picture failed!');
+    })
+}
+
+export async function changeUserDetails({session, name, username, email, password} : changeUserDetailsProps){
+    let body : Dictionary<string> = {};
+    if (name !== ""){ body['name'] = name }
+    if (username !== ""){ body['username'] = username }
+    if (email !== ""){ body['email'] = email }
+    if (password !== ""){ body['password'] = password }
+
+    const requestOj = {
+        method : 'POST',
+        headers : {
+            'Authorization' : `Bearer ${session?.session}`,
+            'Content-Type' : 'application/json'
+        },
+        body : JSON.stringify(body)
+    };
+    const url = `${constants.BACKEND_URL}/edit/profile/details`;
+
+    return fetch(url, requestOj)
+    .then((response) => {
+        if(response.status == 401){
+            session?.signOut();
+            return;     // Avoid the catch block
+        }
+
+        if(!response.ok){
+            showAlert('Error', 'Change of profile details failed!');
+            return;
+        };
+
+        showAlert('Success', 'Profile details successfully changed!');
+    })
+    .catch((err) => {
+        console.log("Upload error", err);
+        showAlert('Error', 'Change of profile details failed!');
     })
 }

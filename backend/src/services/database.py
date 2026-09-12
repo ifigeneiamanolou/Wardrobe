@@ -6,7 +6,6 @@ from pymongo.errors import AutoReconnect, DuplicateKeyError, OperationFailure, C
 from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical
 from src.utils.db_backoff import with_retry
 from src.config.conf import mongodb_key
-from src.utils.redis_utilities import cache_response
 
 MONGO_URI = f"mongodb+srv://ifigeneiamanolou26_db_user:{mongodb_key}@closetcluster.6sudtpr.mongodb.net/Authentication"
 
@@ -228,9 +227,36 @@ async def edit_profile_picture(client : MongoClient, username : str, image : str
         update_operation = {
             '$set' : {'image' : image}
         }
-        result = await collection.update_one(document_to_find, update_operation)
+        await collection.update_one(document_to_find, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
         raise DatabaseError() from exc
+
+# Edit the profile details of a user
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def edit_profile_details(
+    client : MongoClient, 
+    old_username : str,
+    name : str | None = None, 
+    username : str | None = None,
+    email : str | None = None, 
+    password : str | None = None
+):
+    try:
+        collection = client["Authentication"]["Users"]
+        document_to_find = {'username' : old_username}
+        update_operation = {}
+        if name: update_operation.update({'$set' : {'name' : name}})
+        if username: update_operation.update({'$set' : {'username' : username}})
+        if email: update_operation.update({'$set' : {'email' : email}})
+        if password: update_operation.update({'$set' : {'password' : password}})
+        await collection.update_one(document_to_find, update_operation)
+    except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+
+
 

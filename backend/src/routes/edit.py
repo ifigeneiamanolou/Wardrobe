@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Annotated
-from src.services.authentication import get_current_user
-from src.services.database import load_cluster, change_favorite, delete_item_outfit, edit_value, edit_profile_picture
-from src.models.pydantic import User, editFavorite, deleteData, editData, editProfilePicture
+from src.services.authentication import get_current_user, hash
+from src.services.database import load_cluster, change_favorite, delete_item_outfit, edit_value, edit_profile_picture, edit_profile_details, find_user, find_user_by_email
+from src.models.pydantic import User, editFavorite, deleteData, editData, editProfilePicture, UserDetails
 from src.services.s3storage import upload_file_to_bucket, delete_item_from_bucket
 from pymongo import MongoClient
 import os
+from src.exceptions.database import DatabaseUnavailableError, DatabaseError
 import uuid
 import shutil
 
@@ -47,7 +48,6 @@ async def edit_item_value(
     except Exception:
         raise
 
-
 @router.post("/profile/picture")
 async def toggle_favorite(
     user : Annotated[User, Depends(get_current_user)],
@@ -82,3 +82,46 @@ async def toggle_favorite(
             os.remove(path)
 
     return {"message" : f"Profile picture saved successfully!"}
+
+
+@router.post("/profile/details")
+async def toggle_favorite(
+    user : Annotated[User, Depends(get_current_user)],
+    client : Annotated[MongoClient, Depends(load_cluster)],
+    data : UserDetails
+):  
+    try:
+        existing_user = await find_user(user.username, client)
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    if existing_user is not None:
+        raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail = "Another user with the same username")
+
+    try:
+        existing_user_email = await find_user_by_email(user.email, client)
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search by email")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    if existing_user_email is not None:
+        raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail = "Another user with the same email")
+
+    # Hash the password
+    if(data.password):
+        data.password = hash(data.password)
+
+    try:
+        await edit_profile_details(
+            client, 
+            user.username, 
+            data.name, 
+            data.username, 
+            data.email, 
+            data.password
+        )
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search by email")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")

@@ -8,7 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import showAlert from "@/src/components/alert";
 import * as yup from 'yup';
 import { useFormik } from "formik";
-import { changeProfilePicture } from "@/src/apis/edit";
+import { changeProfilePicture, changeUserDetails } from "@/src/apis/edit";
 
 const schema = yup.object().shape({
     name : yup.string().min(2, 'Too short!').max(50, 'Too long'),
@@ -46,6 +46,16 @@ export default function Edit(){
                 await changeProfilePicture({
                     session : session,
                     image : image
+                });
+            };
+
+            if(values.name || values.username || values.email || values.password){
+                await changeUserDetails({
+                    session : session,
+                    name : values.name,
+                    email : values.email,
+                    password : values.password,
+                    username : values.password
                 });
             };
         }

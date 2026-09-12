@@ -7,6 +7,12 @@ class User(BaseModel):
     email : str
     name : str 
 
+class UserDetails(BaseModel):
+    name : Optional[str] = None
+    username : Optional[str] = None
+    email : Optional[str] = None
+    password : Optional[str] = None
+
 class UserNewPassword(BaseModel):
     username : str
     password : str
@@ -46,3 +52,4 @@ class editData(deleteData):
 
 class editProfilePicture(BaseModel):
     image : UploadFile
+
