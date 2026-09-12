@@ -1,6 +1,7 @@
 import constants from "../constants/app";
 import { Session } from "../ctx";
 import showAlert from "../components/alert";
+import { File} from "expo-file-system";
 
 type deleteType = {
     _id : string;
@@ -24,8 +25,13 @@ type submitProps = {
     session : Session
 }
 
+type changePictureProps = {
+    session : Session;
+    image : string;
+}
+
 export async function deleteItem({_id, type, session} : deleteType){
-    fetch(`${constants['BACKEND_URL']}/edit/delete`, {
+    return fetch(`${constants['BACKEND_URL']}/edit/delete`, {
         method : "POST",
         headers : {
             'Authorization' : `Bearer ${session?.session}`,
@@ -54,7 +60,7 @@ export async function deleteItem({_id, type, session} : deleteType){
 
 export async function submit({type, value, _id, onEnd, handleChange, handleSubmit, session} : submitProps){
     let temp = handleSubmit(type);
-    fetch(`${constants['BACKEND_URL']}/edit/value`, {
+    return fetch(`${constants['BACKEND_URL']}/edit/value`, {
         method : "POST", 
         headers : {
             'Authorization' : `Bearer ${session?.session}`,
@@ -93,7 +99,7 @@ export async function submit({type, value, _id, onEnd, handleChange, handleSubmi
 };
 
 export async function changeFavorite({_id, isFavorite, session} : toggleType){
-    fetch(`${constants['BACKEND_URL']}/edit/favorite`, {
+    return fetch(`${constants['BACKEND_URL']}/edit/favorite`, {
         method : "POST",
         headers : {
             'Content-Type': 'application/json',
@@ -121,6 +127,34 @@ export async function changeFavorite({_id, isFavorite, session} : toggleType){
     })
 };
 
-export async function changeProfilePicture(){
+export async function changeProfilePicture({session, image} : changePictureProps){
+    // Format the request body
+    const form = new FormData();
+    const file = new File(image);
+    form.append('image', file);
 
+    const requestOj = {
+        method : 'POST',
+        headers : {'Authorization' : `Bearer ${session?.session}`},
+        body : form
+    };
+    const url = `${constants.BACKEND_URL}/edit/profile/picture`;
+    return fetch(url, requestOj)
+    .then((response) => {
+        if(response.status == 401){
+            session?.signOut();
+            return;     // Avoid the catch block
+        }
+
+        if(!response.ok){
+            showAlert('Error', 'Change of profile picture failed!');
+            return;
+        };
+
+        showAlert('Success', 'Profile picture successfully changed!');
+    })
+    .catch((err) => {
+        console.log("Upload error", err);
+        showAlert('Error', 'Change of profile picture failed!');
+    })
 }

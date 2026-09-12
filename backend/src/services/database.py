@@ -2,7 +2,7 @@ from pymongo import MongoClient
 from src.models.pydantic import ClothingItem, UserInDb, UserWithToken
 import uuid
 import time
-from pymongo.errors import DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
+from pymongo.errors import AutoReconnect, DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
 from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical
 from src.utils.db_backoff import with_retry
 from src.config.conf import mongodb_key
@@ -218,3 +218,19 @@ async def edit_value(client : MongoClient, id : str, value : str, category : str
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
         raise DatabaseError() from exc
+
+# Edit the profile picture of a user
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def edit_profile_picture(client : MongoClient, username : str, image : str):
+    try:
+        collection = client["Authentication"]["Users"]
+        document_to_find = {'username' : username}
+        update_operation = {
+            '$set' : {'image' : image}
+        }
+        result = await collection.update_one(document_to_find, update_operation)
+    except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+

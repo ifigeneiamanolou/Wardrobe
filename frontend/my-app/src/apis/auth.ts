@@ -53,7 +53,7 @@ export const changePasswordCall = async ({username, password, onEnd, session} : 
         }),
     }
     const url = `${constants['BACKEND_URL']}/auth/change/password`;
-    fetch(url, requestObj)
+    return fetch(url, requestObj)
     .then((res) => {
         if(!res.ok){
             showAlert('Error', 'Change of password failed');
@@ -89,7 +89,7 @@ export async function login({username, password, onEnd, session} : changePasswor
         },
         body : data.toString()
     };
-    fetch(url, configObj)
+    return fetch(url, configObj)
     .then(async (response) => {
         if(!response.ok){
             showAlert('Error', 'Log in failed');
@@ -120,7 +120,7 @@ export async function signup({name, username, password, email, onEnd} : signUpPa
     }
     
     const url = `${constants.BACKEND_URL}/auth/signup`;
-    fetch(url, requestObj)
+    return fetch(url, requestObj)
     .then((res) => {
         if(!res.ok){
             showAlert('Error', 'Sign up failed');
@@ -139,7 +139,7 @@ export async function signup({name, username, password, email, onEnd} : signUpPa
 }
 
 export async function validate({session, onEnd, onChange} : UserCheckParams){
-    fetch(`${constants['BACKEND_URL']}/auth/users/me`, {
+    return fetch(`${constants['BACKEND_URL']}/auth/users/me`, {
         method : "GET",
         headers : {Authorization : `Bearer ${session?.session}`}
     })

@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import showAlert from "@/src/components/alert";
 import * as yup from 'yup';
 import { useFormik } from "formik";
+import { changeProfilePicture } from "@/src/apis/edit";
 
 const schema = yup.object().shape({
     name : yup.string().min(2, 'Too short!').max(50, 'Too long'),
@@ -25,7 +26,6 @@ export default function Edit(){
     const router = useRouter();
     const [visible, setVisible] = useState(false);
     const [image, setImage] = useState<string | undefined>(undefined);      // uri of image
-    const [image64, setImage64] = useState<string | undefined | null>(undefined);
 
     const formik = useFormik({
         validationSchema : schema,
@@ -35,8 +35,19 @@ export default function Edit(){
             password : "",
             email : "",
         },
-        onSubmit : () => {
+        onSubmit : async (values, {resetForm}) => {
+            if(!image && !values.name && !values.username
+                && !values.email && !values.password ){
+                showAlert('Error', 'Change at least one detail to submit changes!');
+                return;
+            }
 
+            if(image){
+                await changeProfilePicture({
+                    session : session,
+                    image : image
+                });
+            };
         }
     })
 
@@ -48,24 +59,9 @@ export default function Edit(){
         })
 
         if(!result.canceled){
-            setImage64(result.assets[0].base64);
             setImage(result.assets[0].uri);
         }
     };
-
-    const submit = () => {
-        if(!image && !formik.values.name && !formik.values.username
-            && !formik.values.email && !formik.values.password ){
-            showAlert('Error', 'Change at least one detail to submit changes!');
-            return;
-        }
-
-        if(image){
-            // submit the image
-        }
-
-        
-    }
 
     return(
         <View className = "flex-1 flex-col p-4 gap-6 bg-white">
@@ -165,7 +161,7 @@ export default function Edit(){
 
                 <TouchableOpacity 
                     className = "flex rounded-lg bg-blush p-4 justify-center items-center w-32"
-                    onPress = {() => {}}
+                    onPress = {() => formik.handleSubmit()}
                 >
                     <Text className = "font-bold text-white text-xl">Submit</Text>
                 </TouchableOpacity>

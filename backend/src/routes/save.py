@@ -45,6 +45,8 @@ async def save_item(
 
         # Save the item in the database
         id = await save_clothing(cluster, item, color, category, user.username, url)
+    except Exception:
+        raise
     finally:
         if(os.path.exists(path)):
             os.remove(path)

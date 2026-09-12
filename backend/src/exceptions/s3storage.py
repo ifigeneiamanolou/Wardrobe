@@ -3,3 +3,6 @@ class S3UploadError(Exception):
 
 class S3DownloadError(Exception):
     pass
+
+class S3DeleteError(Exception):
+    pass

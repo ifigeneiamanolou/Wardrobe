@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 from boto3.s3.transfer import S3UploadFailedError
 from src.config.conf import bucket_name
 import os
-from src.exceptions.s3storage import S3UploadError, S3DownloadError
+from src.exceptions.s3storage import S3UploadError, S3DownloadError, S3DeleteError
 from src.config.conf import aws_key, aws_secret_key, aws_region
 
 async def upload_file_to_bucket(file_name : str, bucket_name_param : str = bucket_name):
@@ -24,11 +24,11 @@ async def upload_file_to_bucket(file_name : str, bucket_name_param : str = bucke
         print(
             f"Uploaded file {file_name} into bucket {bucket.name} with key {obj.key}."
         )
-
-        # Construct and return the url where it is stored
-        return f"https://{bucket.name}.s3.amazonaws.com/{key}"
     except (S3UploadFailedError, ClientError) as err:
         raise S3UploadError(f"Couldn't upload file {file_name} to {bucket_name_param}: {err}") from err
+
+    # Construct and return the url where it is stored
+    return f"https://{bucket.name}.s3.amazonaws.com/{key}"
 
 async def load_photo(url : str, bucket_name_param : str = bucket_name):
     # Create an s3 client
@@ -50,3 +50,27 @@ async def load_photo(url : str, bucket_name_param : str = bucket_name):
         return image_data
     except ClientError as e:
         raise S3DownloadError(f"Could not load image {file_name} from {bucket_name_param}: {e}") from e
+
+async def delete_item_from_bucket(url : str, bucket_name_param : str = bucket_name):
+    # Create an s3 client
+    session = boto3.Session(
+        aws_access_key_id = aws_key,
+        aws_secret_access_key = aws_secret_key,
+        region_name = aws_region
+        )
+    s3 = session.client('s3')
+
+    # Extract the file name from the url
+    parts = url.split('/')
+    file_name = parts[-1]
+
+    # Delete the image from s3
+    try:
+        response = s3.delete_object(Bucket = bucket_name_param, Key = file_name)
+        result = bool(response['ResponseMetadata']['DeleteMarker'])
+
+        if result is False:
+          raise S3DeleteError(f"Could not load image {file_name} from {bucket_name_param}: {e}") 
+    except ClientError as e:
+        raise S3DeleteError(f"Could not load image {file_name} from {bucket_name_param}: {e}") from e
+        
