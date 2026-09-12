@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import * as yup from 'yup';
 import {useFormik} from 'formik';
-import constants from '../constants/app';
-import showAlert from '../components/alert';
 import '../../global.css';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';

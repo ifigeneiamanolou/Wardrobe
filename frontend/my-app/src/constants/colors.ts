@@ -12,7 +12,8 @@ const colors = {
   "Success": "#4caf82",
   "Warning": "#e0a940",
   "Info": "#5b9bd5",
-  "link": "#5b9bd5"
+  "link": "#5b9bd5",
+  "Light red" : "#f46860",
 }
 
 export default colors;

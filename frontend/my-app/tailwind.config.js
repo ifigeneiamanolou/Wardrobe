@@ -25,7 +25,8 @@ module.exports = {
       "success": "#4caf82",
       "warning": "#e0a940",
       "info": "#5b9bd5",
-      "link": "#5b9bd5"
+      "link": "#5b9bd5",
+      "light-red" : "#f46860",
     },
   },
   plugins: [],

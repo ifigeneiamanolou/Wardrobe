@@ -2,6 +2,7 @@ import constants from "../constants/app";
 import showAlert from "../components/alert";
 import {router} from 'expo-router';
 import { Session } from "../ctx";
+import { User } from "@react-native-google-signin/google-signin";
 
 type changePasswordParams = {
     username : string;
@@ -15,10 +16,16 @@ type signUpParams = {
     email : string,
     username : string,
     password : string,
-    onEnd : () => void;
+    onEnd : () => void
 }
 
 type logOutParams = {
+    session : Session
+}
+
+type UserCheckParams = {
+    onEnd : () => void,
+    onChange : (value : boolean) => void,
     session : Session
 }
 
@@ -128,6 +135,22 @@ export async function signup({name, username, password, email, onEnd} : signUpPa
     })
     .finally(() => {
         onEnd()
+    })
+}
+
+export async function validate({session, onEnd, onChange} : UserCheckParams){
+    fetch(`${constants['BACKEND_URL']}/auth/users/me`, {
+        method : "GET",
+        headers : {Authorization : `Bearer ${session?.session}`}
+    })
+    .then((res) => {
+        onChange(res.ok);
+    })
+    .catch((reason) => {
+        onChange(false);
+    })
+    .finally(() => {
+        onEnd();
     })
 }
 
