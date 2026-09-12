@@ -29,7 +29,6 @@ async def format_user_output(results : list):
                 "image" : ""
             }
             continue
-        
         image = await load_photo(result['image'])
         b = base64.b64encode(bytes(image))
         b64_image = b.decode('utf-8')

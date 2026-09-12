@@ -6,6 +6,7 @@ import UserCard from "@/src/components/userCard";
 import { User } from "@/src/types/cards";
 import { fetchUsers } from "@/src/apis/load";
 import { useSession } from "@/src/ctx";
+import LoadingDots from "react-native-loading-dots";
 
 export default function AddFriend(){
     const [searchItem, setSearchItem] = useState<string | null>('');
@@ -13,7 +14,7 @@ export default function AddFriend(){
     const session = useSession();
     // Avoid losing data when filtering and having to reload from the db
     const [apiItems, setApiItems] = useState<User[]>();           
-    const [filteredItems, setFilteredItems] = useState<User[]>();
+    const [filteredItems, setFilteredItems] = useState<User[]>([]);
 
     useEffect(() => {
         const getUsers = async() => {
@@ -36,11 +37,14 @@ export default function AddFriend(){
         const filteredItems = apiItems?.filter((item : User) => 
             item.username.toLowerCase().includes((searchItem ?? '').toLowerCase())
         );
-        setFilteredItems(filteredItems);
+        if(filteredItems){
+            setFilteredItems(filteredItems);
+        }
     };
 
     return(
-        <View className="flex-1 flex-col p-2 bg-white">
+        <View className="flex-1 flex-col p-2 gap-8 bg-white">
+            {/* Search bar */}
             <View className = "flex flex-row border border-border rounded-lg focus-within:color-dusty-rose items-center">
                 <TextInput 
                     className = "flex-grow p-2"
@@ -49,21 +53,34 @@ export default function AddFriend(){
                     onChangeText = {handleChange}
                 />
                 <Ionicon 
-                    name = "search" 
+                    name = "cross" 
                     size = {24} 
                     color = {colors['Graphite']} 
                     className = "p-4"
                 />
             </View>
 
-            {loading ? 
-            <Text> Loading ...</Text>  // TO CHANGE !!!!!!!!!!!!!!!!
-            : <FlatList 
-                className = 'flex bg-white'
-                ItemSeparatorComponent = {() => <View className = "h-2"/>}
-                data = {filteredItems} 
+            {/* List of users*/}
+            {loading ? (
+            <View className='h-12 justify-center items-center'>
+                <LoadingDots
+                    dots = {3}
+                    colors = {[colors['Blush'], colors['Blush'], colors['Blush']]}
+                    size = {10}
+                    gap = {2}
+                />
+            </View>
+            ) : filteredItems.length === 0 ? (
+            <View className = "flex-1 p-4 justify-center items-center">
+                <Text className = "font-bold text-dusty-rose text-2xl"> No usersParam found </Text>
+            </View>
+            ) : (
+            <FlatList 
+                className = 'flex bg-white '
+                ItemSeparatorComponent = {() => <View className = "h-4"/>}
+                data = {filteredItems}
                 renderItem = {({item}) => (<UserCard item = {item}/>)}
-            />}
+            />)}
         </View>
     )
 }

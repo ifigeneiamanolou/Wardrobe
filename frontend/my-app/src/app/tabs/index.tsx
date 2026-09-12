@@ -134,8 +134,8 @@ export default function Home() {
             {/* Elements */} 
             {showItems ?
                 (noItems ? 
-                    <View className='flex-1 flex-grow'>
-                        <Text className = "flex-1 text-dusty-rose font-bold text-xl ">
+                    <View className='flex-1 flex-grow p-4 justify-center items-center'>
+                        <Text className = " text-dusty-rose font-bold text-xl ">
                             No items found
                         </Text> 
                     </View> :
@@ -152,8 +152,8 @@ export default function Home() {
                         }}       // Space between the columns
                 />) :
                 (noOutfits ? 
-                    <View className = "flex-1 flex-grow">
-                        <Text className = "flex text-dusty-rose font-bold text-xl justify-center items-center">
+                    <View className='flex-1 flex-grow p-4 justify-center items-center'>
+                        <Text className = " text-dusty-rose font-bold text-xl ">
                             No outfits found
                         </Text> 
                     </View> :
