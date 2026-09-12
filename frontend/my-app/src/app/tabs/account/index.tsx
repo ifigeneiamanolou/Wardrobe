@@ -7,6 +7,7 @@ import colors from '@/src/constants/colors';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { fetchProfile } from '@/src/apis/load';
+import LoadingDots from "react-native-loading-dots";
 
 export default function Account() {
     const session = useSession();
@@ -14,8 +15,10 @@ export default function Account() {
     const [username, setUsername] = useState<string | null>(null);
     const [email, setEmail] = useState<string | null>(null);
     const [url, setUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     useEffect(() => {
+        setIsLoading(true);
         const loadDetails = async() => {
             const response = await fetchProfile({session : session});
             if(response){
@@ -23,6 +26,7 @@ export default function Account() {
                 setUsername(response['username']);
                 setUrl(response['image']);
             };
+            setIsLoading(false);
         };
 
         if(email == null || username == null || url == null){
@@ -53,12 +57,24 @@ export default function Account() {
                 />
                 : <Ionicon name = "person-circle" size = {150} color = {colors['Blush']} />
                 }
+                {isLoading ?
+                <View className='h-12 justify-center items-center'>
+                    <LoadingDots
+                        dots = {3}
+                        colors = {[colors['Blush'], colors['Blush'], colors['Blush']]}
+                        size = {10}
+                        gap = {2}
+                    />
+                </View>
+                : <>
                 <Text className = "font-bold text-blush text-xl"> {username} </Text>
                 <Text className = "font-bold text-blush text-lg"> {email} </Text>
+                </>
+                }
             </View>
 
             {/* Menu navigation */}
-            <View className = "flex flex-grow gap-4">
+            <View className = "flex flex-grow gap-4 pt-2">
                 {/* Friends */}
                 <View className = "flex-1 flex-row bg-blush rounded-md  items-center gap-4 p-4">
                     <Ionicon name = "share-social" size = {24} color = {colors['White']}/>

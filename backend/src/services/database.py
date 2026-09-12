@@ -31,7 +31,6 @@ async def find_user(username : str, client : MongoClient):
         users_collection = client["Authentication"]["Users"]
         document_to_find = {"username" : username}
         result = users_collection.find_one(document_to_find)
-        if()
 
         if result is None:
             return None

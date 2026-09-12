@@ -1,7 +1,7 @@
 import constants from "../constants/app";
 import { Session } from "../ctx";
 import showAlert from "../components/alert";
-import { File} from "expo-file-system";
+import { EncodingType, File} from "expo-file-system";
 
 type deleteType = {
     _id : string;
@@ -143,7 +143,7 @@ export async function changeProfilePicture({session, image} : changePictureProps
     // Format the request body
     const form = new FormData();
     const file = new File(image);
-    form.append('image', file);
+    form.append('data', file);
 
     const requestOj = {
         method : 'POST',

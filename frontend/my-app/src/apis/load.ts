@@ -144,7 +144,7 @@ export async function fetchOutfits ({cleanup, onOutfitChunk, session, onEmpty} :
 
 export async function fetchProfile({session} : loadDetailsProps) : Promise<any>{
     const requestOj = {
-        method : 'POST',
+        method : 'GET',
         headers : {
             'Authorization' : `Bearer ${session?.session}`,
             'Content-Type' : 'application/json'

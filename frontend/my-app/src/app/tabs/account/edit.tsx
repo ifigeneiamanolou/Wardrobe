@@ -9,6 +9,7 @@ import showAlert from "@/src/components/alert";
 import * as yup from 'yup';
 import { useFormik } from "formik";
 import { changeProfilePicture, changeUserDetails } from "@/src/apis/edit";
+import { File, Paths } from "expo-file-system";
 
 const schema = yup.object().shape({
     name : yup.string().min(2, 'Too short!').max(50, 'Too long'),
@@ -64,12 +65,16 @@ export default function Edit(){
     const pickImageAsync = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes : ['images'],
+            base64 : true,
             allowsEditing : true,        // allow cropping
             quality : 1                  // maximum quality
         })
 
         if(!result.canceled){
-            setImage(result.assets[0].uri);
+            const source = new File(result.assets[0].uri);
+            const dest = new File(Paths.cache, `photo_${Date.now()}.jpg`);
+            await source.copy(dest);
+            setImage(dest.uri);
         }
     };
 

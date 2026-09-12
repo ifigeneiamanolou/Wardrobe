@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from typing import Annotated
 from src.services.authentication import get_current_user, hash
 from src.services.database import load_cluster, change_favorite, delete_item_outfit, edit_value, edit_profile_picture, edit_profile_details, find_user, find_user_by_email
-from src.models.pydantic import User, editFavorite, deleteData, editData, editProfilePicture, UserDetails
+from src.models.pydantic import User, editFavorite, deleteData, editData, UserDetails
 from src.services.s3storage import upload_file_to_bucket, delete_item_from_bucket
 from pymongo import MongoClient
 import os
@@ -52,7 +52,7 @@ async def edit_item_value(
 async def toggle_favorite(
     user : Annotated[User, Depends(get_current_user)],
     client : Annotated[MongoClient, Depends(load_cluster)],
-    data : editProfilePicture
+    data : UploadFile = File(...)
 ):  
     # Save the uploaded image temporarily in local storage
     ext = data.image.filename.rsplit('.', 1)[1] or ".jpg"
@@ -75,7 +75,6 @@ async def toggle_favorite(
                 await delete_item_from_bucket(url)
             except Exception as e:
                 print(f"Failed to roll back S3 object {url}: {e}")
-
         raise
     finally:
         if(os.path.exists(path)):
