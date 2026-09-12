@@ -146,7 +146,7 @@ export async function validate({session, onEnd, onChange} : UserCheckParams){
     .then((res) => {
         onChange(res.ok);
     })
-    .catch((reason) => {
+    .catch(() => {
         onChange(false);
     })
     .finally(() => {

@@ -24,7 +24,7 @@ type submitProps = {
     session : Session
 }
 
-export const deleteItem = ({_id, type, session} : deleteType) => {
+export async function deleteItem({_id, type, session} : deleteType){
     fetch(`${constants['BACKEND_URL']}/edit/delete`, {
         method : "POST",
         headers : {
@@ -52,7 +52,7 @@ export const deleteItem = ({_id, type, session} : deleteType) => {
     })
 };
 
-export const submit = ({type, value, _id, onEnd, handleChange, handleSubmit, session} : submitProps) => {
+export async function submit({type, value, _id, onEnd, handleChange, handleSubmit, session} : submitProps){
     let temp = handleSubmit(type);
     fetch(`${constants['BACKEND_URL']}/edit/value`, {
         method : "POST", 
@@ -92,7 +92,7 @@ export const submit = ({type, value, _id, onEnd, handleChange, handleSubmit, ses
     })
 };
 
-export const changeFavorite = ({_id, isFavorite, session} : toggleType) => {
+export async function changeFavorite({_id, isFavorite, session} : toggleType){
     fetch(`${constants['BACKEND_URL']}/edit/favorite`, {
         method : "POST",
         headers : {
@@ -120,3 +120,7 @@ export const changeFavorite = ({_id, isFavorite, session} : toggleType) => {
         showAlert('Error', err.message);
     })
 };
+
+export async function changeProfilePicture(){
+
+}
