@@ -17,6 +17,10 @@ type OutfitProps = {
     onEmpty : () => void;
 }
 
+type loadDetailsProps = {
+    session : Session;
+}
+
 export async function fetchItems ({cleanup, onItemChunk, session, onEmpty} : ItemProps) {
     if(session?.session === null || session?.session === undefined){
         console.log('Token is null');
@@ -135,5 +139,36 @@ export async function fetchOutfits ({cleanup, onOutfitChunk, session, onEmpty} :
 
     if(reader){
         reader.read().then(processText);
+    }
+}
+
+export async function fetchProfile({session} : loadDetailsProps) : Promise<any>{
+    const requestOj = {
+        method : 'POST',
+        headers : {
+            'Authorization' : `Bearer ${session?.session}`,
+            'Content-Type' : 'application/json'
+        }
+    };
+    const url = `${constants.BACKEND_URL}/load/profile`;
+
+    try{
+        const response = await fetch(url, requestOj);
+
+        if(response.status == 401){
+            session?.signOut();
+            return null;     // Avoid the catch block
+        };
+
+        if(!response.ok){
+            showAlert('Error', 'Loading of user details failed!');
+            return null;
+        };
+
+        return await response.json();
+    }catch(err){
+        console.log("Loading error", err);
+        showAlert('Error', 'Loading of user details failed!');
+        return null;
     }
 }

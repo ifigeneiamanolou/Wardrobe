@@ -1,14 +1,35 @@
 import { View, Text, TouchableOpacity} from 'react-native';
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {logOut} from '@/src/apis/auth';
 import { useSession } from '@/src/ctx';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import colors from '@/src/constants/colors';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
+import { fetchProfile } from '@/src/apis/load';
 
 export default function Account() {
     const session = useSession();
     const router = useRouter();
+    const [username, setUsername] = useState<string | null>(null);
+    const [email, setEmail] = useState<string | null>(null);
+    const [url, setUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        const loadDetails = async() => {
+            const response = await fetchProfile({session : session});
+            if(response){
+                setEmail(response['email']);
+                setUsername(response['username']);
+                setUrl(response['image']);
+            };
+        };
+
+        if(email == null || username == null || url == null){
+            loadDetails();
+        };
+    }, []);
+
     return(
         <View className = "flex-1 flex-col p-4 gap-4 bg-white ">
             {/* Edit button */}
@@ -24,9 +45,16 @@ export default function Account() {
 
             {/* User details */}
             <View className = "flex items-center">
-                <Ionicon name = "person-circle" size = {150} color = {colors['Blush']} />
-                <Text className = "font-bold text-blush text-xl"> Username </Text>
-                <Text className = "font-bold text-blush text-lg"> Email </Text>
+                {url ? 
+                <Image
+                    className="rounded-full"
+                    style={{ width: '60%', aspectRatio: 1 }}
+                    source = {{uri : url}}
+                />
+                : <Ionicon name = "person-circle" size = {150} color = {colors['Blush']} />
+                }
+                <Text className = "font-bold text-blush text-xl"> {username} </Text>
+                <Text className = "font-bold text-blush text-lg"> {email} </Text>
             </View>
 
             {/* Menu navigation */}

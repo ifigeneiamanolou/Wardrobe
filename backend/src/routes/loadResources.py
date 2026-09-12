@@ -38,3 +38,14 @@ async def get_items(
 
     # Load the images from AWS S3 and return one by one in the frontend
     return StreamingResponse(format_output_items(results),  media_type="application/x-ndjson")
+
+@router.get("/profile")
+async def get_profile(
+    user : Annotated[User, Depends(get_current_user)],
+):
+    return {
+       "username" : user.username,
+       "email" : user.email,
+       "url" : user.image 
+    }
+
