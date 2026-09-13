@@ -6,7 +6,9 @@ import UserCard from "@/src/components/userCard";
 import { User } from "@/src/types/cards";
 import { fetchUsers } from "@/src/apis/load";
 import { useSession } from "@/src/ctx";
+import { makeRequest } from "@/src/apis/friends";
 import LoadingDots from "react-native-loading-dots";
+import showAlert from "@/src/components/alert";
 
 export default function AddFriend(){
     const [searchItem, setSearchItem] = useState<string | null>('');
@@ -31,6 +33,25 @@ export default function AddFriend(){
             getUsers();
         }
     }, []);
+
+    const request = async (username : string) => {
+        await makeRequest({
+            username : username,        // Username from which the request came
+            noRessources : () => {
+                showAlert('Error', 'User not found');
+                setApiItems(apiItems?.filter((user : User) => {
+                    return user.username !== username
+                }))
+            },
+            onEnd : () => {
+                showAlert('Success', `Request was sent to ${username}!`);
+                setApiItems(apiItems?.filter((user : User) => {
+                    return user.username !== username
+                }))
+            },
+            session : session
+        })
+    };
 
     const handleChange = (searchItem : string) => {
         setSearchItem(searchItem);
@@ -85,9 +106,7 @@ export default function AddFriend(){
                 renderItem = {({item}) => (<UserCard 
                     request = {true} 
                     item = {item}
-                    onPress = {(username : string) => {
-                        // TO PERFORM AN ACTION
-                    }}
+                    onPress = {() => request(item.username)}
                 />)}
             />)}
         </View>

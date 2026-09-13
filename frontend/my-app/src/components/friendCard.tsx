@@ -4,6 +4,7 @@ import { User } from "../types/cards";
 
 type props = {
     item : User
+    onPress : () => void;
 }
 
 export default function FriendCard({item} : props){
