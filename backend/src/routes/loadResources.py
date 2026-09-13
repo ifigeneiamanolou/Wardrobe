@@ -93,6 +93,6 @@ async def get_profile(
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful loading of friends")
     except DatabaseUnavailableError:
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
-    return {'requests' : result}
+    return {'friends' : result}
 
 
