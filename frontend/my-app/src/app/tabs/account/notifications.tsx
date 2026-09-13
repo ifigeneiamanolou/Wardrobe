@@ -47,9 +47,9 @@ export default function Notifications(){
     };
 
     return(
-        <View className = "flex-1 bg-white p-2 gap-8">
+        <View className = "flex-1 bg-white p-4 gap-8">
             {loading ? (
-                <View className='h-12 justify-center items-center'>
+                <View className='flex-1 h-12 justify-center items-center'>
                     <LoadingDots
                         dots = {3}
                         colors = {[colors['Blush'], colors['Blush'], colors['Blush']]}
@@ -66,7 +66,7 @@ export default function Notifications(){
                     data = {requests}
                     renderItem={({item}) => (
                         <UserCard 
-                            request = {false} 
+                            request = {'Accept'} 
                             item = {item}
                             onPress={() => pressAccept(item.username)}
                         />

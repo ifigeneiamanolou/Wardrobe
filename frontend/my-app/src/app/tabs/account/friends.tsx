@@ -5,7 +5,7 @@ import colors from "@/src/constants/colors";
 import { User } from "@/src/types/cards";
 import { useSession } from "@/src/ctx";
 import { useRouter } from "expo-router";
-import FriendCard from "@/src/components/friendCard";
+import UserCard from "@/src/components/userCard";
 import { loadFriends } from "@/src/apis/friends";
 import LoadingDots from "react-native-loading-dots";
 
@@ -30,14 +30,15 @@ export default function Friends(){
     }, []);
 
     const deleteFriend = (username : string) => {
-        console.log('friend deleted')
+        console.log('friend deleted');
+        // TO DO!!!!!!!!!!!!!
     };
 
     return(
-        <View className="flex-1">
+        <View className="flex-1 p-4 bg-white">
             {/* Message or list of friends */}
             {loading ? (
-                <View className='h-12 justify-center items-center'>
+                <View className='flex-1 h-12 justify-center items-center'>
                     <LoadingDots
                         dots = {3}
                         colors = {[colors['Blush'], colors['Blush'], colors['Blush']]}
@@ -54,22 +55,24 @@ export default function Friends(){
                     className='flex-1 bg-white'
                     ItemSeparatorComponent={() => <View className = "h-2"/>}
                     data = {friends}
-                    renderItem={({item}) => (<FriendCard 
-                        item = {item}
-                        onPress = {() => deleteFriend(item.username)}
-                    />)}
+                    renderItem={({item}) => (
+                        <UserCard 
+                            request = {'Friends'} 
+                            item = {item}
+                            onPress = {() => deleteFriend(item.username)}
+                        />
+                    )}
                 />
             )}
 
             {/* Button to add friends */}
             <TouchableOpacity 
                 className="bg-rose rounded-full" 
-                style={{ position: 'absolute', right: 16, bottom: 16, zIndex: 50 }}
+                style={{ position: 'absolute', right: 20, bottom: 20, zIndex: 50 }}
                 onPress = {() => router.navigate('/tabs/account/addFriend')}
             >
-                <Feather name = "plus" size = {24} color = {colors['White']} className = "p-2"/>
+                <Feather name = "plus" size = {32} color = {colors['White']} className = "p-2"/>
             </TouchableOpacity>
-
         </View>
     )
 }

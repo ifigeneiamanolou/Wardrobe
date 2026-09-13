@@ -280,11 +280,10 @@ async def make_friend_request(client : MongoClient, user_id : str, new_username 
     try:
         # Find the id of the new user
         users_collection = client["Authentication"]["Users"]
-        result = users_collection.find({'username' : new_username})
-        if result:
-            request_id = result['_id']
-        else:
+        result = users_collection.find_one({'username' : new_username})
+        if result is None:
             raise UserNotFound()
+        request_id = result['_id']
 
         # Create a new entry in the friendshipts table
         friends_collection = client['Authentication']['Friendships']
@@ -292,7 +291,7 @@ async def make_friend_request(client : MongoClient, user_id : str, new_username 
             "id_1" : request_id if request_id < user_id else user_id,
             "id_2" : request_id if request_id > user_id else user_id, 
             "created_at" : datetime.datetime.now(),
-            "accepted" : False,
+            "accepted" : 0,
         }
         result = friends_collection.insert_one(payload)
         return result.inserted_id
@@ -307,20 +306,19 @@ async def accept_friend_request(client : MongoClient, user_id : str, new_usernam
     try:
         # Find the id of the user from which the request came
         users_collection = client["Authentication"]["Users"]
-        result = users_collection.find({'username' : new_username})
-        if result:
-            request_id = result['_id']
-        else:
+        result = users_collection.find_one({'username' : new_username})
+        if result is None:
             raise UserNotFound()
+        request_id = result['_id']
 
         # Edit the corresponding entry in the friendships table
         friends_collection = client['Authentication']['Friendships']
         document_to_find = ({
-            'id_1' : request_id if request_id < user_id else user_id,
-            'id_2' : request_id if request_id > user_id else user_id
+            'id_1' : min(request_id, user_id),
+            'id_2' : max(request_id, user_id)
         })
         result = friends_collection.update_one(document_to_find, {
-            '$set' : {'accepted' : True, "accepted_at" : datetime.datetime.now()}
+            '$set' : {'accepted' : 1, "accepted_at" : datetime.datetime.now()}
         })
 
         if(result.matched_count == 0):
@@ -337,8 +335,8 @@ async def find_requests(client : MongoClient, user_id : str, accepted : bool):
         friends_collection = client['Authentication']['Friendships']
         result_cursor = friends_collection.aggregate([
             {'$match' : {
-                'status' : accepted,
-                '$or' : [{'$id_1' : user_id}, {'$id_2' : user_id}]
+                'accepted' : 1 if accepted else 0,
+                '$or' : [{'id_1' : user_id}, {'id_2' : user_id}]
             }},
             {'$addFields' : { 'otherUser' : { '$cond' : {
                 'if' : {'$eq' : ['$id_1', user_id]},
@@ -346,17 +344,17 @@ async def find_requests(client : MongoClient, user_id : str, accepted : bool):
                 'else' : '$id_1'
             }}}},
             {'$lookup' : {
-                'from' : 'Friendships',
+                'from' : 'Users',
                 'localField' : 'otherUser',
                 'foreignField' : '_id',
                 'as' : 'friend'
             }},
-            {'$unwind' : 'friend'},
+            {'$unwind' : '$friend'},
             {'$unset' : 'otherUser'}
         ])
         results = list(result_cursor)
         friends = []
-        if len(result) == 0:
+        if len(results) == 0:
             raise NoRequestsError()
         for result in results:
             formatted_image = await format_image(result['friend']['image'])
@@ -369,4 +367,4 @@ async def find_requests(client : MongoClient, user_id : str, accepted : bool):
     except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
         raise DatabaseUnavailableError(exc) from exc
     except Exception as exc:
-        raise DatabaseError() from exc
+        raise 

@@ -1,24 +1,19 @@
 import { View, Image, Text, TouchableOpacity } from "react-native";
-import React from "react";
+import React, {useState} from "react";
 import colors from "../constants/colors";
 import { User } from "../types/cards";
 import Ionicon from 'react-native-vector-icons/Ionicons';
 
+type Request = 'Accept' | 'Request' | 'Friends';
+
 type props = {
     item : User;
-    request : boolean;          // if true the request is sent if false received
-    onPress : (username : string) => void;
+    request : Request;
+    onPress : () => void;
 }
 
-export default function UserCard({item, request} : props){
-    const sendNotification = () => {
-
-    };
-
-    const acceptRequest = () => {
-
-    };
-
+export default function UserCard({item, request, onPress} : props){
+    const [pressed, setPressed] = useState(false);
     return(
         <View className = "flex-1 flex-row items-center justify-start bg-blush rounded-lg gap-8 p-4">
             {item.image == "" ? 
@@ -30,19 +25,46 @@ export default function UserCard({item, request} : props){
             <View className="flex flex-col gap-3">
                 <Text className="font-bold text-white text-2xl">{item.username}</Text>
                 <Text className = "text-white text-md">{item.email}</Text>
-                {request ?
+                {request == 'Request'? (
                 <TouchableOpacity
                     className="bg-white justify-center items-center rounded-full p-2 w-36"
-                    onPress={sendNotification}     
+                    onPress={() => {
+                        setPressed(true);
+                        onPress();
+                        setPressed(false);
+                    }}     
                 >
-                    <Text className = "text-blush font-bold font-lg">Add</Text>
+                    <Text className = "text-blush font-bold font-lg">
+                        {pressed ? 'Sending ...' : 'Add'}
+                    </Text>
                 </TouchableOpacity>
-                : <TouchableOpacity
+                ) : request == 'Accept' ? (
+                <TouchableOpacity
                     className="bg-white justify-center items-center rounded-full p-2 w-36"
-                    onPress={acceptRequest}     
+                    onPress={() => {
+                        setPressed(true);
+                        onPress();
+                        setPressed(false);
+                    }}     
                 >
-                    <Text className = "text-blush font-bold font-lg">Accept</Text>
-                </TouchableOpacity>}
+                    <Text className = "text-blush font-bold font-lg">
+                        {pressed ? 'Accepting ...' : 'Accept'}
+                    </Text>
+                </TouchableOpacity>
+                ) : (
+                <TouchableOpacity
+                    className="bg-white justify-center items-center rounded-full p-2 w-36"
+                    onPress={() => {
+                        setPressed(true);
+                        onPress();
+                        setPressed(false);
+                    }}     
+                >
+                    <Text className = "text-blush font-bold font-lg">
+                        {pressed ? 'Removing ...' : 'Remove'}
+                    </Text>
+                </TouchableOpacity>
+                )}
             </View>
         </View>
     );

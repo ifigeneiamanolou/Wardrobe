@@ -3,7 +3,8 @@ from typing import Literal, Optional
 from fastapi import UploadFile
 
 class User(BaseModel):
-    _id : str
+    model_config = ConfigDict(populate_by_name=True)
+    id: str = Field(alias="_id")
     username : str
     email : str
     name : str 
@@ -51,4 +52,7 @@ class editFavorite(deleteData):
 class editData(deleteData):
     value : str
     category : Literal["shop", "category", "color", "price", "size", "name"]
+
+class requestData(BaseModel):
+    username : str
 

@@ -71,7 +71,7 @@ async def get_profile(
     client : Annotated[MongoClient, Depends(load_cluster)]
 ):
     try:
-        result = await find_requests(client, user._id, False)
+        result = await find_requests(client, user.id, False)
     except NoRequestsError:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"No notifications")
     except DatabaseError:
@@ -86,7 +86,7 @@ async def get_profile(
     client : Annotated[MongoClient, Depends(load_cluster)]
 ):
     try:
-        result = await find_requests(client, user._id, True)
+        result = await find_requests(client, user.id, True)
     except NoRequestsError:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"No friends")
     except DatabaseError:

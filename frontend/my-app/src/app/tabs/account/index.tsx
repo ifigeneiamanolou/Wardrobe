@@ -47,11 +47,11 @@ export default function Account() {
             </View>
 
             {/* User details */}
-            <View className = "flex items-center">
+            <View className = "flex items-center gap-3">
                 {url ? 
                 <Image 
                     source = {{uri : `data:image/png;base64,${url}`}} 
-                    className="rounded-2xl"
+                    className="rounded-full"
                     style = {{width : 150, height : 150}} 
                     onError={(error) => {
                         console.log(error.nativeEvent.error);

@@ -111,7 +111,7 @@ export async function loadFriends({session, onEnd, noRessources} : loadProps){
 export async function acceptRequest({username, onEnd, session, noRessources} : requestProps){
     const url = `${constants['BACKEND_URL']}/edit/accept/request`;
     const requestObj = {
-        method : 'GET',
+        method : 'POST',
         headers : {
             'Accept' : 'application/json',
             'Content-Type' : 'application/json',
@@ -149,7 +149,7 @@ export async function acceptRequest({username, onEnd, session, noRessources} : r
 export async function makeRequest({username, onEnd, session, noRessources} : requestProps){
     const url = `${constants['BACKEND_URL']}/edit/friend/request`;
     const requestObj = {
-        method : 'GET',
+        method : 'POST',
         headers : {
             'Accept' : 'application/json',
             'Content-Type' : 'application/json',

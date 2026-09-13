@@ -15,7 +15,7 @@ export default function AddFriend(){
     const [loading, setLoading] = useState<boolean>(true);
     const session = useSession();
     // Avoid losing data when filtering and having to reload from the db
-    const [apiItems, setApiItems] = useState<User[]>();           
+    const [apiItems, setApiItems] = useState<User[]>();           // EXCLUDE FRIENDS !!!!!!!!!!!!
     const [filteredItems, setFilteredItems] = useState<User[]>([]);
 
     useEffect(() => {
@@ -46,6 +46,9 @@ export default function AddFriend(){
             onEnd : () => {
                 showAlert('Success', `Request was sent to ${username}!`);
                 setApiItems(apiItems?.filter((user : User) => {
+                    return user.username !== username
+                }))
+                setFilteredItems(filteredItems?.filter((user : User) => {
                     return user.username !== username
                 }))
             },
@@ -86,7 +89,7 @@ export default function AddFriend(){
 
             {/* List of users*/}
             {loading ? (
-            <View className='h-12 justify-center items-center'>
+            <View className='flex-1 h-12 justify-center items-center'>
                 <LoadingDots
                     dots = {3}
                     colors = {[colors['Blush'], colors['Blush'], colors['Blush']]}
@@ -96,7 +99,7 @@ export default function AddFriend(){
             </View>
             ) : filteredItems.length === 0 ? (
             <View className = "flex-1 p-4 justify-center items-center">
-                <Text className = "font-bold text-dusty-rose text-2xl"> No usersParam found </Text>
+                <Text className = "font-bold text-dusty-rose text-2xl"> No users found </Text>
             </View>
             ) : (
             <FlatList 
@@ -104,7 +107,7 @@ export default function AddFriend(){
                 ItemSeparatorComponent = {() => <View className = "h-4"/>}
                 data = {filteredItems}
                 renderItem = {({item}) => (<UserCard 
-                    request = {true} 
+                    request = {'Request'} 
                     item = {item}
                     onPress = {() => request(item.username)}
                 />)}
