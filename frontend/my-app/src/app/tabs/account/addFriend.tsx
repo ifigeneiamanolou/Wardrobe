@@ -82,7 +82,13 @@ export default function AddFriend(){
                 className = 'flex bg-white '
                 ItemSeparatorComponent = {() => <View className = "h-4"/>}
                 data = {filteredItems}
-                renderItem = {({item}) => (<UserCard item = {item}/>)}
+                renderItem = {({item}) => (<UserCard 
+                    request = {true} 
+                    item = {item}
+                    onPress = {(username : string) => {
+                        // TO PERFORM AN ACTION
+                    }}
+                />)}
             />)}
         </View>
     )

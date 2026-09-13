@@ -1,15 +1,21 @@
 import { View, Image, Text, TouchableOpacity } from "react-native";
-import React, { useEffect } from "react";
+import React from "react";
 import colors from "../constants/colors";
 import { User } from "../types/cards";
 import Ionicon from 'react-native-vector-icons/Ionicons';
 
 type props = {
-    item : User
+    item : User;
+    request : boolean;          // if true the request is sent if false received
+    onPress : (username : string) => void;
 }
 
-export default function UserCard({item} : props){
+export default function UserCard({item, request} : props){
     const sendNotification = () => {
+
+    };
+
+    const acceptRequest = () => {
 
     };
 
@@ -24,12 +30,19 @@ export default function UserCard({item} : props){
             <View className="flex flex-col gap-3">
                 <Text className="font-bold text-white text-2xl">{item.username}</Text>
                 <Text className = "text-white text-md">{item.email}</Text>
+                {request ?
                 <TouchableOpacity
                     className="bg-white justify-center items-center rounded-full p-2 w-36"
                     onPress={sendNotification}     
                 >
                     <Text className = "text-blush font-bold font-lg">Add</Text>
                 </TouchableOpacity>
+                : <TouchableOpacity
+                    className="bg-white justify-center items-center rounded-full p-2 w-36"
+                    onPress={acceptRequest}     
+                >
+                    <Text className = "text-blush font-bold font-lg">Accept</Text>
+                </TouchableOpacity>}
             </View>
         </View>
     );

@@ -15,6 +15,7 @@ type saveProps = {
     onEnd : () => void;
     onChange : () => void;
 }
+
 export async function saveItem({favorite, name, size, shop, session, onEnd, onChange, uri, price} : saveProps){
     const form = new FormData();
     const file = new File(uri);
