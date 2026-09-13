@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from typing import Annotated
 from src.services.authentication import get_current_user, hash
-from src.services.database import load_cluster, change_favorite, delete_item_outfit, edit_value, edit_profile_picture, edit_profile_details, find_user, find_user_by_email
+from src.services.database import (load_cluster, change_favorite, delete_item_outfit, edit_value, 
+                                   edit_profile_picture, edit_profile_details, find_user, 
+                                   find_user_by_email, make_friend_request, accept_friend_request)
 from src.models.pydantic import User, editFavorite, deleteData, editData, UserDetails
 from src.services.s3storage import upload_file_to_bucket, delete_item_from_bucket
 from pymongo import MongoClient
 import os
-from src.exceptions.database import DatabaseUnavailableError, DatabaseError
+from src.exceptions.database import DatabaseUnavailableError, DatabaseError, UserNotFound, FriendshipNotFound
 import uuid
 import shutil
 
@@ -124,3 +126,37 @@ async def toggle_favorite(
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search by email")
     except DatabaseUnavailableError:
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+
+@router.post("/friend/request")
+async def get_friends(
+    user : Annotated[User, Depends(get_current_user)],
+    client : Annotated[MongoClient, Depends(load_cluster)],
+    username : str
+):
+    try:
+        request_id = await make_friend_request(client, user._id, username)
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful request")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    except UserNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f"User with username {username} does not exist")
+    return {'id' : request_id}
+
+@router.post("/accept/request")
+async def get_friends(
+    user : Annotated[User, Depends(get_current_user)],
+    client : Annotated[MongoClient, Depends(load_cluster)],
+    username : str
+):
+    try:
+        await accept_friend_request(client, user._id, username)
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful request")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    except UserNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f"User with username {username} does not exist")
+    except FriendshipNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "Friendship request not found")
+    return {'message' : 'Successful update'}

@@ -3,6 +3,7 @@ from typing import Literal, Optional
 from fastapi import UploadFile
 
 class User(BaseModel):
+    _id : str
     username : str
     email : str
     name : str 

@@ -3,9 +3,11 @@ from src.models.pydantic import ClothingItem, UserInDb, UserWithToken
 import uuid
 import time
 from pymongo.errors import AutoReconnect, DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
-from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical
+from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical, UserNotFound, FriendshipNotFound, NoFriendshipsError, NoRequestsError
 from src.utils.db_backoff import with_retry
+from src.services.formatOutput import format_image
 from src.config.conf import mongodb_key
+import datetime
 
 MONGO_URI = f"mongodb+srv://ifigeneiamanolou26_db_user:{mongodb_key}@closetcluster.6sudtpr.mongodb.net/Authentication"
 
@@ -272,4 +274,99 @@ async def find_all_users(client : MongoClient, username : str):
     except Exception as exc:
         raise DatabaseError() from exc
 
+# Make friendship request
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def make_friend_request(client : MongoClient, user_id : str, new_username : str):
+    try:
+        # Find the id of the new user
+        users_collection = client["Authentication"]["Users"]
+        result = users_collection.find({'username' : new_username})
+        if result:
+            request_id = result['_id']
+        else:
+            raise UserNotFound()
 
+        # Create a new entry in the friendshipts table
+        friends_collection = client['Authentication']['Friendships']
+        payload = {
+            "id_1" : request_id if request_id < user_id else user_id,
+            "id_2" : request_id if request_id > user_id else user_id, 
+            "created_at" : datetime.datetime.now(),
+            "accepted" : False,
+        }
+        result = friends_collection.insert_one(payload)
+        return result.inserted_id
+    except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
+        raise DatabaseUnavailableError(exc) from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+# Accept a friendship request
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def accept_friend_request(client : MongoClient, user_id : str, new_username : str):
+    try:
+        # Find the id of the user from which the request came
+        users_collection = client["Authentication"]["Users"]
+        result = users_collection.find({'username' : new_username})
+        if result:
+            request_id = result['_id']
+        else:
+            raise UserNotFound()
+
+        # Edit the corresponding entry in the friendships table
+        friends_collection = client['Authentication']['Friendships']
+        document_to_find = ({
+            'id_1' : request_id if request_id < user_id else user_id,
+            'id_2' : request_id if request_id > user_id else user_id
+        })
+        result = friends_collection.update_one(document_to_find, {
+            '$set' : {'accepted' : True, "accepted_at" : datetime.datetime.now()}
+        })
+
+        if(result.matched_count == 0):
+            raise FriendshipNotFound()
+    except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
+        raise DatabaseUnavailableError(exc) from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+# Load all pending requests received
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def find_requests(client : MongoClient, user_id : str, accepted : bool):
+    try:
+        friends_collection = client['Authentication']['Friendships']
+        result_cursor = friends_collection.aggregate([
+            {'$match' : {
+                'status' : accepted,
+                '$or' : [{'$id_1' : user_id}, {'$id_2' : user_id}]
+            }},
+            {'$addFields' : { 'otherUser' : { '$cond' : {
+                'if' : {'$eq' : ['$id_1', user_id]},
+                'then' : '$id_2',
+                'else' : '$id_1'
+            }}}},
+            {'$lookup' : {
+                'from' : 'Friendships',
+                'localField' : 'otherUser',
+                'foreignField' : '_id',
+                'as' : 'friend'
+            }},
+            {'$unwind' : 'friend'},
+            {'$unset' : 'otherUser'}
+        ])
+        results = list(result_cursor)
+        friends = []
+        if len(result) == 0:
+            raise NoRequestsError()
+        for result in results:
+            formatted_image = await format_image(result['friend']['image'])
+            friends.append({
+                'username' : result['friend']['username'],
+                'email' : result['friend']['email'],
+                'image' : formatted_image
+            })
+        return friends
+    except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
+        raise DatabaseUnavailableError(exc) from exc
+    except Exception as exc:
+        raise DatabaseError() from exc

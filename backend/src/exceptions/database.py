@@ -12,3 +12,16 @@ class ItemExists(DatabaseError):
 
 class PasswordIsIdentical(DatabaseError):
     pass
+
+class UserNotFound(DatabaseError):
+    pass
+
+
+class FriendshipNotFound(DatabaseError):
+    pass
+
+class NoRequestsError(DatabaseError):
+    pass
+
+class NoFriendshipsError(DatabaseError):
+    pass

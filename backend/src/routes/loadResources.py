@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from src.services.authentication import get_current_user
-from src.services.database import load_cluster, load_outfits_items, find_all_users
+from src.services.database import load_cluster, load_outfits_items, find_all_users, find_requests
 from src.services.formatOutput import format_output_items, format_user_output, format_image
-from src.exceptions.database import DatabaseError, DatabaseUnavailableError
+from src.exceptions.database import DatabaseError, DatabaseUnavailableError, NoRequestsError
 from src.models.pydantic import User
 from pymongo import MongoClient
 from typing import Annotated
@@ -64,4 +64,35 @@ async def get_profile(
     except DatabaseUnavailableError:
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
     return {'users' : formatted_result}
+
+@router.get("/notifications")
+async def get_profile(
+    user : Annotated[User, Depends(get_current_user)],
+    client : Annotated[MongoClient, Depends(load_cluster)]
+):
+    try:
+        result = await find_requests(client, user._id, False)
+    except NoRequestsError:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"No notifications")
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful loading of requests")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    return {'requests' : result}
+
+@router.get("/friends")
+async def get_profile(
+    user : Annotated[User, Depends(get_current_user)],
+    client : Annotated[MongoClient, Depends(load_cluster)]
+):
+    try:
+        result = await find_requests(client, user._id, True)
+    except NoRequestsError:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"No friends")
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful loading of friends")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    return {'requests' : result}
+
 
