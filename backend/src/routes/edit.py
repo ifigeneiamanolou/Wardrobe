@@ -3,7 +3,8 @@ from typing import Annotated
 from src.services.authentication import get_current_user, hash
 from src.services.database import (load_cluster, change_favorite, delete_item_outfit, edit_value, 
                                    edit_profile_picture, edit_profile_details, find_user, 
-                                   find_user_by_email, make_friend_request, accept_friend_request)
+                                   find_user_by_email, make_friend_request, accept_friend_request,
+                                   delete_friend)
 from src.models.pydantic import User, editFavorite, deleteData, editData, UserDetails, requestData
 from src.services.s3storage import upload_file_to_bucket, delete_item_from_bucket
 from pymongo import MongoClient
@@ -84,7 +85,6 @@ async def toggle_favorite(
 
     return {"message" : f"Profile picture saved successfully!"}
 
-
 @router.post("/profile/details")
 async def toggle_favorite(
     user : Annotated[User, Depends(get_current_user)],
@@ -134,7 +134,7 @@ async def get_friends(
     data : requestData
 ):
     try:
-        request_id = await make_friend_request(client, user.id, data.username)
+        await make_friend_request(client, user.id, data.username)
     except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful request")
     except DatabaseUnavailableError:
@@ -142,6 +142,22 @@ async def get_friends(
     except UserNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f"User with username {data.username} does not exist")
     return {'message' : 'Successful request'}
+
+@router.post("/friend/delete")
+async def get_friends(
+    user : Annotated[User, Depends(get_current_user)],
+    client : Annotated[MongoClient, Depends(load_cluster)],
+    data : requestData
+):
+    try:
+        await delete_friend(client, user.id, data.username)
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful deletion")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
+    except (UserNotFound, FriendshipNotFound):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f"User with username {data.username} or friendship does not exist")
+    return {'message' : 'Successful deletion'}
 
 @router.post("/accept/request")
 async def get_friends(

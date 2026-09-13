@@ -259,16 +259,37 @@ async def edit_profile_details(
     except Exception as exc:
         raise DatabaseError() from exc
 
-
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def find_all_users(client : MongoClient, username : str):
     try:
         collection = client["Authentication"]["Users"]
-        result = collection.find(
-            filter = {'username' : {'$ne' : username}}, 
-            projection = {'username' : 1, 'email' : 1, 'image' : 1, '_id' : 0},
-        )
-        return result
+        result = collection.aggregate([
+            { 
+                '$match' : {
+                    'username' : {'$ne' : username}
+                }
+            },
+            {
+                '$lookup' : {
+                    'from' : 'Friendships',
+                    'localField' : '_id',
+                    'foreignField' : 'id_1',
+                    'as' : 'friends_1'
+                }
+            },
+            {
+                '$lookup' : {
+                    'from' : 'Friendships',
+                    'localField' : '_id',
+                    'foreignField' : 'id_2',
+                    'as' : 'friends_2'
+                }
+            },
+            {'$addFields' : {'friends' : {'$concatArrays' : ['$friends_1', '$friends_2']}}},
+            {'$match' : {'friends' : {'$size' : 0}}},
+            {'$project' : {'username' : 1, 'email' : 1, 'image' : 1, '_id' : 0}}
+        ])
+        return list(result)
     except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
         raise DatabaseUnavailableError(exc) from exc
     except Exception as exc:
@@ -357,7 +378,9 @@ async def find_requests(client : MongoClient, user_id : str, accepted : bool):
         if len(results) == 0:
             raise NoRequestsError()
         for result in results:
-            formatted_image = await format_image(result['friend']['image'])
+            formatted_image = ""
+            if 'image' in result['friend'].keys():
+                formatted_image = await format_image(result['friend']['image'])
             friends.append({
                 'username' : result['friend']['username'],
                 'email' : result['friend']['email'],
@@ -368,3 +391,26 @@ async def find_requests(client : MongoClient, user_id : str, accepted : bool):
         raise DatabaseUnavailableError(exc) from exc
     except Exception as exc:
         raise 
+
+async def delete_friend(client : MongoClient, user_id : str, username : str):
+    try:
+        # Find the id of the user from which the request came
+        users_collection = client["Authentication"]["Users"]
+        result = users_collection.find_one({'username' : username})
+        if result is None:
+            raise UserNotFound()
+        request_id = result['_id']
+
+        # Delete the corresponding entry in the friendships table
+        friends_collection = client['Authentication']['Friendships']
+        result = friends_collection.delete_one({
+            'id_1' : min(request_id, user_id),
+            'id_2' : max(request_id, user_id)
+        })
+
+        if result.deleted_count == 0:
+            raise FriendshipNotFound()
+    except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
+        raise DatabaseUnavailableError(exc) from exc
+    except Exception as exc:
+        raise DatabaseError() from exc

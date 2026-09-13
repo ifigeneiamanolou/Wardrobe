@@ -46,5 +46,4 @@ async def format_image(image : str):
         b = base64.b64encode(bytes(image))
         b64_image = b.decode('utf-8')
         return b64_image
-    
     return ""

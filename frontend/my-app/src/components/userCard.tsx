@@ -28,9 +28,9 @@ export default function UserCard({item, request, onPress} : props){
                 {request == 'Request'? (
                 <TouchableOpacity
                     className="bg-white justify-center items-center rounded-full p-2 w-36"
-                    onPress={() => {
+                    onPress={async () => {
                         setPressed(true);
-                        onPress();
+                        await onPress();
                         setPressed(false);
                     }}     
                 >
@@ -41,9 +41,9 @@ export default function UserCard({item, request, onPress} : props){
                 ) : request == 'Accept' ? (
                 <TouchableOpacity
                     className="bg-white justify-center items-center rounded-full p-2 w-36"
-                    onPress={() => {
+                    onPress={async () => {
                         setPressed(true);
-                        onPress();
+                        await onPress();
                         setPressed(false);
                     }}     
                 >
@@ -54,9 +54,9 @@ export default function UserCard({item, request, onPress} : props){
                 ) : (
                 <TouchableOpacity
                     className="bg-white justify-center items-center rounded-full p-2 w-36"
-                    onPress={() => {
+                    onPress={async () => {
                         setPressed(true);
-                        onPress();
+                        await onPress();
                         setPressed(false);
                     }}     
                 >

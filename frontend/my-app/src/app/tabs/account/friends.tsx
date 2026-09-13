@@ -8,6 +8,8 @@ import { useRouter } from "expo-router";
 import UserCard from "@/src/components/userCard";
 import { loadFriends } from "@/src/apis/friends";
 import LoadingDots from "react-native-loading-dots";
+import { deleteFriend } from "@/src/apis/friends";
+import showAlert from "@/src/components/alert";
 
 export default function Friends(){
     const [friends, setFriends] = useState<User[]>([]);
@@ -29,9 +31,23 @@ export default function Friends(){
         fetchRessources();
     }, []);
 
-    const deleteFriend = (username : string) => {
-        console.log('friend deleted');
-        // TO DO!!!!!!!!!!!!!
+    const deleteItem = async (username : string) => {
+        await deleteFriend({
+            username : username,
+            session : session,
+            noRessources : () => {
+                showAlert('Error', 'User or friendship not found');
+                setFriends(friends?.filter((user : User) => {
+                    return user.username !== username
+                }))
+            },
+            onEnd : () => {
+                showAlert('Success', `User ${username} is now deleted!`);
+                setFriends(friends?.filter((user : User) => {
+                    return user.username !== username
+                }))
+            },
+        })
     };
 
     return(
@@ -59,7 +75,7 @@ export default function Friends(){
                         <UserCard 
                             request = {'Friends'} 
                             item = {item}
-                            onPress = {() => deleteFriend(item.username)}
+                            onPress = {() => deleteItem(item.username)}
                         />
                     )}
                 />

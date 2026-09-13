@@ -183,3 +183,41 @@ export async function makeRequest({username, onEnd, session, noRessources} : req
         showAlert('Error', 'Request failed!');
     }
 }
+
+export async function deleteFriend({username, onEnd, session, noRessources} : requestProps){
+    const url = `${constants['BACKEND_URL']}/edit/friend/delete`;
+    const requestObj = {
+        method : 'POST',
+        headers : {
+            'Accept' : 'application/json',
+            'Content-Type' : 'application/json',
+            'Authorization' : `Bearer ${session?.session}`
+        },
+        body : JSON.stringify({'username' : username})
+    };
+
+    try{
+        const response = await fetch(url, requestObj);
+
+        if(response.status == 401){
+            session?.signOut();
+            return;
+        };
+
+        if(response.status == 404){
+            noRessources();
+            return;
+        }
+
+        if(!response.ok){
+            showAlert('Error', 'Removing friend failed!');
+            return;
+        };
+
+        // Given the request was successful delete the user from the list
+        onEnd(username);
+    } catch(err){
+        console.log("Delete error", err);
+        showAlert('Error', 'Delete operation failed!');
+    }
+}
