@@ -9,6 +9,7 @@ class User(BaseModel):
     email : str
     name : str 
     image : Optional[str] = None
+    push_token : str
 
 class UserDetails(BaseModel):
     name : Optional[str] = None

@@ -8,6 +8,10 @@ import { Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import colors from '../constants/colors';
 import { signup } from '../apis/auth';
+import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
+import showAlert from "../components/alert";
+import { useSession } from '../ctx';
 
 const SignUpSchema = yup.object().shape({
     name : yup.string().
@@ -37,6 +41,7 @@ const SignUpSchema = yup.object().shape({
 export default function signUp(){
     const [visible, setVisible] = useState(false);
     const [newVisible, setNewVisible] = useState(false);
+    const session = useSession();
 
     const formik = useFormik({
         initialValues : {
@@ -47,17 +52,69 @@ export default function signUp(){
             passwordNew : ""
         },
         validationSchema : SignUpSchema,
-        onSubmit : (values, {resetForm}) => {
+        onSubmit : async (values, {resetForm}) => {
             const {passwordNew, ...data} = values;
-            signup({
+            let tokenInput = "";
+
+            // Register the user for notifications
+            registerForPushNotifications()
+            .then(token => {tokenInput = token ?? ""});
+
+            // Perform the sign up
+            await signup({
+                token : tokenInput,
                 name : data.name,
                 username : data.username,
                 password : data.password,
                 email : data.email,
-                onEnd : () => formik.resetForm()
-            })
+                onEnd : () => {resetForm()}
+            });
         },
     });
+
+    const registerForPushNotifications = async() => {
+        // Used to attribute a push token to the specific project
+        const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? 
+                          Constants?.easConfig?.projectId;
+    
+        // Configure a notification channel
+        await Notifications.setNotificationChannelAsync('Default', {
+            name : 'Default',
+            importance : Notifications.AndroidImportance.DEFAULT,
+            vibrationPattern : [0, 250, 250, 250],  // vibrate, pause, vibrate, pause (ms)
+            lightColor: '#FF231F7C'
+        })
+    
+        // Check current permissions
+        const {status : existingStatus} = await Notifications.getPermissionsAsync()
+        let finalStatus = existingStatus
+    
+        // Request permission if not granted
+        if(finalStatus !== 'granted'){
+            const {status} = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+            if(status !== 'granted'){
+                showAlert('Attention', "You won't be able to receive notifications!");
+                const {status} = await Notifications.requestPermissionsAsync();
+                finalStatus = status;
+            }
+        }
+    
+        if(!projectId){
+            showAlert('Attention', 'Project id not found');
+            return;
+        }
+    
+        try{
+            const pushToken = (await Notifications.getExpoPushTokenAsync({
+                projectId : projectId
+            })).data;
+            return pushToken;
+        } catch (err){
+            console.log('Failed to generate push token : ', err);
+            showAlert('Error', 'Failed to activate notifications');
+        }
+    }
 
 
     return(

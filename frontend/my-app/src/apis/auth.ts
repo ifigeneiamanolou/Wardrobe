@@ -11,12 +11,18 @@ type changePasswordParams = {
     session : Session;
 }
 
+type UploadParams = {
+    token : string;
+    session : Session;
+}
+
 type signUpParams = {
     name : string,
     email : string,
     username : string,
     password : string,
-    onEnd : () => void
+    onEnd : () => void,
+    token : string
 }
 
 type logOutParams = {
@@ -107,7 +113,7 @@ export async function login({username, password, onEnd, session} : changePasswor
     })
 }
 
-export async function signup({name, username, password, email, onEnd} : signUpParams){
+export async function signup({name, username, password, email, onEnd, token} : signUpParams){
     const requestObj = {
         method : "POST",
         headers : {'Content-Type' : 'application/json'},
@@ -115,7 +121,8 @@ export async function signup({name, username, password, email, onEnd} : signUpPa
             "username" : username,
             "name" : name,
             "email" : email,
-            "password" : password
+            "password" : password,
+            "push_token" : token
         })
     }
     
@@ -153,5 +160,3 @@ export async function validate({session, onEnd, onChange} : UserCheckParams){
         onEnd();
     })
 }
-
-    
