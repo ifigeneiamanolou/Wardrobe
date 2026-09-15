@@ -7,7 +7,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import colors from "../constants/colors";
 import { deleteItem } from "../apis/edit";
 import { submit } from "../apis/edit";
-import { useSession } from "../ctx";
+import { useSession } from "../context/ctx";
 
 type Props = {
     image : string;

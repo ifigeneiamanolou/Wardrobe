@@ -1,7 +1,7 @@
 import constants from "../constants/app";
 import showAlert from "../components/alert";
 import {router} from 'expo-router';
-import { Session } from "../ctx";
+import { Session } from "../context/ctx";
 import { User } from "@react-native-google-signin/google-signin";
 
 type changePasswordParams = {

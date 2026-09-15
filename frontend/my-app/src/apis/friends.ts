@@ -1,5 +1,5 @@
 import constants from "../constants/app";
-import { Session } from "../ctx";
+import { Session } from "../context/ctx";
 import showAlert from "../components/alert";
 import { User } from "../types/cards";
 

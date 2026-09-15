@@ -5,7 +5,7 @@ import colors from "@/src/constants/colors";
 import UserCard from "@/src/components/userCard";
 import { User } from "@/src/types/cards";
 import { fetchUsers } from "@/src/apis/load";
-import { useSession } from "@/src/ctx";
+import { useSession } from "@/src/context/ctx";
 import { makeRequest } from "@/src/apis/friends";
 import LoadingDots from "react-native-loading-dots";
 import showAlert from "@/src/components/alert";

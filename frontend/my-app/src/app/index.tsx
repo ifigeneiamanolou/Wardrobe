@@ -1,5 +1,5 @@
 import { Redirect } from "expo-router";
-import { useSession } from "../ctx";
+import { useSession } from "../context/ctx";
 import Splash from "../components/splash";
 import React, { useEffect, useState } from "react";
 import { validate } from "../apis/auth";

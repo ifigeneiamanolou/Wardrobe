@@ -1,4 +1,4 @@
-import { Session} from "../ctx";
+import { Session} from "../context/ctx";
 import {File} from 'expo-file-system';
 import {fetch} from 'expo/fetch';
 import showAlert from "../components/alert";

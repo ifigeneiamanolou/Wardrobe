@@ -9,7 +9,7 @@ import size from '../constants/sizes';
 import Checkbox from './CheckBox';
 import constants from '../constants/app';
 import showAlert from './alert';
-import { useSession } from '../ctx';
+import { useSession } from '../context/ctx';
 import {File} from 'expo-file-system';
 import {fetch} from 'expo/fetch';
 import { saveItem } from '../apis/save';

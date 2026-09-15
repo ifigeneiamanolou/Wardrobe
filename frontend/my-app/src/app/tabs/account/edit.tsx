@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import { Text, TextInput, TouchableOpacity, View, Image } from "react-native";
-import { useSession } from "@/src/ctx";
+import { useSession } from "@/src/context/ctx";
 import { useRouter } from "expo-router";
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import colors from "@/src/constants/colors";

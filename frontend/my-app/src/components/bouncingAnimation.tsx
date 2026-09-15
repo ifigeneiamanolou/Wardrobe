@@ -12,7 +12,7 @@ import Animated, {
   Easing
 } from "react-native-reanimated";
 import { View, } from "react-native";
-import {useSession} from '../ctx';
+import {useSession} from '../context/ctx';
 
 export default function AnimatedBag(){
     // Shared values live on the UI thread, run on 60fps, and don't trigger react rerenders

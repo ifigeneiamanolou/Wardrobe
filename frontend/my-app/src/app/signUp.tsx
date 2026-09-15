@@ -11,7 +11,7 @@ import { signup } from '../apis/auth';
 // import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import showAlert from "../components/alert";
-import { useSession } from '../ctx';
+import { useSession } from '../context/ctx';
 
 const SignUpSchema = yup.object().shape({
     name : yup.string().

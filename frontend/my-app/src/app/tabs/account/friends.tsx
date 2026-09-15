@@ -3,7 +3,7 @@ import { Text , View, TouchableOpacity, FlatList} from "react-native";
 import Feather from 'react-native-vector-icons/Feather';
 import colors from "@/src/constants/colors";
 import { User } from "@/src/types/cards";
-import { useSession } from "@/src/ctx";
+import { useSession } from "@/src/context/ctx";
 import { useRouter } from "expo-router";
 import UserCard from "@/src/components/userCard";
 import { loadFriends } from "@/src/apis/friends";

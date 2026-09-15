@@ -7,55 +7,21 @@ import { useSession } from '@/src/context/ctx';
 import { Item, Outfit } from '@/src/types/cards';
 import OutfitCard from '@/src/components/outfitCard';
 import ItemCard from '@/src/components/itemCard';
-import { fetchItems, fetchOutfits } from '@/src/apis/load';
+import { fetchOutfits } from '@/src/apis/load';
+import { useItems } from '@/src/context/itemsCtx';
 
 export default function Home() {
     const session = useSession();
+    const itemsContext = useItems();
     const valueOutfits = useSharedValue(0);
     const valueItems = useSharedValue(1);
-    const [items, setItems] = useState<Item[]>([]);
     const [outfits, setOutfits] = useState<Outfit[]>([]);
     const [showItems, setShowItems] = useState<boolean>(true);
-    const [noItems, setNoItems] = useState<boolean>(false);
     const [noOutfits, setNoOutfits] = useState<boolean>(false);
 
-    useEffect(() => {
-        if(session?.session){  // Avoid timing issues
-            fetchItems({
-                cleanup : cleanupItems,
-                onItemChunk : onItemChunk,
-                session : session,
-                onEmpty : () => setNoItems(true)
-            });
-        }
-    }, [session?.session]);
-
     const cleanupOutfits = () => {
-        setItems([]);
         setOutfits([]);
         setNoOutfits(false);
-    }
-
-    const cleanupItems = () => {
-        setItems([]);
-        setOutfits([]);
-        setNoItems(false);
-    }
-
-    const onItemChunk = (chunk : string) => {
-        const dict = JSON.parse(chunk);
-        const item : Item = {
-            _id : dict['_id'],
-            shop : dict['shop'],
-            favorite : dict['favorite'] == "yes" ? true : false,
-            size : dict['size'],
-            price : dict['price'],
-            category : dict['category'],
-            name : dict['name'],
-            color : dict['color'],
-            image : dict['image'].trim()
-        };
-        setItems(prev => [...prev, item]);
     }
 
     const onOutfitChunk = (chunk : string) => {
@@ -99,12 +65,7 @@ export default function Home() {
             valueOutfits.value = withTiming(0, {duration : 700, easing : Easing.in(Easing.cubic)});
         };
         setShowItems(true);
-        await fetchItems({
-            onItemChunk : onItemChunk,
-            cleanup : cleanupItems,
-            session : session,
-            onEmpty : () => setNoItems(true)
-        });
+        itemsContext?.refreshItems();
     };
 
     return(
@@ -133,7 +94,7 @@ export default function Home() {
 
             {/* Elements */} 
             {showItems ?
-                (noItems ? 
+                (itemsContext?.noItems ? 
                     <View className='flex-1 flex-grow p-4 justify-center items-center'>
                         <Text className = " text-dusty-rose font-bold text-xl ">
                             No items found
@@ -141,15 +102,15 @@ export default function Home() {
                     </View> :
                     <FlatList
                         ItemSeparatorComponent={() => <View className = "h-2"/>}
-                        data = {items}
+                        data = {itemsContext?.items ?? []}
                         numColumns = {2}
                         horizontal = {false}
                         className='flex-1 bg-white'
                         renderItem={({item}) => (<ItemCard item = {item}/>)}
-                        contentContainerStyle = {{padding : 10}}                        // Padding around the list
+                        contentContainerStyle = {{padding : 10}}                        
                         columnWrapperStyle = {{
                             justifyContent : 'space-between',
-                        }}       // Space between the columns
+                        }}      
                 />) :
                 (noOutfits ? 
                     <View className='flex-1 flex-grow p-4 justify-center items-center'>

@@ -5,7 +5,7 @@ import { View, Text, TouchableOpacity,TextInput } from "react-native";
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import colors from "../constants/colors";
 import Feather from 'react-native-vector-icons/Feather';
-import { useSession } from "../ctx";
+import { useSession } from "../context/ctx";
 import { submit, changeFavorite } from "../apis/edit";
 
 type Props = {

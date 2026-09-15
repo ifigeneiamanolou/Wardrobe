@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, Image} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {logOut} from '@/src/apis/auth';
-import { useSession } from '@/src/ctx';
+import { useSession } from '@/src/context/ctx';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import colors from '@/src/constants/colors';
 import { useRouter } from 'expo-router';

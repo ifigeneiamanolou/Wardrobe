@@ -13,7 +13,7 @@ import {
   GoogleSignin,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
-import { useSession } from '../ctx';
+import { useSession } from '../context/ctx';
 
 const LoginSchema = yup.object().shape({
     username : yup.string()

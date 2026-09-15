@@ -3,7 +3,7 @@ import { Text, FlatList, View } from "react-native"
 import { User } from "@/src/types/cards"
 import UserCard from "@/src/components/userCard";
 import {loadRequests, acceptRequest } from "@/src/apis/friends";
-import { useSession } from "@/src/ctx";
+import { useSession } from "@/src/context/ctx";
 import LoadingDots from "react-native-loading-dots";
 import colors from "@/src/constants/colors";
 import showAlert from "@/src/components/alert";

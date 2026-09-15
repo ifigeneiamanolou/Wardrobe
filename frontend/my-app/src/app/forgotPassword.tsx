@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useFormik } from "formik";
 import colors from "../constants/colors";
 import { changePasswordCall } from "../apis/auth";
-import { useSession } from "../ctx";
+import { useSession } from "../context/ctx";
 
 const forgotSchema = yup.object().shape({
     username : yup.string()
