@@ -13,6 +13,7 @@ import { useSession } from '../context/ctx';
 import {File} from 'expo-file-system';
 import {fetch} from 'expo/fetch';
 import { saveItem } from '../apis/save';
+import { useItems } from '../context/itemsCtx';
 
 const editSchema = yup.object().shape({
     name : yup.string()
@@ -42,6 +43,7 @@ type props = {
 
 function EditImage({onPress, uri} : props){
     const session = useSession();
+    const itemContext = useItems();
     
     const formik = useFormik({
         initialValues : {
@@ -59,7 +61,10 @@ function EditImage({onPress, uri} : props){
                 size : values.size ?? "",
                 shop : values.shop,
                 session : session,
-                onEnd : resetForm,
+                onEnd : () => {
+                    resetForm();
+                    itemContext?.refreshItems();
+                },
                 onChange : onPress,
                 uri : uri,
                 price : values.price

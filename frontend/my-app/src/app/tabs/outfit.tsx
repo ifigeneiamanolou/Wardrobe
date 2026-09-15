@@ -1,5 +1,7 @@
 import { Text, TouchableOpacity, View, ScrollView} from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
+import { useItems } from '@/src/context/itemsCtx';
+import ItemCardSmall from '@/src/components/itemCardSmall';
 
 const typesList = [
     'Top',
@@ -20,6 +22,13 @@ interface Categories {
 
 export default function Outfit() {
     const [selectedType, setSelectedType] = useState<Categories>({type : 'Top'});
+    const itemContext = useItems();
+
+    useEffect(() => {
+        if(itemContext?.items.length == 0){
+            itemContext.refreshItems();
+        }
+    }, []);
 
     const isSelected = (value : string) : boolean => {
         return value == selectedType.type;
@@ -36,7 +45,8 @@ export default function Outfit() {
                     {/* Menu */}
                     <ScrollView 
                         horizontal = {true}
-                        className='h-12 rounded-full bg-white/60 m-1'
+                        style = {{height : 35}}
+                        className=' rounded-full bg-white/60 m-1'
                         contentContainerStyle = {{
                             alignItems : 'center',
                             paddingHorizontal : 8
@@ -44,11 +54,11 @@ export default function Outfit() {
                         showsHorizontalScrollIndicator = {false}
                     >
                         {typesList.map((value, index) => (
-                            <TouchableOpacity className = "items-center p-2" key = {index} onPress={() => {
+                            <TouchableOpacity className = "items-center pr-4" key = {index} onPress={() => {
                                     setSelectedType({type : value})
                                     console.log('Selected index in menu', index);
                                 }}>
-                                <Text className = {`font-bold text-xl ${isSelected(value) ? 'text-dusty-rose' : 'text-white'}`}>
+                                <Text className = {`font-bold text-lg ${isSelected(value) ? 'text-dusty-rose' : 'text-white'}`}>
                                     {value}
                                 </Text>
                             </TouchableOpacity>
@@ -56,6 +66,19 @@ export default function Outfit() {
                     </ScrollView>
 
                     {/* Clothing items */}
+                    <ScrollView 
+                        horizontal = {true}
+                        style = {{height : 110}}
+                        className='rounded-lg bg-white/60 m-1 p-2'
+                        showsHorizontalScrollIndicator = {false}
+                        contentContainerClassName='gap-2'
+                    >
+                        {itemContext?.items.filter((value) => (
+                            value.category == selectedType.type
+                        )).map((value, index) => (
+                            <ItemCardSmall item = {value} key = {index}/>
+                        ))}
+                    </ScrollView>
                 </View>
             </View>
         </View>
