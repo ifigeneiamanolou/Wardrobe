@@ -1,3 +1,5 @@
+// Used to produce a bouncing animation when ressources are loading in the background
+
 import React, { useEffect } from "react";
 import Animated, {
   useSharedValue,

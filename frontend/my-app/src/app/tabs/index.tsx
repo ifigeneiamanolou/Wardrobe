@@ -3,7 +3,7 @@ import React from 'react';
 import Animated from 'react-native-reanimated';
 import { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
 import { useEffect, useState } from 'react';
-import { useSession } from '@/src/ctx';
+import { useSession } from '@/src/context/ctx';
 import { Item, Outfit } from '@/src/types/cards';
 import OutfitCard from '@/src/components/outfitCard';
 import ItemCard from '@/src/components/itemCard';

@@ -1,3 +1,5 @@
+// Contains form to add metadata to the clothing item added
+
 import * as yup from 'yup';
 import { View, TextInput, TouchableOpacity,Text} from 'react-native';
 import {useFormik} from 'formik';

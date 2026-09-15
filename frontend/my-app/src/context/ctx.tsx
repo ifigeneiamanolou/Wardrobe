@@ -1,5 +1,5 @@
 import {use, createContext, type PropsWithChildren} from 'react';
-import { useStorageState } from './hooks/useStorageState';
+import { useStorageState } from '../hooks/useStorageState';
 import React from 'react';
 import { router } from 'expo-router';
 

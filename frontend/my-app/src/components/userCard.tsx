@@ -1,3 +1,4 @@
+// Reusable card used for the notifications, friends and requests pages
 import { View, Image, Text, TouchableOpacity } from "react-native";
 import React, {useState} from "react";
 import colors from "../constants/colors";

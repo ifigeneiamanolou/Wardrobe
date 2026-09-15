@@ -1,3 +1,5 @@
+// Reusable menu to be used in forms
+
 import React from "react";
 import {View, TouchableOpacity, FlatList, Text, Modal, TouchableWithoutFeedback, Platform} from 'react-native';
 import Ionicon from 'react-native-vector-icons/Ionicons';

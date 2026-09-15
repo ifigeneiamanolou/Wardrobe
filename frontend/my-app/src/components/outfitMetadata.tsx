@@ -1,3 +1,5 @@
+// Back face of the flip card used in the library outfits for image metadata
+
 import React from "react";
 import { View, TouchableOpacity } from "react-native";
 import Ionicon from 'react-native-vector-icons/Ionicons';
@@ -7,9 +9,10 @@ import Feather from 'react-native-vector-icons/Feather';
 type Props = {
     favorite : boolean;
     onFlip : () => void;
+    saved : boolean;
 }
 
-export default function OutfitMetadata({favorite, onFlip} : Props){
+export default function OutfitMetadata({favorite, onFlip, saved} : Props){
     return(
         <View className = "flex-1 flex-col">
             <Ionicon 

@@ -1,3 +1,5 @@
+// Reusable pop up component from the bottom right corner with react native reanimated
+
 import React, { useEffect } from "react";
 import { View, Modal } from "react-native";
 import Animated from "react-native-reanimated";

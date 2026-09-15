@@ -20,7 +20,6 @@ function Add(){
     const [fadeBackground, setFadeBackground] = useState<boolean>(false);
 
     useEffect(() => {
-        // FIX THE APPEARANCE OF THE BUTTON     !!!!!!!!!!!!
         requestPermission();
         requestMedia();
     }, []);

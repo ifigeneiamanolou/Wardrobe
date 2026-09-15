@@ -1,3 +1,5 @@
+
+// Item cards
 type Item = {
     shop : string;
     favorite : boolean;
@@ -17,6 +19,7 @@ type Outfit = {
     _id : string;
 }
 
+// User cards for friends feature
 type User = {
     image : string;
     username : string;

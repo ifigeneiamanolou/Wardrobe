@@ -1,3 +1,4 @@
+// Produces a checkbox that can be used in forms such as the one used to add an item
 import React from "react";
 import {View, TouchableOpacity, Text} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'

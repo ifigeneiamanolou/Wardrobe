@@ -1,7 +1,7 @@
 
 import showAlert from "../components/alert";
 import constants from "../constants/app";
-import { Session } from "../ctx";
+import { Session } from "../context/ctx";
 import { User } from "../types/cards";
 
 type ItemProps = {

@@ -1,3 +1,5 @@
+// Renders an image of an outfit or item in a flip card
+
 import React, {useState} from "react";
 import { Image, View, Text, TouchableOpacity, TextInput } from "react-native";
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -13,9 +15,10 @@ type Props = {
     type : string;
     _id : string;
     onFlip : () => void;
+    saved : boolean;    // If saved from feed the user can't edit it
 }
 
-export default function ImageContainer({image, name, type, _id, onFlip} : Props){
+export default function ImageContainer({image, name, type, _id, onFlip, saved} : Props){
     const [editName, setEditName] = useState<boolean>(false);
     const [nameValue, onChangeName] = useState<string>(name);
     const session = useSession();
@@ -57,14 +60,17 @@ export default function ImageContainer({image, name, type, _id, onFlip} : Props)
                             })}
                         />
                     }
-                    <TouchableOpacity onPress={() => setEditName(!editName)}>
-                        <Feather 
-                            name = "edit" 
-                            size = {24} 
-                            color = {colors['White']} 
-                            className = "flex pr-2" 
-                        />
-                    </TouchableOpacity>
+                    {!saved ?  
+                        <TouchableOpacity onPress={() => setEditName(!editName)}>
+                            <Feather 
+                                name = "edit" 
+                                size = {24} 
+                                color = {colors['White']} 
+                                className = "flex pr-2" 
+                            />
+                        </TouchableOpacity> 
+                    : null}
+                    
                     <TouchableOpacity onPress = {() =>deleteItem({
                         _id : _id,
                         type : type,

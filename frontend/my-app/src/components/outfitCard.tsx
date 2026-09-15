@@ -1,3 +1,5 @@
+// Contains the flip card used in the library for outfits
+
 import { Outfit } from "../types/cards";
 import React from 'react';
 import {View } from "react-native";
@@ -26,13 +28,15 @@ export default function ItemCard({outfit} : props){
                         type = "Outfits"
                         _id = {outfit._id}
                         onFlip = {flip}
+                        saved = {false}     // CONDITIONAL !!!!!!!!
                     />
                 }
                 reguralContent = {
                     <OutfitMetadata
                         favorite = {outfit.favorite}
                         onFlip = {flip}
-                    />
+                        saved = {false}   // CONDITIONAL !!!!!!!!!!
+                    /> 
                 }
                 duration = {500}
                 direction = 'y'

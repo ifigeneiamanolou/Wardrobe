@@ -1,8 +1,10 @@
+// Contains the flip card used in the library for clothing items
+
 import { Item } from "../types/cards";
 import React from 'react';
 import { View} from "react-native";
 import FlipCard from "./flipCard";
-import ImageMetadata from "./itemMetadata";
+import ItemMetadata from "./itemMetadata";
 import ImageContainer from "./imageContainer";
 import { useSharedValue } from "react-native-reanimated";
 import { StyleSheet } from "react-native";
@@ -28,11 +30,12 @@ export default function ItemCard({item} : props){
                         type = "Items"
                         _id = {item._id}
                         onFlip = {flip}
+                        saved = {false}
                     />
                 }
                 cardStyle = {styles.flipCard}
                 reguralContent = {
-                    <ImageMetadata
+                    <ItemMetadata
                         _id = {item._id}
                         price = {item.price}
                         shop = {item.shop}

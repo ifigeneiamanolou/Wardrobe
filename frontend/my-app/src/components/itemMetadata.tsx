@@ -1,3 +1,5 @@
+// Back face of the flip card used in the library clothing items for image metadata
+
 import React, {useState} from "react";
 import { View, Text, TouchableOpacity,TextInput } from "react-native";
 import Ionicon from 'react-native-vector-icons/Ionicons';

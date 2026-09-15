@@ -1,3 +1,5 @@
+// Reusable component to render a flip card
+
 import { StyleProp, View, FlexStyle } from "react-native";
 import React, {useState} from "react";
 import Animated, { interpolate } from "react-native-reanimated";

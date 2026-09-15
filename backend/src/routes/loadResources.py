@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from src.services.authentication import get_current_user
 from src.services.database import load_cluster, load_outfits_items, find_all_users, find_requests
-from src.services.formatOutput import format_output_items, format_user_output, format_image
+from src.services.formatOutput import format_output_items, format_user_output, format_image, format_output_outfit
 from src.exceptions.database import DatabaseError, DatabaseUnavailableError, NoRequestsError
 from src.models.pydantic import User
 from pymongo import MongoClient
@@ -23,7 +23,7 @@ async def get_outfits(
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No outfits")
 
     # Load the images from AWS S3 and return one by one in the frontend
-    pass
+    return StreamingResponse(format_output_outfits(results),  media_type="application/x-ndjson")
 
 @router.get("/items")
 async def get_items(
@@ -52,7 +52,7 @@ async def get_profile(
     }
 
 @router.get("/users")
-async def get_profile(
+async def get_users(
     user : Annotated[User, Depends(get_current_user)],
     client : Annotated[MongoClient, Depends(load_cluster)]
 ):
@@ -66,7 +66,7 @@ async def get_profile(
     return {'users' : formatted_result}
 
 @router.get("/notifications")
-async def get_profile(
+async def get_notifications(
     user : Annotated[User, Depends(get_current_user)],
     client : Annotated[MongoClient, Depends(load_cluster)]
 ):
@@ -81,7 +81,7 @@ async def get_profile(
     return {'requests' : result}
 
 @router.get("/friends")
-async def get_profile(
+async def get_friends(
     user : Annotated[User, Depends(get_current_user)],
     client : Annotated[MongoClient, Depends(load_cluster)]
 ):

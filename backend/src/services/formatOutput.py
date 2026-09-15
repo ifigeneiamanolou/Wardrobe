@@ -47,3 +47,6 @@ async def format_image(image : str):
         b64_image = b.decode('utf-8')
         return b64_image
     return ""
+
+async def format_output_outfit():
+    pass
