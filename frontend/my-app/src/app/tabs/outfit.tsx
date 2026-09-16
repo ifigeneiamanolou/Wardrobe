@@ -1,5 +1,5 @@
-import { Text, TouchableOpacity, View, ScrollView} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import { Text, TouchableOpacity, View, ScrollView, Image} from 'react-native';
+import React, {useEffect, useState, useRef} from 'react';
 import { useItems } from '@/src/context/itemsCtx';
 import ItemCardSmall from '@/src/components/itemCardSmall';
 import Ionicon from 'react-native-vector-icons/Ionicons';
@@ -8,6 +8,7 @@ import PopUp from '@/src/components/popUp';
 import SettingsFilter from '@/src/components/settingsFilter';
 import {GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Item } from '@/src/types/cards';
+import ItemCardZoom from '@/src/components/itemCardZoom';
 
 const typesList = [
     'Top',
@@ -41,10 +42,12 @@ export default function Outfit() {
     const [upperPrice, setUpperPrice] = useState<number>(1000);
 
     // Drag and drop
-    const [droppedImages, setDroppedImages] = useState<Item[]>([]);
+    const [droppedImages, setDroppedImages] = useState<{
+        item : Item, x : number, y : number}[]>([]);
     const [dropZoneLayout, setDropZoneLayout] = useState({
         x : 0, y : 0, height : 0, width : 0
     });
+    const dropZoneRef = useRef<View>(null);
 
     // Back button for the filters
     const onClear = () => {
@@ -87,41 +90,45 @@ export default function Outfit() {
     }
 
     // Callback when an item is successfully added to the drop pane
-    const handleSuccessDrag = (index : number) => {
-        const itemToAdd = itemContext?.items[index];
-        if(itemToAdd){
-            setDroppedImages(prev => [...prev, itemToAdd]);
-        }
+    const handleSuccessDrag = (item : Item, x : number, y : number) => {
+        setDroppedImages(prev => [...prev, {item, x, y}]);
     }
 
-    // Callback when an item is not successfully added to the drop pane
-    const handleFailureDrag = (index : number) => {
-
-    };
+    const removeItem = (id : string) => {
+        setDroppedImages(droppedImages.filter(((value) => value.item._id !== id)))
+    }
 
     return(
         <GestureHandlerRootView>
             <View className='flex-1 bg-white p-2'>
                 {/* Main outfit pane */}
                 <View
+                ref = {dropZoneRef}
                     style = {{
                         height : dragLayout.y - 25,
                         width : dragLayout.width
                     }}
                     className='absolute left-2 top-2 right-2 rounded-xl overflow-hidden p-4 bg-blush border-4 border-dashed border-dusty-rose/40 shadow-sm justify-center items-center'
-                    onLayout = {(event) => {
-                        setDropZoneLayout({
-                            x : event.nativeEvent.layout.x,
-                            y : event.nativeEvent.layout.y,
-                            height : event.nativeEvent.layout.height,
-                            width : event.nativeEvent.layout.width
+                    onLayout = {() => {
+                        dropZoneRef.current?.measureInWindow((x, y, width, height) => {
+                            setDropZoneLayout({x, y, height, width})
                         })
                     }}
                 >
-                    {/* Container when no items are added */}
-                    <Ionicon name = "shirt-outline" size = {32} color = {colors['Dusty rose']}/>
-                    <Text className='font-bold text-dusty-rose mt-2'> Drag items to create an outfit </Text>
-                    
+                    {droppedImages.length == 0 ? (
+                        <><Ionicon name = "shirt-outline" size = {32} color = {colors['Dusty rose']}/>
+                        <Text className='font-bold text-dusty-rose mt-2'> Drag items to create an outfit </Text></>
+                    ) : (
+                        droppedImages.map((value) => (
+                            <ItemCardZoom
+                                item = {value.item}
+                                x = {value.x}
+                                y = {value.y}
+                                removeItem={removeItem}
+                            />
+                        ))
+                    )}
+                   
                 </View>
 
                 {/* Clothing items library */}
@@ -199,9 +206,19 @@ export default function Outfit() {
                                 .filter((value) => (
                                     selectedType.type == value.category
                                 ))
-                                .map((value, index) => (
-                                    <ItemCardSmall dropZoneLayout={dropZoneLayout} key = {index} item={value} />
+                                .filter((value) => (
+                                    !(value._id in droppedImages.map((value => (
+                                        value.item._id
+                                    ))))
                                 ))
+                                .map((value) => (
+                                    <ItemCardSmall 
+                                        dropZoneLayout={dropZoneLayout} 
+                                        item={value}
+                                        key = {value._id}
+                                        handleSuccessDrag={handleSuccessDrag} 
+                                    />)
+                                )
                             }
                         </ScrollView>
 

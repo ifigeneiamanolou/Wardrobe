@@ -5,3 +5,9 @@ export default function Settings(){
         <Text> settings </Text>
     )
 }
+
+// privacy settings:
+// camera
+// file storage
+// media library ??
+// notifications

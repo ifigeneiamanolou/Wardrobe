@@ -16,7 +16,13 @@ async def load_cluster(retries : int = 10, delay : int = 3):
     for i in range(1, retries + 1):
         client = None
         try:
-            client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+            client = MongoClient(
+                MONGO_URI, 
+                serverSelectionTimeoutMS=60000,
+                socketTimeoutMS=  45000,          
+                connectTimeoutMS= 30000,
+                waitQueueTimeoutMS= 20000
+            )
             client.admin.command("ping")
             yield client
             return

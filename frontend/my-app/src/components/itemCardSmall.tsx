@@ -3,20 +3,23 @@ import React , {useState} from "react";
 import { Text, Image } from "react-native";
 import { Item } from "../types/cards";
 import { useSharedValue, withSpring, useAnimatedStyle } from "react-native-reanimated";
-import { PanGesture, Gesture, GestureDetector } from "react-native-gesture-handler";
+import { scheduleOnRN } from "react-native-worklets";
+import {  Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
 
 type props = {
     item : Item;
     dropZoneLayout : any;
+    handleSuccessDrag : (item : Item, x : number, y : number) => void;
 }
 
-export default function ItemCardSmall({item, dropZoneLayout} : props){
+export default function ItemCardSmall({item, dropZoneLayout, handleSuccessDrag} : props){
     const translateX = useSharedValue(0);
     const translateY = useSharedValue(0);
     const [imageLayout, setImageLayout] = useState({
         height : 0, width : 0
     });
+    const [show, setShow] = useState<boolean>(true);
 
     const panGestureHandler = () => {
         return Gesture.Pan()
@@ -24,15 +27,19 @@ export default function ItemCardSmall({item, dropZoneLayout} : props){
             translateX.value = event.translationX;
             translateY.value = event.translationY;
         })
-        .onEnd(() => {
+        .onEnd((event) => {
             if(translateX && translateY ){
                 if(imageLayout &&
-                   translateX.value >= dropZoneLayout.x &&
-                   translateY.value <= dropZoneLayout.y && 
-                   translateX.value + imageLayout.width <= dropZoneLayout.x + dropZoneLayout.width &&
-                   translateY.value + imageLayout.height <= dropZoneLayout.y + dropZoneLayout.height
+                   event.absoluteX >= dropZoneLayout.x &&
+                   event.absoluteY >= dropZoneLayout.y && 
+                   event.absoluteX <= dropZoneLayout.x + dropZoneLayout.width &&
+                   event.absoluteY <= dropZoneLayout.y + dropZoneLayout.height
                 ){
-                    console.log('success');
+                    // Run on the JS thread to avoid crashes
+                    const relativeX = event.absoluteX - dropZoneLayout.x - 45;
+                    const relativeY = event.absoluteY - dropZoneLayout.y - 40;
+                    scheduleOnRN(setShow, false);
+                    scheduleOnRN(handleSuccessDrag, item,relativeX, relativeY);
                 } else{         // Go back to original position if outside
                     translateX.value = withSpring(0);
                     translateY.value = withSpring(0);
@@ -51,24 +58,26 @@ export default function ItemCardSmall({item, dropZoneLayout} : props){
     });
 
     return(
-        <GestureDetector gesture = {panGestureHandler()}>
-            <Animated.View 
-                className= "flex-col bg-white rounded-lg items-center p-1 z-10"
-                style = {[animatedStyle, {
-                    height : 90,
-                    width : 80
-                }]} 
-                onLayout={(event) => {
-                    const {height, width} = event.nativeEvent.layout;
-                    setImageLayout({height, width});
-                }}>
-                    <Image 
-                        source = {{uri : `data:image/png;base64,${item.image}`}} 
-                        style={{ width: 60, height: 60, borderRadius: 8 }} 
-                        resizeMode="cover"
-                    />
-                    <Text className="font-bold text-dusty-rose pt-1">{item.name}</Text>
-            </Animated.View>
-        </GestureDetector>
+        <>{show ? (
+            <GestureDetector gesture = {panGestureHandler()}>
+                <Animated.View 
+                    className= "flex-col bg-white rounded-lg items-center p-1 z-10"
+                    style = {[animatedStyle, {
+                        height : 90,
+                        width : 80
+                    }]} 
+                    onLayout={(event) => {
+                        const {height, width} = event.nativeEvent.layout;
+                        setImageLayout({height, width});
+                    }}>
+                        <Image 
+                            source = {{uri : `data:image/png;base64,${item.image}`}} 
+                            style={{ width: 60, height: 60, borderRadius: 8 }} 
+                            resizeMode="cover"
+                        />
+                        <Text className="font-bold text-dusty-rose pt-1">{item.name}</Text>
+                </Animated.View>
+            </GestureDetector>) : null
+        }</>
     )
 }
