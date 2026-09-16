@@ -9,12 +9,11 @@ import { Dimensions } from "react-native";
 type Props = {
   visible: boolean;             // Controls the popup
   children: React.ReactNode;
-  modalVisible : boolean;       // Controls the background
 };
 
 const {width, height} = Dimensions.get("window");
 
-const PopUp = ({ visible, children, modalVisible }: Props) => {
+const PopUp = ({ visible, children}: Props) => {
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(width * 0.35);
@@ -77,7 +76,7 @@ const PopUp = ({ visible, children, modalVisible }: Props) => {
   return (
     <Modal
       transparent
-      visible={modalVisible}
+      visible={visible}
       onRequestClose={() => {}}
     >
       <View className="flex-1 justify-center items-center bg-graphite/50">

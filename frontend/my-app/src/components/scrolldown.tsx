@@ -59,11 +59,14 @@ export default function ScrollDown({data, onChange, placeholder} : props){
                             <TouchableWithoutFeedback onPress = {() => setExpanded(false)}>
                                 <FlatList
                                     keyExtractor={(item) => item.value}
-                                    data = {data}
+                                    data = {[{
+                                        value : placeholder,
+                                        label : placeholder
+                                    }, ...data]}
                                     renderItem = {({item}) => (
                                         <TouchableOpacity 
                                             onPress = {() => onSelect(item)}
-                                            className="">
+                                            className="p-2">
                                             <Text className = 'text-graphite'>{item.label}</Text>
                                         </TouchableOpacity>
                                     )}

@@ -3,17 +3,14 @@
 import * as yup from 'yup';
 import { View, TextInput, TouchableOpacity,Text} from 'react-native';
 import {useFormik} from 'formik';
-import React from 'react';
+import React, { useState } from 'react';
 import ScrollDown from './scrolldown';
 import size from '../constants/sizes';
 import Checkbox from './CheckBox';
-import constants from '../constants/app';
-import showAlert from './alert';
 import { useSession } from '../context/ctx';
-import {File} from 'expo-file-system';
-import {fetch} from 'expo/fetch';
 import { saveItem } from '../apis/save';
 import { useItems } from '../context/itemsCtx';
+import AnimatedBag from './bouncingAnimation';
 
 const editSchema = yup.object().shape({
     name : yup.string()
@@ -43,6 +40,7 @@ type props = {
 
 function EditImage({onPress, uri} : props){
     const session = useSession();
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const itemContext = useItems();
     
     const formik = useFormik({
@@ -55,6 +53,7 @@ function EditImage({onPress, uri} : props){
         },
         validationSchema : editSchema,
         onSubmit : async (values, {resetForm}) => {
+            setIsLoading(true);
             await saveItem({
                 favorite : values.favorite,
                 name : values.name,
@@ -64,6 +63,7 @@ function EditImage({onPress, uri} : props){
                 onEnd : () => {
                     resetForm();
                     itemContext?.refreshItems();
+                    setIsLoading(false);
                 },
                 onChange : onPress,
                 uri : uri,
@@ -72,7 +72,9 @@ function EditImage({onPress, uri} : props){
         },
     });
 
-    return(
+    return isLoading ? (
+        <AnimatedBag />
+    ) : (
         <View className = "w-full justify-center items-center gap-4">
             {/* Page title */}
             <View className = "flex">
@@ -170,8 +172,8 @@ function EditImage({onPress, uri} : props){
                     </TouchableOpacity>
                 </View>
             </View>
-        </View> 
-    );  
+        </View>
+    );
 };
 
 export default EditImage;

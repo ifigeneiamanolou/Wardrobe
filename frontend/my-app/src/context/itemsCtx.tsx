@@ -8,6 +8,10 @@ export type WardrobeContext = {
     refreshItems : () => void;
     noItems : boolean;
     items : Item[];
+    colors : string[];
+    shops : string[];
+    sizes : string[];  
+    loading : boolean; 
 } | null;
 
 const ItemContext = createContext<WardrobeContext>(null);
@@ -25,10 +29,15 @@ export function useItems(){
 export function ItemProvider({children} : PropsWithChildren){
     const [items, setItems] = useState<Item[]>([])
     const [noItems, setNoItems] = useState<boolean>(true);
+    const [colors, setColors] = useState<string[]>([]);
+    const [shops, setShops] = useState<string[]>([]);
+    const [sizes, setSizes] = useState<string[]>([]);
     const session = useSession();
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const loadItems = async () => {
         setNoItems(false);
+        setIsLoading(true);
         await fetchItems({
             session : session,
             onEmpty : () => setNoItems(true),
@@ -49,22 +58,30 @@ export function ItemProvider({children} : PropsWithChildren){
                     color : dict['color'],
                     image : dict['image'].trim()
                 };
+                if(!(colors.includes(dict['color']))){
+                    setColors(colors.concat(dict['color']));
+                }
+                if(!(shops.includes(dict['shop']))){
+                    setShops(shops.concat(dict['shop']));
+                }
+                if(!(sizes.includes(dict['size']))){   
+                    setSizes(sizes.concat(dict['size']));
+                }
                 setItems(prev => [...prev, item]);
             }
         })
+        setIsLoading(false);
     }
-
-    useEffect(() => {
-        if(session?.session){
-            loadItems();
-        }
-    }, [session?.session])
 
     return(
         <ItemContext.Provider value = {{
             items : items,
             refreshItems : async () => await loadItems(),
             noItems : noItems,
+            shops : shops,
+            colors : colors,
+            sizes : sizes,
+            loading : isLoading
         }}>
             {children}
         </ItemContext.Provider>

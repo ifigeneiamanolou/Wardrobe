@@ -17,7 +17,6 @@ function Add(){
     const [flash, setFlash] = useState<FlashMode>('off');
     const cameraRef = useRef<CameraView>(null);
     const [showPopUp, setShowPopUp] = useState<boolean>(false);
-    const [fadeBackground, setFadeBackground] = useState<boolean>(false);
 
     useEffect(() => {
         requestPermission();
@@ -26,12 +25,10 @@ function Add(){
 
     const openPopUp = () => {
         setShowPopUp(!showPopUp);
-        setFadeBackground(!fadeBackground);
     };
 
     const closePopUp = () => {
         setShowPopUp(!showPopUp);
-        setFadeBackground(!fadeBackground);
         setImage("");
     };
 
@@ -154,7 +151,7 @@ function Add(){
             </View>
 
             {/* Pop up */}
-            <PopUp visible = {showPopUp} modalVisible = {fadeBackground}>
+            <PopUp visible = {showPopUp}>
                 <EditImage onPress = {closePopUp} uri = {image} />
             </PopUp>
         </View>

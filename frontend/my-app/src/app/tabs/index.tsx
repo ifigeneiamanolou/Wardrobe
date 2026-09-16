@@ -4,11 +4,13 @@ import Animated from 'react-native-reanimated';
 import { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
 import { useEffect, useState } from 'react';
 import { useSession } from '@/src/context/ctx';
-import { Item, Outfit } from '@/src/types/cards';
+import { Outfit } from '@/src/types/cards';
 import OutfitCard from '@/src/components/outfitCard';
 import ItemCard from '@/src/components/itemCard';
 import { fetchOutfits } from '@/src/apis/load';
+import LoadingDots from 'react-native-loading-dots';
 import { useItems } from '@/src/context/itemsCtx';
+import colors from '@/src/constants/colors';
 
 export default function Home() {
     const session = useSession();
@@ -18,6 +20,12 @@ export default function Home() {
     const [outfits, setOutfits] = useState<Outfit[]>([]);
     const [showItems, setShowItems] = useState<boolean>(true);
     const [noOutfits, setNoOutfits] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false); // outfits
+
+    useEffect(() => {
+        setShowItems(true);
+        itemsContext?.refreshItems();
+    }, []);
 
     const cleanupOutfits = () => {
         setOutfits([]);
@@ -51,12 +59,14 @@ export default function Home() {
             valueItems.value = withTiming(0, {duration : 700, easing : Easing.in(Easing.cubic)});
         };
         setShowItems(false);
+        setIsLoading(true);
         await fetchOutfits({
             onOutfitChunk : onOutfitChunk,
             cleanup : cleanupOutfits,
             session : session,
             onEmpty : () => setNoOutfits(true)
         });
+        setIsLoading(false);
     };
 
     const onSelectItems = async() => {
@@ -94,12 +104,22 @@ export default function Home() {
 
             {/* Elements */} 
             {showItems ?
-                (itemsContext?.noItems ? 
+                (itemsContext?.noItems ? (
                     <View className='flex-1 flex-grow p-4 justify-center items-center'>
                         <Text className = " text-dusty-rose font-bold text-xl ">
                             No items found
                         </Text> 
-                    </View> :
+                    </View>
+                ) : itemsContext?.loading ? (
+                    <View className='flex-1 h-12 justify-center items-center'>
+                        <LoadingDots
+                            dots = {3}
+                            colors = {[colors['Blush'], colors['Blush'], colors['Blush']]}
+                            size = {10}
+                            gap = {2}
+                        />
+                    </View>
+                ) : (
                     <FlatList
                         ItemSeparatorComponent={() => <View className = "h-2"/>}
                         data = {itemsContext?.items ?? []}
@@ -111,13 +131,23 @@ export default function Home() {
                         columnWrapperStyle = {{
                             justifyContent : 'space-between',
                         }}      
-                />) :
-                (noOutfits ? 
+                />)) :
+                (noOutfits ? (
                     <View className='flex-1 flex-grow p-4 justify-center items-center'>
                         <Text className = " text-dusty-rose font-bold text-xl ">
                             No outfits found
                         </Text> 
-                    </View> :
+                    </View>
+                ) : isLoading ? (
+                    <View className='flex-1 h-12 justify-center items-center'>
+                        <LoadingDots
+                            dots = {3}
+                            colors = {[colors['Blush'], colors['Blush'], colors['Blush']]}
+                            size = {10}
+                            gap = {2}
+                        />
+                    </View>
+                ) : (
                     <FlatList
                         ItemSeparatorComponent={<View className = "h-2"/>}              // Space between the rows
                         contentContainerStyle = {{padding : 10}}                        // Padding around the list
@@ -130,7 +160,7 @@ export default function Home() {
                             justifyContent : 'space-between'
                         }}       // Space between the columns
                     />
-                )}
+                ))}
         </View> 
     );
 }
