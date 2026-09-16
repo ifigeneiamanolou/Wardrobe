@@ -26,4 +26,8 @@ type User = {
     email : string;
 }
 
-export {Item, Outfit, User};
+interface DragPayload {
+    item : Item
+}
+
+export {Item, Outfit, User, DragPayload};

@@ -24,7 +24,7 @@ For the backend the following are used:
 The application is containerized fully using Docker. Instructions on running the application can be found in the "frontend" and "backend" folders of this repository
 
 ## Frontend features
-1) Custom animations and draggable elements using react-native-reanimated and react-gesture-handler to display pop ups and create outfits
+1) Custom animations and draggable elements using react-native-reanimated and react-gesture-handler to display pop ups and create outfits in a drag-and-drop fashion
 2) All routes are protected using an authentication context and a custom hook, storing all sensitive user information in expo-secure-store
 3) Custom consistent color pallette applied in the app
 4) Custom splash screen displayed when the frontend waits for a backend operation to finish such as an image upload
