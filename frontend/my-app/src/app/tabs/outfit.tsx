@@ -125,6 +125,7 @@ export default function Outfit() {
                                 x = {value.x}
                                 y = {value.y}
                                 removeItem={removeItem}
+                                key = {value.item._id}
                             />
                         ))
                     )}
