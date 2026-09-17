@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Image, TouchableOpacity, TextInput, Text } from "react-native";
+import { View, Image, TouchableOpacity, TextInput, Text , PermissionsAndroid} from "react-native";
 import { Item } from "../types/cards";
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import colors from "../constants/colors";
 import * as ImagePicker from 'expo-image-picker';
 import {captureRef} from 'react-native-view-shot';
 import showAlert from "./alert";
-import { Paths, File } from "expo-file-system";
 import * as yup from 'yup';
 import { useFormik } from "formik";
 import { saveOutfit } from "../apis/save";
@@ -80,32 +79,45 @@ export default function SubmitOutfit({images, dropZoneLayout, onBack} : props){
 
     const submit = async () => {
         // Take a screenshot
-        let localUri = "";
+        let localImage = "";
         try{
-            localUri = await captureRef(ImageView, {
+            localImage = await captureRef(ImageView, {
                 quality : 1,
                 height : dropZoneLayout.height * 0.9,
-                width : dropZoneLayout.width * 0.9
+                width : dropZoneLayout.width * 0.9,
+                format : "jpg",
+                result : 'data-uri'
             });
+            setImage(localImage);
         }catch(err){
-            console.log('Error', err);
-            showAlert('Error', 'Unable to take screenshot');
+            console.log('Error when taking the picture', err);
+            showAlert('Error', 'Unable to save the outfit');
             return;
         }
-        
-        // Save the screenshot in cache
-        const source = new File(localUri);
-        const dest = new File(Paths.cache, `outfit_${Date.now()}.jpg`);
-        await source.copy(dest);
-        setImage(dest.uri);
 
-        // Send the screenshot to the backend
-        formik.handleSubmit();
+        // Ask for permission
+        const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            {
+                title : 'Permission required',
+                message : 'Access to your storage is needed to save the outfit',
+                buttonNeutral : 'Ask me later',
+                buttonPositive : 'OK',
+                buttonNegative : 'Cancel'
+            }
+        )
+
+        if(granted == PermissionsAndroid.RESULTS.GRANTED){
+            formik.handleSubmit();
+        } else{
+            showAlert('Error', 'You must allow access to local storage. Go to settings!');
+            return;
+        }
     }
 
     return(
         <>{isLoading ? (
-            <View style = {{
+            <View className = "bg-blush" style = {{
                 height : outerLayout.height,
                 width : outerLayout.width,
                 transform : [

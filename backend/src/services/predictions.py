@@ -83,5 +83,5 @@ async def read_image(path : str):
     # Save the image
     processed_path = path.rsplit(".", 1)[0] + "_processed.png"
     output_image.save(processed_path)
-    img = cv2.imread(processed_path, cv2.IMREAD_COLOR)      # No transparency
+    img = cv2.imread(processed_path, cv2.IMREAD_COLOR)      
     return img, processed_path

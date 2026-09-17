@@ -74,8 +74,8 @@ export async function saveItem({favorite, name, size, shop, session, onEnd, onCh
 
 export async function saveOutfit({uri, items, title, description, favorite, session, onEnd} : saveOutfitProps){
     const form = new FormData();
-    const file = new File(uri);
     const favoriteNew = favorite ? "yes" : "no";
+    const file = new File(`file://${uri}`);
     form.append('favorite', favoriteNew);
     form.append('title', title);
     form.append('description', description);
@@ -101,6 +101,9 @@ export async function saveOutfit({uri, items, title, description, favorite, sess
         }
 
         if(!response.ok){
+            onEnd();
+            console.log(response.status);
+            console.log(response.body)
             showAlert('Error', 'Upload of outfit failed');
             return;
         };
@@ -108,8 +111,9 @@ export async function saveOutfit({uri, items, title, description, favorite, sess
         showAlert('Success', 'Outfit was uploaded');
     })
     .catch((err) => {
-        console.log("Upload error", err.details);
-        showAlert('Error', err.message);
+        console.log('Error when uploading the outfit', err);
+        showAlert('Error', 'Upload of outfit failed');
+        return;
     })
     .finally(() => {
         onEnd();

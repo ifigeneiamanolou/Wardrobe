@@ -420,3 +420,38 @@ async def delete_friend(client : MongoClient, user_id : str, username : str):
         raise DatabaseUnavailableError(exc) from exc
     except Exception as exc:
         raise DatabaseError() from exc
+
+async def save_outfit(
+    items : list[str], url : str, client : MongoClient, username : str,
+    name : str, favorite : str, description : str
+):
+    
+    payload = {
+        "_id" : str(uuid.uuid4()),
+        "name" : name,
+        "description" : description,
+        "items" : items,
+        "favorite" : favorite,
+        "username" : username,
+        "url" : url              # URL to the stored image in the S3 bucket
+    }
+        
+    try:
+        items_collection = client["Clothing"]["Outfits"]
+    
+        # Check if such an item exists
+        document_to_find = {"name" : name}
+        result = items_collection.find_one(document_to_find)
+        if result is not None:
+            raise ItemExists()
+    
+        # Insert the item in the database
+        result = items_collection.insert_one(payload)
+        return result.inserted_id
+    except ItemExists:
+        raise
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+    

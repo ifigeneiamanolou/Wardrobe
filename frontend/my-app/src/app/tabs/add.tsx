@@ -57,6 +57,16 @@ function Add(){
     };
 
     const takePicture = async () => {
+        if(!hasPermission){
+            showAlert('Error', 'You must grant permission to the camera. Go to settings!');
+            return;
+        }
+
+        if(!mediaPermission){
+            showAlert('Error', 'You must grant access to the media library. Go to settings!');
+            return;
+        }
+
         if(cameraRef.current){
             try{
                 const data = await cameraRef.current.takePictureAsync({

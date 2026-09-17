@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View, ScrollView, Image} from 'react-native';
+import { Text, TouchableOpacity, View, ScrollView} from 'react-native';
 import React, {useEffect, useState, useRef} from 'react';
 import { useItems } from '@/src/context/itemsCtx';
 import ItemCardSmall from '@/src/components/itemCardSmall';
@@ -90,12 +90,12 @@ export default function Outfit() {
     }
 
     // Submit the picture to the db
-    const submit = () => {
+    const submit = async () => {
         if (droppedImages.length < 2){
             showAlert('Error', 'At least 2 items are needed');
             return;
         }
-
+        
         setOpenSubmit(true);
     }
 
