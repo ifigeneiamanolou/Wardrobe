@@ -19,18 +19,3 @@ def load_clothing_item(
         price = price, 
         size = size
     )
-
-def load_outfit(
-    items : list[str] = Form(...),
-    file : UploadFile = File(...),
-    title : str = Form(...),
-    description : str = Form(...),
-    favorite : str = Form(...)
-) -> Outfit:
-    return Outfit(
-        file = file,
-        items = items,
-        description = description,
-        favorite = favorite,
-        title = title
-    )

@@ -42,6 +42,9 @@ function EditImage({onPress, uri} : props){
     const session = useSession();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const itemContext = useItems();
+
+    // Height of the popup to render the loading animation with the same height
+    const [height, setHeight] = useState<number>(0);  
     
     const formik = useFormik({
         initialValues : {
@@ -72,106 +75,114 @@ function EditImage({onPress, uri} : props){
         },
     });
 
-    return isLoading ? (
-        <AnimatedBag />
-    ) : (
-        <View className = "w-full justify-center items-center gap-4">
-            {/* Page title */}
-            <View className = "flex">
-                <Text className = "text-graphite font-bold text-2xl"> Image details </Text>
-            </View>
+    return (
+        <View className = "w-full">
+            {isLoading ? (
+                <View style = {{height : height}}>
+                    <AnimatedBag label='Wait for your image to be uploaded ...' />
+                </View>
+            ) : (
+                <View 
+                    className = "justify-center items-center gap-4"
+                    onLayout={(event) => setHeight(event.nativeEvent.layout.height)}>
+                    {/* Page title */}
+                    <View className = "flex">
+                        <Text className = "text-graphite font-bold text-2xl"> Image details </Text>
+                    </View>
 
-            {/* Form */}
-            <View className='flex flex-col w-full'>
-                <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
-                    <TextInput 
-                        placeholder='Name' 
-                        value={formik.values.name} 
-                        onChangeText={formik.handleChange('name')}
-                        onBlur={formik.handleBlur('name')}
-                        autoCapitalize='none'
-                        className = "flex-grow text-graphite ml-2"
+                    {/* Form */}
+                    <View className='flex flex-col w-full'>
+                        <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
+                            <TextInput 
+                                placeholder='Name' 
+                                value={formik.values.name} 
+                                onChangeText={formik.handleChange('name')}
+                                onBlur={formik.handleBlur('name')}
+                                autoCapitalize='none'
+                                className = "flex-grow text-graphite ml-2"
+                            />
+                        </View>
+                        {formik.errors.name && formik.touched.name && 
+                            <Text className='font-bold text-error mt-1 text-xs'>{formik.errors.name}</Text>
+                        }
+                    </View>
+
+                    <View className='flex flex-col w-full'>
+                        <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
+                            <TextInput 
+                                placeholder='Price' 
+                                value={String(formik.values.price)} 
+                                onChangeText={formik.handleChange('price')}
+                                keyboardType= 'number-pad'
+                                onBlur={formik.handleBlur('price')}
+                                autoCapitalize='none'
+                                className = "flex-grow text-graphite ml-2"
+                            />
+                        </View>
+                        {formik.errors.price && formik.touched.price && 
+                            <Text className='font-bold text-error mt-1 text-xs'>{formik.errors.price}</Text>
+                        }
+                    </View>
+
+                    <View className='flex flex-col w-full'>
+                        <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
+                            <TextInput 
+                                placeholder='Shop' 
+                                value={formik.values.shop} 
+                                onChangeText={formik.handleChange('shop')}
+                                autoCapitalize='none'
+                                onBlur={formik.handleBlur('shop')}
+                                className = "flex-grow text-graphite ml-2"
+                            />
+                        </View>
+                        {formik.errors.shop && formik.touched.shop && 
+                            <Text className='font-bold text-error mt-1 text-xs'>{formik.errors.shop}</Text>
+                        }
+                    </View>
+
+                    {/* Scrolldown */}
+                    <ScrollDown 
+                        data = {data} 
+                        onChange = {
+                            (value : string) => {formik.setFieldValue("size", value)} 
+                        }
+                        placeholder = "Select size"
                     />
-                </View>
-                {formik.errors.name && formik.touched.name && 
-                    <Text className='font-bold text-error mt-1 text-xs'>{formik.errors.name}</Text>
-                }
-            </View>
 
-            <View className='flex flex-col w-full'>
-                <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
-                    <TextInput 
-                        placeholder='Price' 
-                        value={String(formik.values.price)} 
-                        onChangeText={formik.handleChange('price')}
-                        keyboardType= 'number-pad'
-                        onBlur={formik.handleBlur('price')}
-                        autoCapitalize='none'
-                        className = "flex-grow text-graphite ml-2"
+                    {/* Toggle */}
+                    <Checkbox 
+                        label = "Favorite"
+                        onPress = { () => {
+                            formik.setFieldValue(
+                                "favorite",
+                                !formik.values.favorite
+                            )
+                        }}
+                        isChecked = {formik.values.favorite}
                     />
+
+                    {/* Bottom navigation buttons */}
+                    <View className = "flex flex-row items-center justify-around mx-4 gap-4">
+                        <View>
+                            <TouchableOpacity 
+                                className='flex bg-rose rounded-lg items-center justify-center p-4' 
+                                onPress = {onPress}> 
+                                <Text className='font-bold text-white' > Back </Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View className='py-4'>
+                            <TouchableOpacity 
+                                className='flex bg-rose rounded-lg items-center justify-center p-4' 
+                                onPress = {() => formik.handleSubmit()}> 
+                                <Text className='font-bold text-white' > 
+                                    {formik.isSubmitting ? 'Uploading ...' : 'Continue' }
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
-                {formik.errors.price && formik.touched.price && 
-                    <Text className='font-bold text-error mt-1 text-xs'>{formik.errors.price}</Text>
-                }
-            </View>
-
-            <View className='flex flex-col w-full'>
-                <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
-                    <TextInput 
-                        placeholder='Shop' 
-                        value={formik.values.shop} 
-                        onChangeText={formik.handleChange('shop')}
-                        autoCapitalize='none'
-                        onBlur={formik.handleBlur('shop')}
-                        className = "flex-grow text-graphite ml-2"
-                    />
-                </View>
-                {formik.errors.shop && formik.touched.shop && 
-                    <Text className='font-bold text-error mt-1 text-xs'>{formik.errors.shop}</Text>
-                }
-            </View>
-
-            {/* Scrolldown */}
-            <ScrollDown 
-                data = {data} 
-                onChange = {
-                    (value : string) => {formik.setFieldValue("size", value)} 
-                }
-                placeholder = "Select size"
-            />
-
-            {/* Toggle */}
-            <Checkbox 
-                label = "Favorite"
-                onPress = { () => {
-                    formik.setFieldValue(
-                        "favorite",
-                        !formik.values.favorite
-                    )
-                }}
-                isChecked = {formik.values.favorite}
-            />
-
-            {/* Bottom navigation buttons */}
-            <View className = "flex flex-row items-center justify-around mx-4 gap-4">
-                <View>
-                    <TouchableOpacity 
-                        className='flex bg-rose rounded-lg items-center justify-center p-4' 
-                        onPress = {onPress}> 
-                        <Text className='font-bold text-white' > Back </Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View className='py-4'>
-                    <TouchableOpacity 
-                        className='flex bg-rose rounded-lg items-center justify-center p-4' 
-                        onPress = {() => formik.handleSubmit()}> 
-                        <Text className='font-bold text-white' > 
-                            {formik.isSubmitting ? 'Uploading ...' : 'Continue' }
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+            )}
         </View>
     );
 };

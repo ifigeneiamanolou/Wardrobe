@@ -35,16 +35,13 @@ const schema = yup.object().shape({
 export default function SubmitOutfit({images, dropZoneLayout, onBack} : props){
     const [permission, requestPermission] = ImagePicker.useMediaLibraryPermissions();
     const ImageView = useRef<View>(null);
-    const [image, setImage] = useState<string>('');
+    const image = useRef<string>('');           // with useState '' is passed as there is no time for a rerender
     const [boxLayout, setBoxLayout] = useState({
         x : 0, y : 0, height : 0, width : 0
     });         // Used to position the like button
     const [widthIcon, setWidthIcon] = useState<number>(0);
     const session = useSession();
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [outerLayout, setOuterLayout] = useState({
-        x : 0, y : 0, height : 0, width : 0
-    });         // Used to render the animation
 
     const formik = useFormik({
         validationSchema : schema,
@@ -56,7 +53,7 @@ export default function SubmitOutfit({images, dropZoneLayout, onBack} : props){
         onSubmit : async(values, {resetForm}) => {
             setIsLoading(true);
             await saveOutfit({
-                uri : image,
+                image : image.current,
                 items : images.map((v) => v.item),
                 title : values.title,
                 description : values.description,
@@ -79,57 +76,36 @@ export default function SubmitOutfit({images, dropZoneLayout, onBack} : props){
 
     const submit = async () => {
         // Take a screenshot
-        let localImage = "";
         try{
-            localImage = await captureRef(ImageView, {
+            const localImage = await captureRef(ImageView, {
                 quality : 1,
                 height : dropZoneLayout.height * 0.9,
                 width : dropZoneLayout.width * 0.9,
                 format : "jpg",
-                result : 'data-uri'
+                result : 'base64'
             });
-            setImage(localImage);
+            image.current = localImage;
+            formik.handleSubmit();
         }catch(err){
             console.log('Error when taking the picture', err);
             showAlert('Error', 'Unable to save the outfit');
-            return;
-        }
-
-        // Ask for permission
-        const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-            {
-                title : 'Permission required',
-                message : 'Access to your storage is needed to save the outfit',
-                buttonNeutral : 'Ask me later',
-                buttonPositive : 'OK',
-                buttonNegative : 'Cancel'
-            }
-        )
-
-        if(granted == PermissionsAndroid.RESULTS.GRANTED){
-            formik.handleSubmit();
-        } else{
-            showAlert('Error', 'You must allow access to local storage. Go to settings!');
-            return;
         }
     }
 
     return(
         <>{isLoading ? (
-            <View className = "bg-blush" style = {{
-                height : outerLayout.height,
-                width : outerLayout.width,
-                transform : [
-                    {translateX : outerLayout.x},
-                    {translateY : outerLayout.y}
-                ]
-            }}>
-                <AnimatedBag />
+            <View 
+                className = "bg-white" 
+                style = {{
+                    height : boxLayout.height,
+                    width : boxLayout.width
+                }}
+            >
+                <AnimatedBag label = "Wait for your outfit to be uploaded ..."/>
             </View>
         ) : (
             <View 
-                className="flex flex-col w-full justify-center items-center gap-4" 
+                className="flex flex-col w-full justify-center items-center gap-4 bg-blush" 
                 onLayout={(event) => {
                     setBoxLayout(event.nativeEvent.layout);
                 }}

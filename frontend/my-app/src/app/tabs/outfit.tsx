@@ -100,7 +100,11 @@ export default function Outfit() {
     }
 
     const closeSubmit = () => {
+        // Close the pop up
         setOpenSubmit(false);
+
+        // Reset the dropped images
+        setDroppedImages([]);       
     }
 
     // Callback when an item is successfully added to the drop pane

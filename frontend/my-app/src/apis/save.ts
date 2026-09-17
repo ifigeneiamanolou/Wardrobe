@@ -18,7 +18,7 @@ type saveProps = {
 }
 
 type saveOutfitProps = {
-    uri : string;       // outfit image
+    image : string;       // base64 encoded outfit image
     items : Item[];
     title : string;
     description : string;
@@ -72,25 +72,23 @@ export async function saveItem({favorite, name, size, shop, session, onEnd, onCh
     })
 }
 
-export async function saveOutfit({uri, items, title, description, favorite, session, onEnd} : saveOutfitProps){
-    const form = new FormData();
-    const favoriteNew = favorite ? "yes" : "no";
-    const file = new File(`file://${uri}`);
-    form.append('favorite', favoriteNew);
-    form.append('title', title);
-    form.append('description', description);
-    form.append('file', file);
-    items.forEach((v) => {
-        form.append('items', v._id)
+export async function saveOutfit({image, items, title, description, favorite, session, onEnd} : saveOutfitProps){
+    const url = `${constants.BACKEND_URL}/save/outfit`;
+    const body = JSON.stringify({
+        image : image,
+        items : items.map((v) => (v._id)),
+        title : title,
+        description : description,
+        favorite : favorite ? 'yes' : 'no'
     });
 
-    const url = `${constants.BACKEND_URL}/save/outfit`;
     const requestObj = {
         method : "POST",
         headers : {
-            "Authorization" : `Bearer ${session?.session}`
+            "Authorization" : `Bearer ${session?.session}`,
+            "Content-Type": "application/json"
         },
-        body : form
+        body : body
     };
 
     return fetch(url, requestObj)

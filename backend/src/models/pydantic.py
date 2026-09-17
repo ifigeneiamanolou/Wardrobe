@@ -59,11 +59,10 @@ class requestData(BaseModel):
     username : str
 
 class Outfit(BaseModel):
-    file : UploadFile
+    image : str
     items : list[str]
     title : str
     description : str
     favorite : str
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
