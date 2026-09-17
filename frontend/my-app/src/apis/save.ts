@@ -3,6 +3,7 @@ import {File} from 'expo-file-system';
 import {fetch} from 'expo/fetch';
 import showAlert from "../components/alert";
 import constants from "../constants/app";
+import { Item } from "../types/cards";
 
 type saveProps = {
     favorite : boolean;
@@ -14,6 +15,14 @@ type saveProps = {
     price : number;
     onEnd : () => void;
     onChange : () => void;
+}
+
+type saveOutfitProps = {
+    uri : string;       // outfit image
+    items : Item[];
+    title : string;
+    description : string;
+    favorite : boolean;
 }
 
 export async function saveItem({favorite, name, size, shop, session, onEnd, onChange, uri, price} : saveProps){
@@ -61,3 +70,6 @@ export async function saveItem({favorite, name, size, shop, session, onEnd, onCh
     })
 }
 
+export async function saveOutfit({uri, items, title, description, favorite} : saveOutfitProps){
+
+}

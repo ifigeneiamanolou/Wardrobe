@@ -105,7 +105,7 @@ export async function login({username, password, onEnd, session} : changePasswor
     })
     .catch((err) => {
         console.log("Log in error", err);
-        showAlert('Error', err.message);
+        showAlert('Error', 'Login failed');
     })
     .finally(() => {
         onEnd();

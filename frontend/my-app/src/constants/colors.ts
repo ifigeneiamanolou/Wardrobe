@@ -14,6 +14,7 @@ const colors = {
   "Info": "#5b9bd5",
   "link": "#5b9bd5",
   "Light red" : "#f46860",
+  
 }
 
 export default colors;

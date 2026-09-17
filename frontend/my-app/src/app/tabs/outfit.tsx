@@ -9,6 +9,8 @@ import SettingsFilter from '@/src/components/settingsFilter';
 import {GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Item } from '@/src/types/cards';
 import ItemCardZoom from '@/src/components/itemCardZoom';
+import showAlert from '@/src/components/alert';
+import SubmitOutfit from '@/src/components/submitOutfit';
 
 const typesList = [
     'Top',
@@ -32,7 +34,10 @@ export default function Outfit() {
     const [dragLayout, setDragLayout] = useState({
         x : 0, y : 0, height : 0, width : 0
     });
+
+    // Popups
     const [openPopUp, setOpenPopUp] = useState<boolean>(false);
+    const [openSubmit, setOpenSubmit] = useState<boolean>(false);
 
     // Filters
     const [selectedType, setSelectedType] = useState<Categories>({type : 'Top'});
@@ -43,7 +48,7 @@ export default function Outfit() {
 
     // Drag and drop
     const [droppedImages, setDroppedImages] = useState<{
-        item : Item, x : number, y : number}[]>([]);
+        item : Item, x : number, y : number, scale : number}[]>([]);
     const [dropZoneLayout, setDropZoneLayout] = useState({
         x : 0, y : 0, height : 0, width : 0
     });
@@ -86,12 +91,27 @@ export default function Outfit() {
 
     // Submit the picture to the db
     const submit = () => {
-        // LOADING STATE WITH ANIMATION
+        if (droppedImages.length < 2){
+            showAlert('Error', 'At least 2 items are needed');
+            return;
+        }
+
+        setOpenSubmit(true);
+    }
+
+    const closeSubmit = () => {
+        setOpenSubmit(false);
     }
 
     // Callback when an item is successfully added to the drop pane
     const handleSuccessDrag = (item : Item, x : number, y : number) => {
-        setDroppedImages(prev => [...prev, {item, x, y}]);
+        setDroppedImages(prev => [...prev, {item, x, y, scale : 1}]);
+    }
+
+    const updateTransform = (id : string, scale : number) => {
+        setDroppedImages(prev => prev.map(d => 
+            d.item._id === id ? {...d, scale} : d
+        ))
     }
 
     const removeItem = (id : string) => {
@@ -103,7 +123,7 @@ export default function Outfit() {
             <View className='flex-1 bg-white p-2'>
                 {/* Main outfit pane */}
                 <View
-                ref = {dropZoneRef}
+                    ref = {dropZoneRef}
                     style = {{
                         height : dragLayout.y - 25,
                         width : dragLayout.width
@@ -126,6 +146,7 @@ export default function Outfit() {
                                 y = {value.y}
                                 removeItem={removeItem}
                                 key = {value.item._id}
+                                updateTransform = {updateTransform}
                             />
                         ))
                     )}
@@ -208,9 +229,7 @@ export default function Outfit() {
                                     selectedType.type == value.category
                                 ))
                                 .filter((value) => (
-                                    !(value._id in droppedImages.map((value => (
-                                        value.item._id
-                                    ))))
+                                    !droppedImages.some((dropped) => dropped.item._id === value._id)
                                 ))
                                 .map((value) => (
                                     <ItemCardSmall 
@@ -224,11 +243,25 @@ export default function Outfit() {
                         </ScrollView>
 
                         {/* Settings pop up */}
-                        <PopUp visible = {openPopUp}>
+                        <PopUp visible = {openPopUp} background={colors['White']}>
                             <SettingsFilter 
                                 onSubmit={onSubmit} 
-                                onClear={onClear}>
-                            </SettingsFilter>
+                                onClear={onClear}
+                            />
+                        </PopUp>
+
+                        {/* Submit popup */}
+                        <PopUp visible = {openSubmit} background={colors['Blush']}>
+                            <SubmitOutfit
+                                images = {droppedImages.map((value) => ({
+                                    item : value.item,
+                                    translationX : value.x - dropZoneLayout.x,
+                                    translationY : value.y - dropZoneLayout.y,
+                                    scale : value.scale
+                                }))}
+                                dropZoneLayout={dropZoneLayout}
+                                onBack={closeSubmit}
+                            />
                         </PopUp>
                     </View>
                 </View>

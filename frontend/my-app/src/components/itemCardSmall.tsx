@@ -9,7 +9,7 @@ import Animated from "react-native-reanimated";
 
 type props = {
     item : Item;
-    dropZoneLayout : any;
+    dropZoneLayout : {x : number, y : number, height : number, width : number};
     handleSuccessDrag : (item : Item, x : number, y : number) => void;
 }
 

@@ -151,7 +151,7 @@ function Add(){
             </View>
 
             {/* Pop up */}
-            <PopUp visible = {showPopUp}>
+            <PopUp visible = {showPopUp} background={colors['White']}>
                 <EditImage onPress = {closePopUp} uri = {image} />
             </PopUp>
         </View>

@@ -23,4 +23,5 @@ The app can be previewed using Expo Go (built for Expo 57).
 # to do
 1) centralize all exceptions coming from the backend
 2) fix the loading bag animation in the log in page, the add page, and the new outfit page
+3) fix the boundaries in the drag and drop (some what working)
 

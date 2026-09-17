@@ -9,11 +9,12 @@ import { Dimensions } from "react-native";
 type Props = {
   visible: boolean;             // Controls the popup
   children: React.ReactNode;
+  background : string;
 };
 
 const {width, height} = Dimensions.get("window");
 
-const PopUp = ({ visible, children}: Props) => {
+const PopUp = ({ visible, children, background}: Props) => {
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(width * 0.35);
@@ -80,7 +81,10 @@ const PopUp = ({ visible, children}: Props) => {
       onRequestClose={() => {}}
     >
       <View className="flex-1 justify-center items-center bg-graphite/50">
-        <Animated.View className="w-[90%] rounded-2xl bg-white p-5" style = {style}>
+        <Animated.View 
+          className="w-[90%] rounded-2xl p-4" 
+          style = {[style, {backgroundColor : background}]}
+        >
           {children}
         </Animated.View>
       </View>

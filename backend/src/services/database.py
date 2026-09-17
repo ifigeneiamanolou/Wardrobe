@@ -27,7 +27,7 @@ async def load_cluster(retries : int = 10, delay : int = 3):
             yield client
             return
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-            print(f"Attempt {i}/{retries}")
+            print(f"Attempt {i}/{retries} to connect to db")
             if i < retries:
                 time.sleep(delay)
     raise RuntimeError("Cound not connect to mongoDB server")
