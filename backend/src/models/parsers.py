@@ -1,9 +1,10 @@
-from src.models.pydantic import ClothingItem
+from src.models.pydantic import ClothingItem, Outfit
 from typing import Optional, Literal
 from fastapi import Form, UploadFile, File
 
 def load_clothing_item(
-    name : str = Form(...),   # inform the backend to parse from multipart/form-data instead of query parameters
+    # inform the backend to parse from multipart/form-data instead of query parameters
+    name : str = Form(...),   
     shop : str = Form(...),
     price : str = Form(...),
     file : UploadFile = File(...),
@@ -17,4 +18,19 @@ def load_clothing_item(
         shop = shop, 
         price = price, 
         size = size
+    )
+
+def load_outfit(
+    items : list[str] = Form(...),
+    file : UploadFile = File(...),
+    title : str = Form(...),
+    description : str = Form(...),
+    favorite : str = Form(...)
+) -> Outfit:
+    return Outfit(
+        file = file,
+        items = items,
+        description = description,
+        favorite = favorite,
+        title = title
     )

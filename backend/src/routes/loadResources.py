@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from src.services.authentication import get_current_user
 from src.services.database import load_cluster, load_outfits_items, find_all_users, find_requests
-from src.services.formatOutput import format_output_items, format_user_output, format_image, format_output_outfit
+from src.services.formatOutput import format_output_items, format_user_output, format_image, format_output_outfits
 from src.exceptions.database import DatabaseError, DatabaseUnavailableError, NoRequestsError
 from src.models.pydantic import User
 from pymongo import MongoClient

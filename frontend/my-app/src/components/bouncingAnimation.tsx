@@ -122,7 +122,10 @@ export default function AnimatedBag(){
 
     return(
         <View className = "flex-1 justify-center align-middle">
-            <Animated.Image style = {stylesheet}
+            <Animated.Image style = {[stylesheet, {
+                height : 10,
+                width : 'auto'
+            }]}
                 source = {require("../../assets/animations/layerCopy.png")}
             />
         </View>
