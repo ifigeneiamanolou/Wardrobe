@@ -20,6 +20,21 @@ async def format_output_items(results : list):
         }
         yield json.dumps(data) + '\n'   # Use a line separator to denote the end of an image stream
 
+async def format_output_outfits(results : list):
+    for result in results:
+        image = await load_photo(result['url'])
+        b = base64.b64encode(bytes(image))
+        b64_image = b.decode('utf-8')
+        data = {
+            "_id" : result['_id'],
+            "image" : b64_image,
+            "name" : result['name'],
+            "favorite" : result['favorite'],
+            "description" : result['description'],
+            "items" : result['items']
+        }
+        yield json.dumps(data) + '\n'   # Use a line separator to denote the end of an image stream
+
 async def format_user_output(results : list):
     for index, result in enumerate(results):
         if 'image' not in result.keys():

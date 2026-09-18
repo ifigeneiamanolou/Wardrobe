@@ -30,6 +30,8 @@ The app can be previewed using Expo Go (built for Expo 57).
 7) Make a feature of viewing only the liked items
 8) Make the feed
 9) Add username on outfit when something is saved from the feed 
+10) fix the splash image, app icon etc
+
 
 # plus 
 1) activate redis for all heavy tasks

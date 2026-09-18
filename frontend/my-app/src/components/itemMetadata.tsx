@@ -109,6 +109,8 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                     {!editShop ?
                         <Text className="text-white flex-grow"> {shopValue} </Text>: 
                         <TextInput 
+                            placeholderTextColor={colors['Graphite']}
+                            cursorColor={colors['Graphite']}
                             className = "text-white border border-white rounded-lg mx-3 px-1 h-7 flex-grow"
                             value = {shopValue}
                             style = {{paddingVertical : 5}}
@@ -142,6 +144,8 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                         <TextInput 
                             className = "text-white border border-white rounded-lg px-1 mx-3 h-7 flex-grow"
                             value = {sizeValue}
+                            cursorColor={colors['Graphite']}
+                            placeholderTextColor={colors['Graphite']}
                             onChangeText = {onChangeSize}
                             style = {{paddingVertical : 5}}
                             onSubmitEditing = {() => submit({
@@ -173,6 +177,8 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                         <TextInput 
                             className = "text-white border border-white rounded-lg px-1 h-7 mx-3 flex-grow"
                             value = {priceValue}
+                            cursorColor={colors['Graphite']}
+                            placeholderTextColor={colors['Graphite']}
                             style = {{paddingVertical : 5}}
                             onChangeText = {onChangePrice}
                             inputMode="numeric"
@@ -205,6 +211,8 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                         <TextInput 
                             className = "text-white border border-white rounded-lg px-1 mx-3 h-7 flex-grow"
                             value = {categoryValue}
+                            cursorColor={colors['Graphite']}
+                            placeholderTextColor={colors['Graphite']}
                             onChangeText = {onChangeCategory}
                             style = {{paddingVertical : 5}}
                             onSubmitEditing = {() => submit({
@@ -236,6 +244,8 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                         <TextInput 
                             className = "text-white border border-white rounded-lg px-1 h-7 mx-3 flex-grow"
                             value = {colorValue}
+                            placeholderTextColor={colors['Graphite']}
+                            cursorColor={colors['Graphite']}
                             onChangeText = {onChangeColor}
                             style = {{paddingVertical : 5}}
                             onSubmitEditing = {() => submit({

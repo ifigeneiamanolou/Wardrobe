@@ -3,16 +3,17 @@ import { View, TextInput, TouchableOpacity, Text} from 'react-native';
 import { useFormik } from 'formik';
 import { Link } from 'expo-router';
 import * as yup from 'yup';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import '../../global.css';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import colors from '../constants/colors';
 import { login } from '../apis/auth';
-// import {
-//   GoogleSignin,
-//   statusCodes,
-// } from "@react-native-google-signin/google-signin";
+import {
+  GoogleSignin,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
+import showAlert from '../components/alert';
 import { useSession } from '../context/ctx';
 import AnimatedBag from '../components/bouncingAnimation';
 
@@ -24,12 +25,12 @@ const LoginSchema = yup.object().shape({
 });
 
 export default function Login(){
-    // useEffect(() => {
-    //     GoogleSignin.configure({
-    //         webClientId : "557827216767-er77mu4c9vivgv1ln9g8020e6vb2m3f5.apps.googleusercontent.com",
-    //         offlineAccess : true
-    //     });
-    // }, []);
+    useEffect(() => {
+        GoogleSignin.configure({
+            webClientId : "557827216767-er77mu4c9vivgv1ln9g8020e6vb2m3f5.apps.googleusercontent.com",
+            offlineAccess : true
+        });
+    }, []);
     
     const session = useSession();
     const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
@@ -56,26 +57,26 @@ export default function Login(){
         }
     });
 
-    const googleLog = async () => {
-        // try{
-        //     // Check play services
-        //     await GoogleSignin.hasPlayServices();
+    const googleLogIn = async () => {
+        try{
+            // Check play services
+            await GoogleSignin.hasPlayServices();
 
-        //     // Sign in
-        //     const userInfo = await GoogleSignin.signIn();
-        //     console.log("User Info:", userInfo);
-        // } catch (err : any){
-        //     console.log('Google sign in error, ', err);
-        //     if(err.code == statusCodes.SIGN_IN_CANCELLED){
-        //         showAlert('Canceled', 'User sign in cancelled');
-        //     } else if (err.code == statusCodes.PLAY_SERVICES_NOT_AVAILABLE){
-        //         showAlert('Not available', 'Google play services not available');
-        //     } else if (err.code == statusCodes.IN_PROGRESS){
-        //         showAlert('In progress', 'Sign in already in progress');
-        //     } else {
-        //         showAlert('Error', err.message);
-        //     }
-        // }
+            // Sign in
+            const userInfo = await GoogleSignin.signIn();
+            console.log("User Info:", userInfo);
+        } catch (err : any){
+            console.log('Google sign in error, ', err);
+            if(err.code == statusCodes.SIGN_IN_CANCELLED){
+                showAlert('Canceled', 'User sign in cancelled');
+            } else if (err.code == statusCodes.PLAY_SERVICES_NOT_AVAILABLE){
+                showAlert('Not available', 'Google play services not available');
+            } else if (err.code == statusCodes.IN_PROGRESS){
+                showAlert('In progress', 'Sign in already in progress');
+            } else {
+                showAlert('Error', err.message);
+            }
+        }
     };
 
     return(
@@ -101,6 +102,8 @@ export default function Login(){
                                     defaultValue={formik.values.username} 
                                     onChangeText={formik.handleChange('username')}
                                     autoCapitalize='none'
+                                    placeholderTextColor={colors['Graphite']}
+                                    cursorColor={colors['Graphite']}
                                     className = "flex-grow text-graphite ml-2"
                                 />
                             </View>
@@ -118,6 +121,8 @@ export default function Login(){
                                     onChangeText={formik.handleChange('password')}
                                     secureTextEntry={!isPasswordVisible}
                                     autoCapitalize='none'
+                                    placeholderTextColor={colors['Graphite']}
+                                    cursorColor={colors['Graphite']}
                                     className = "flex-grow text-graphite ml-2"
                                 />
                                 <TouchableOpacity onPress={togglePassword}>
@@ -162,7 +167,7 @@ export default function Login(){
                         <View className='flex flex-col gap-4'>
                             <TouchableOpacity 
                                 className='flex flex-row border border-slate-gray rounded-lg items-center justify-center py-4' 
-                                onPress = {() => googleLog()}
+                                onPress = {() => googleLogIn()}
                             > 
                                 <Ionicon name="logo-google" color={colors['Graphite']} size={24} />
                                 <Text className='font-bold text-graphite' > Log in with Google </Text>

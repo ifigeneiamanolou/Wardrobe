@@ -30,6 +30,7 @@ export default function ItemCard({outfit} : props){
                         _id = {outfit._id}
                         onFlip = {flip}
                         saved = {false}     // CONDITIONAL !!!!!!!!
+                        database = "Outfits"
                     />
                 }
                 reguralContent = {

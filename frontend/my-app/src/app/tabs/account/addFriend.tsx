@@ -75,7 +75,9 @@ export default function AddFriend(){
                     className = "flex-grow p-2"
                     placeholder = "Type a username"
                     value = {searchItem ?? ''}
+                    cursorColor={colors['Graphite']}
                     onChangeText = {handleChange}
+                    placeholderTextColor={colors['Graphite']}
                 />
                 <TouchableOpacity onPress={() => handleChange("")}>
                     <Ionicon 

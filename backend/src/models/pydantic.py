@@ -10,7 +10,13 @@ class User(BaseModel):
     email : str
     name : str 
     image : Optional[str] = None
+
+class NewUser(BaseModel):
+    username : str
+    email : str
+    name : str 
     push_token : str
+    password : str
 
 class UserDetails(BaseModel):
     name : Optional[str] = None

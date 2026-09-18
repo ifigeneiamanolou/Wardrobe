@@ -8,10 +8,9 @@ import { Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import colors from '../constants/colors';
 import { signup } from '../apis/auth';
-// import * as Notifications from 'expo-notifications';
+import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import showAlert from "../components/alert";
-import { useSession } from '../context/ctx';
 
 const SignUpSchema = yup.object().shape({
     name : yup.string().
@@ -41,7 +40,6 @@ const SignUpSchema = yup.object().shape({
 export default function signUp(){
     const [visible, setVisible] = useState(false);
     const [newVisible, setNewVisible] = useState(false);
-    const session = useSession();
 
     const formik = useFormik({
         initialValues : {
@@ -53,13 +51,9 @@ export default function signUp(){
         },
         validationSchema : SignUpSchema,
         onSubmit : async (values, {resetForm}) => {
+            // Register the user for notifications
             const {passwordNew, ...data} = values;
-            let tokenInput = "";
-
-            // // Register the user for notifications
-            // registerForPushNotifications()
-            // .then(token => {tokenInput = token ?? ""})
-            // .then(token => console.log('EXPO PUSH TOKEN:', token));
+            const tokenInput = await registerForPushNotifications() ?? '';
 
             // Perform the sign up
             await signup({
@@ -73,49 +67,49 @@ export default function signUp(){
         },
     });
 
-    // const registerForPushNotifications = async() => {
-    //     // Used to attribute a push token to the specific project
-    //     const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? 
-    //                       Constants?.easConfig?.projectId;
+    const registerForPushNotifications = async() => {
+        // Used to attribute a push token to the specific project
+        const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? 
+                          Constants?.easConfig?.projectId;
     
-    //     // Configure a notification channel
-    //     await Notifications.setNotificationChannelAsync('Default', {
-    //         name : 'Default',
-    //         importance : Notifications.AndroidImportance.DEFAULT,
-    //         vibrationPattern : [0, 250, 250, 250],  // vibrate, pause, vibrate, pause (ms)
-    //         lightColor: '#FF231F7C'
-    //     })
+        // Configure a notification channel
+        await Notifications.setNotificationChannelAsync('Default', {
+            name : 'Default',
+            importance : Notifications.AndroidImportance.DEFAULT,
+            vibrationPattern : [0, 250, 250, 250],  // vibrate, pause, vibrate, pause (ms)
+            lightColor: '#FF231F7C'
+        })
     
-    //     // Check current permissions
-    //     const {status : existingStatus} = await Notifications.getPermissionsAsync()
-    //     let finalStatus = existingStatus
+        // Check current permissions
+        const {status : existingStatus} = await Notifications.getPermissionsAsync()
+        let finalStatus = existingStatus
     
-    //     // Request permission if not granted
-    //     if(finalStatus !== 'granted'){
-    //         const {status} = await Notifications.requestPermissionsAsync();
-    //         finalStatus = status;
-    //         if(status !== 'granted'){
-    //             showAlert('Attention', "You won't be able to receive notifications!");
-    //             const {status} = await Notifications.requestPermissionsAsync();
-    //             finalStatus = status;
-    //         }
-    //     }
+        // Request permission if not granted
+        if(finalStatus !== 'granted'){
+            const {status} = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+            if(status !== 'granted'){
+                showAlert('Attention', "You won't be able to receive notifications!");
+                const {status} = await Notifications.requestPermissionsAsync();
+                finalStatus = status;
+            }
+        }
     
-    //     if(!projectId){
-    //         showAlert('Attention', 'Project id not found');
-    //         return;
-    //     }
+        if(!projectId){
+            showAlert('Attention', 'Project id not found');
+            return;
+        }
     
-    //     try{
-    //         const pushToken = (await Notifications.getExpoPushTokenAsync({
-    //             projectId : projectId
-    //         })).data;
-    //         return pushToken;
-    //     } catch (err){
-    //         console.log('Failed to generate push token : ', err);
-    //         showAlert('Error', 'Failed to activate notifications');
-    //     }
-    // }
+        try{
+            const pushToken = (await Notifications.getExpoPushTokenAsync({
+                projectId : projectId
+            })).data
+            return pushToken;
+        } catch (err){
+            console.log('Failed to generate push token : ', err);
+            showAlert('Error', 'Failed to activate notifications');
+        }
+    }
 
     return(
         <SafeAreaView className = 'flex-1 bg-white'>
@@ -142,7 +136,9 @@ export default function signUp(){
                                 value = {formik.values.name}
                                 onBlur = {formik.handleBlur('name')}
                                 placeholder='Name'
+                                cursorColor={colors['Graphite']}
                                 className = "flex-grow text-graphite ml-2"
+                                placeholderTextColor={colors['Graphite']}
                             />
                         </View>
                         {formik.errors.name && formik.touched.name && 
@@ -158,7 +154,9 @@ export default function signUp(){
                                 value = {formik.values.username}
                                 onBlur = {formik.handleBlur('username')}
                                 placeholder='Username'
+                                cursorColor={colors['Graphite']}
                                 className = "flex-grow text-graphite ml-2"
+                                placeholderTextColor={colors['Graphite']}
                             />
                         </View>
                         {formik.errors.username && formik.touched.username && 
@@ -174,7 +172,9 @@ export default function signUp(){
                                 value = {formik.values.email}
                                 onBlur = {formik.handleBlur('email')}       // Inform formik the field was touched
                                 placeholder='Email'
+                                cursorColor={colors['Graphite']}
                                 className = "flex-grow text-graphite ml-2"
+                                placeholderTextColor={colors['Graphite']}
                             />
                         </View>
                         {formik.errors.email && formik.touched.email && 
@@ -191,7 +191,9 @@ export default function signUp(){
                                 placeholder='Password'
                                 onBlur = {formik.handleBlur('password')}
                                 secureTextEntry={!visible}
+                                cursorColor={colors['Graphite']}
                                 className='flex-grow text-graphite ml-2'
+                                placeholderTextColor={colors['Graphite']}
                             />
                             <Ionicon 
                                 name = {visible ? "eye" : "eye-off"} 
@@ -215,6 +217,8 @@ export default function signUp(){
                                 value = {formik.values.passwordNew}
                                 placeholder='Retype password'
                                 secureTextEntry={!newVisible}
+                                cursorColor={colors['Graphite']}
+                                placeholderTextColor={colors['Graphite']}
                             />
                             <Ionicon 
                                 name = {newVisible ? "eye" : "eye-off"} 
@@ -239,6 +243,32 @@ export default function signUp(){
                             </Text>
                         </TouchableOpacity>
                     </View>  
+
+                    {/* Divider */}
+                    <View className = 'flex flex-row items-center gap-3'>
+                        <View className = 'flex-1 h-[1px] bg-border' />
+                        <Text className = 'w-50 text-center text-slate-gray'> or </Text>
+                        <View className = 'flex-1 h-[1px] bg-border' />
+                    </View>
+
+                    {/* Sign in with google or apple */}
+                    <View className='flex flex-col gap-4'>
+                        <TouchableOpacity 
+                           className='flex flex-row border border-slate-gray rounded-lg items-center justify-center py-4' 
+                            onPress = {() => {}}
+                        > 
+                            <Ionicon name="logo-google" color={colors['Graphite']} size={24} />
+                            <Text className='font-bold text-graphite' > Sign up with Google </Text>
+                        </TouchableOpacity>
+            
+                        <TouchableOpacity 
+                            className='flex flex-row border border-slate-gray rounded-lg items-center py-4 justify-center' 
+                            onPress = {() => formik.handleSubmit()}
+                           > 
+                            <Ionicon name="logo-apple" color={colors['Graphite']} size={24} />
+                            <Text className='font-bold text-graphite' > Sign up with Apple </Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
         </SafeAreaView>

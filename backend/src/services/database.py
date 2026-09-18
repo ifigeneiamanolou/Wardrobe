@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from src.models.pydantic import ClothingItem, UserInDb, UserWithToken
+from src.models.pydantic import ClothingItem, UserInDb, UserWithToken, NewUser
 import uuid
 import time
 from pymongo.errors import AutoReconnect, DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
@@ -72,7 +72,7 @@ async def get_counter(client : MongoClient, name : str, key : str):
 
 # Create a new user in the database
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def create_user(user : UserInDb, client : MongoClient):
+async def create_user(user : NewUser, client : MongoClient):
     payload = {
         "_id" : str(uuid.uuid4()),
         "username" : user.username,
@@ -80,6 +80,7 @@ async def create_user(user : UserInDb, client : MongoClient):
         "password" : user.password,
         "email" : user.email,
         "token_version" : await get_counter(client, 'token_version', user.username),
+        "push_token" : user.push_token
     }
 
     try:

@@ -16,9 +16,10 @@ type Props = {
     _id : string;
     onFlip : () => void;
     saved : boolean;    // If saved from feed the user can't edit it
+    database : string;
 }
 
-export default function ImageContainer({image, name, type, _id, onFlip, saved} : Props){
+export default function ImageContainer({image, name, type, _id, onFlip, saved, database} : Props){
     const [editName, setEditName] = useState<boolean>(false);
     const [nameValue, onChangeName] = useState<string>(name);
     const session = useSession();
@@ -45,9 +46,11 @@ export default function ImageContainer({image, name, type, _id, onFlip, saved} :
                     {!editName ?
                         <Text className="text-white flex-grow"> {nameValue} </Text>: 
                         <TextInput 
+                            placeholderTextColor={colors['Graphite']}
                             className = "text-white border border-white rounded-lg px-1 mx-3 h-7 flex-grow"
                             value = {nameValue}                            
                             onChangeText = {onChangeName}
+                            cursorColor={colors['Graphite']}
                             style = {{paddingVertical : 5}}
                             onSubmitEditing = {() => submit({
                                 type : 'name',
@@ -56,7 +59,8 @@ export default function ImageContainer({image, name, type, _id, onFlip, saved} :
                                 handleChange : handleChange,
                                 handleSubmit : handleSubmit,
                                 _id : _id,
-                                session : session
+                                session : session,
+                                database : database    
                             })}
                         />
                     }

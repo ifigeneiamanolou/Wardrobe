@@ -26,7 +26,7 @@ from fastapi import APIRouter
 from typing import Annotated
 from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
-from src.models.pydantic import User, UserInDb, UserNewPassword
+from src.models.pydantic import User, UserInDb, UserNewPassword, NewUser
 from datetime import timedelta
 from pymongo import MongoClient
 from src.services.authentication import authenticate_user, create_access_token, hash, get_current_user, logout_token, oauth2_scheme
@@ -72,7 +72,7 @@ async def read_users_me(current_user : Annotated[User, Depends(get_current_user)
     return current_user
 
 @router.post("/signup")
-async def signup(user : UserInDb, cluster : Annotated[MongoClient, Depends(load_cluster)]):
+async def signup(user : NewUser, cluster : Annotated[MongoClient, Depends(load_cluster)]):
     # Verify that there is no such user in the system otherwise raise an exception
     try:
         existing_user = await find_user(user.username, cluster)

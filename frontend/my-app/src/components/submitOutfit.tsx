@@ -165,6 +165,8 @@ export default function SubmitOutfit({images, dropZoneLayout, onBack} : props){
                 {/* Form fields */}
                 <View className = "flex flex-row bg-white/50 items-center border-2 border-dusty-rose border-dashed rounded-lg px-3 h-12">
                     <TextInput 
+                        cursorColor={colors['Graphite']}
+                        placeholderTextColor={colors['Graphite']}
                         placeholder='Title' 
                         value={formik.values.title} 
                         onChangeText={formik.handleChange('title')}
@@ -179,6 +181,8 @@ export default function SubmitOutfit({images, dropZoneLayout, onBack} : props){
 
                 <View className = "flex flex-row bg-white/50 items-center border-2 border-dusty-rose border-dashed rounded-lg px-3 h-12">
                     <TextInput 
+                        cursorColor={colors['Graphite']}
+                        placeholderTextColor={colors['Graphite']}
                         placeholder='Description' 
                         value={String(formik.values.description)} 
                         onChangeText={formik.handleChange('description')}

@@ -77,6 +77,8 @@ export default function OutfitMetadata({favorite, onFlip, saved, description, _i
                     {!editDescription ?
                         <Text className="text-white flex-grow"> {descriptionValue} </Text>: 
                         <TextInput 
+                            cursorColor={colors['Graphite']}
+                            placeholderTextColor={colors['Graphite']}
                             className = "text-white border border-white rounded-lg mx-3 px-1 h-7 flex-grow"
                             value = {descriptionValue}
                             style = {{paddingVertical : 5}}

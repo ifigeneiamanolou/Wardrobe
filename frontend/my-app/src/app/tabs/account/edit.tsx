@@ -104,6 +104,7 @@ export default function Edit(){
                             value = {formik.values.name}
                             onChange={() => formik.handleChange('name')}
                             placeholder='Name'
+                            cursorColor={colors['Graphite']}
                             className = "flex-grow text-graphite ml-2"
                         />
                     </View>
@@ -119,6 +120,7 @@ export default function Edit(){
                             value = {formik.values.username}
                             onChange={() => formik.handleChange('username')}
                             placeholder='Username'
+                            cursorColor={colors['Graphite']}
                             className = "flex-grow text-graphite ml-2"
                         />
                     </View>
@@ -134,6 +136,7 @@ export default function Edit(){
                             value = {formik.values.email}
                             onChange={() => formik.handleChange('email')}
                             placeholder='Email'
+                            cursorColor={colors['Graphite']}
                             className = "flex-grow text-graphite ml-2"
                         />
                     </View>
@@ -149,6 +152,7 @@ export default function Edit(){
                             value = {formik.values.password}
                             onChange={() => formik.handleChange('password')}
                             placeholder='Password'
+                            cursorColor={colors['Graphite']}
                             className = "flex-grow text-graphite ml-2"
                             secureTextEntry = {!visible}
                         />

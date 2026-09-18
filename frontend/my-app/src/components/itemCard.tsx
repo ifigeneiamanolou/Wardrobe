@@ -31,6 +31,7 @@ export default function ItemCard({item} : props){
                         _id = {item._id}
                         onFlip = {flip}
                         saved = {false}
+                        database = "Outfits"
                     />
                 }
                 cardStyle = {styles.flipCard}

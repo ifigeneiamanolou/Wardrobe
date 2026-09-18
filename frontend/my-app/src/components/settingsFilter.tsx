@@ -89,6 +89,8 @@ export default function SettingsFilter({onSubmit, onClear} : props){
                     <Text className="text-graphite flex-grow">{upperFiltered}</Text>
                 ) : (
                     <TextInput 
+                        cursorColor={colors['Graphite']}
+                        placeholderTextColor={colors['Graphite']}
                         className = "text-graphite border border-border rounded-lg h-8 flex-grow"
                         value = {upperFiltered.toString()}
                         style = {{paddingVertical : 5}}

@@ -11,6 +11,7 @@ import { useSession } from '../context/ctx';
 import { saveItem } from '../apis/save';
 import { useItems } from '../context/itemsCtx';
 import AnimatedBag from './bouncingAnimation';
+import colors from '../constants/colors';
 
 const editSchema = yup.object().shape({
     name : yup.string()
@@ -94,6 +95,8 @@ function EditImage({onPress, uri} : props){
                     <View className='flex flex-col w-full'>
                         <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
                             <TextInput 
+                                placeholderTextColor={colors['Graphite']}
+                                cursorColor={colors['Graphite']}
                                 placeholder='Name' 
                                 value={formik.values.name} 
                                 onChangeText={formik.handleChange('name')}
@@ -110,7 +113,9 @@ function EditImage({onPress, uri} : props){
                     <View className='flex flex-col w-full'>
                         <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
                             <TextInput 
+                                placeholderTextColor={colors['Graphite']}
                                 placeholder='Price' 
+                                cursorColor={colors['Graphite']}
                                 value={String(formik.values.price)} 
                                 onChangeText={formik.handleChange('price')}
                                 keyboardType= 'number-pad'
@@ -128,6 +133,8 @@ function EditImage({onPress, uri} : props){
                         <View className = "flex flex-row items-center border border-border rounded-lg px-3 h-16 focus-within:color-dusty-rose">
                             <TextInput 
                                 placeholder='Shop' 
+                                placeholderTextColor={colors['Graphite']}
+                                cursorColor={colors['Graphite']}
                                 value={formik.values.shop} 
                                 onChangeText={formik.handleChange('shop')}
                                 autoCapitalize='none'

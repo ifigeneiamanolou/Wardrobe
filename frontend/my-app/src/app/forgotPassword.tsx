@@ -86,6 +86,8 @@ export default function changePassword(){
                                 onChangeText = {formik.handleChange('username')}
                                 value = {formik.values.username}
                                 placeholder='Username'
+                                placeholderTextColor={colors['Graphite']}
+                                cursorColor={colors['Graphite']}
                                 className = "flex-grow text-graphite ml-2"
                             />
                         </View>
@@ -101,6 +103,8 @@ export default function changePassword(){
                                 onChangeText = {formik.handleChange('password')}
                                 value = {formik.values.password}
                                 placeholder='Password'
+                                placeholderTextColor={colors['Graphite']}
+                                cursorColor={colors['Graphite']}
                                 secureTextEntry={!isPasswordVisible}
                                 className='flex-grow text-graphite ml-2'
                             />
@@ -124,6 +128,8 @@ export default function changePassword(){
                                 onChangeText = {formik.handleChange('passwordNew')}
                                 value = {formik.values.passwordNew}
                                 placeholder='Retype password'
+                                placeholderTextColor={colors['Graphite']}
+                                cursorColor={colors['Graphite']}
                                 secureTextEntry={!isPasswordNewVisible}
                             />
                             <Ionicon 

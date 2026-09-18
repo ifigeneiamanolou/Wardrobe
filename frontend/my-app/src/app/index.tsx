@@ -1,25 +1,25 @@
 import { Redirect } from "expo-router";
 import { useSession } from "../context/ctx";
-import Splash from "../components/splash";
 import React, { useEffect, useState } from "react";
 import { validate } from "../apis/auth";
-// import * as Notifications from 'expo-notifications';
+import * as Notifications from 'expo-notifications';
+import Splash from "../components/splash";
 
-// Notifications.setNotificationHandler({
-//   // Modify how incoming notifications are handled
-//   handleNotification : async() => ({
-//     shouldPlaySound : true,
-//     shouldShowBanner : true,
-//     shouldShowList : true,
-//     shouldSetBadge : true
-//   })
-// })
+Notifications.setNotificationHandler({
+  // Modify how incoming notifications are handled
+  handleNotification : async() => ({
+    shouldPlaySound : true,
+    shouldShowBanner : true,
+    shouldShowList : true,
+    shouldSetBadge : true
+  })
+})
 
 export default function Index() {
   const session = useSession();
   const [checking, setChecking] = useState(true);
   const [isValid, setIsValid] = useState(false);
-  // const [notification, setNotification] = useState<Notifications.Notification | undefined>(undefined);
+  const [notification, setNotification] = useState<Notifications.Notification | undefined>(undefined);
   
   async function check(){
     if(session?.session){
@@ -45,22 +45,22 @@ export default function Index() {
     }
 
     // Register notification and response listeners
-    // const notificationListener = Notifications.addNotificationReceivedListener(notification => {
-    //   setNotification(notification);
-    // });
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      setNotification(notification);
+    });
 
-    // const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-    //   console.log(response.userText);
-    // })
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log(response.userText);
+    })
 
-    // return () => {
-    //   notificationListener.remove();
-    //   responseListener.remove();
-    // }
+    return () => {
+      notificationListener.remove();
+      responseListener.remove();
+    }
   }, [session?.isLoading]);
 
   if (session?.isLoading || checking) {
-    return <Splash />;
+    return <Splash />
   }
 
   if (isValid) {
