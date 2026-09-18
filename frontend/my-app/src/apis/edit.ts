@@ -27,6 +27,7 @@ type submitProps = {
     handleSubmit : (type : string) => string;
     handleChange : (type : string, value : string) => void;
     session : Session
+    database : string;   // Outfits or items
 }
 
 type changePictureProps = {
@@ -70,7 +71,7 @@ export async function deleteItem({_id, type, session} : deleteType){
     })
 };
 
-export async function submit({type, value, _id, onEnd, handleChange, handleSubmit, session} : submitProps){
+export async function submit({type, value, _id, onEnd, handleChange, handleSubmit, session, database} : submitProps){
     let temp = handleSubmit(type);
     return fetch(`${constants['BACKEND_URL']}/edit/value`, {
         method : "POST", 
@@ -82,7 +83,8 @@ export async function submit({type, value, _id, onEnd, handleChange, handleSubmi
             'id' : _id,
             'collection' : 'Items',
             'value' : value,
-            'category' : type
+            'category' : type,
+            'database' : database
         })
     }).then((async (res) => {
         if(res.status == 401){

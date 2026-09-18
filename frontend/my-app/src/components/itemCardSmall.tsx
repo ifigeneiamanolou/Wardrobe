@@ -28,17 +28,16 @@ export default function ItemCardSmall({item, dropZoneLayout, handleSuccessDrag} 
             translateY.value = event.translationY;
         })
         .onEnd((event) => {
-            if(translateX && translateY ){
-                if(imageLayout &&
+            if(translateX && translateY){
+                if(imageLayout &&       // Avoid hitting the boundaries
                    event.absoluteX >= dropZoneLayout.x &&
                    event.absoluteY >= dropZoneLayout.y && 
                    event.absoluteX <= dropZoneLayout.x + dropZoneLayout.width &&
                    event.absoluteY <= dropZoneLayout.y + dropZoneLayout.height
                 ){
-                    // Run on the JS thread to avoid crashes
-                    const relativeX = event.absoluteX - dropZoneLayout.x - 45;
-                    const relativeY = event.absoluteY - dropZoneLayout.y - 40;
-                    scheduleOnRN(setShow, false);
+                    const relativeX = event.absoluteX - dropZoneLayout.x - imageLayout.width / 2;
+                    const relativeY = event.absoluteY - dropZoneLayout.y - imageLayout.height / 2;
+                    scheduleOnRN(setShow, false);   // Run on the JS thread to avoid crashes
                     scheduleOnRN(handleSuccessDrag, item,relativeX, relativeY);
                 } else{         // Go back to original position if outside
                     translateX.value = withSpring(0);

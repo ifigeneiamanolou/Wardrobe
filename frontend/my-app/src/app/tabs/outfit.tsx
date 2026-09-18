@@ -48,7 +48,7 @@ export default function Outfit() {
 
     // Drag and drop
     const [droppedImages, setDroppedImages] = useState<{
-        item : Item, x : number, y : number, scale : number}[]>([]);
+        item : Item, x : number, y : number, scale : number, rotate : number}[]>([]);
     const [dropZoneLayout, setDropZoneLayout] = useState({
         x : 0, y : 0, height : 0, width : 0
     });
@@ -109,12 +109,12 @@ export default function Outfit() {
 
     // Callback when an item is successfully added to the drop pane
     const handleSuccessDrag = (item : Item, x : number, y : number) => {
-        setDroppedImages(prev => [...prev, {item, x, y, scale : 1}]);
+        setDroppedImages(prev => [...prev, {item, x, y, scale : 1, rotate : 0}]);
     }
 
-    const updateTransform = (id : string, scale : number) => {
+    const updateTransform = (id : string, scale : number, x : number, y : number, rotate : number) => {
         setDroppedImages(prev => prev.map(d => 
-            d.item._id === id ? {...d, scale} : d
+            d.item._id === id ? {...d, scale, rotate, x, y} : d
         ))
     }
 
@@ -151,6 +151,7 @@ export default function Outfit() {
                                 removeItem={removeItem}
                                 key = {value.item._id}
                                 updateTransform = {updateTransform}
+                                dropZoneLayout={dropZoneLayout}
                             />
                         ))
                     )}
@@ -261,7 +262,8 @@ export default function Outfit() {
                                     item : value.item,
                                     translationX : value.x - dropZoneLayout.x,
                                     translationY : value.y - dropZoneLayout.y,
-                                    scale : value.scale
+                                    scale : value.scale,
+                                    rotate : value.rotate
                                 }))}
                                 dropZoneLayout={dropZoneLayout}
                                 onBack={closeSubmit}

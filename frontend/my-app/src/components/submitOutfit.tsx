@@ -15,7 +15,7 @@ import AnimatedBag from "./bouncingAnimation";
 const IMAGE_INITIAL_SIZE = 60;
 
 type props = {
-    images : {item : Item, translationX : number, translationY : number, scale : number}[];
+    images : {item : Item, translationX : number, translationY : number, scale : number, rotate : number}[];
     dropZoneLayout : {x : number, y : number, height : number, width : number};
     onBack : () => void;
 }
@@ -135,7 +135,8 @@ export default function SubmitOutfit({images, dropZoneLayout, onBack} : props){
                                 height: IMAGE_INITIAL_SIZE * value.scale, 
                                 transform : [
                                     {translateX : value.translationX},
-                                    {translateY : value.translationY}
+                                    {translateY : value.translationY},
+                                    {rotateZ : `${value.rotate}rad`}
                                 ]
                             }} 
                             resizeMode="cover"

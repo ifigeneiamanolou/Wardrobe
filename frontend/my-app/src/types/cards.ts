@@ -14,6 +14,7 @@ type Item = {
 
 type Outfit = {
     image : string;
+    description : string;
     name : string;
     favorite : boolean;
     _id : string;

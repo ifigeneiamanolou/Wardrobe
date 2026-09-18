@@ -120,7 +120,8 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                                 handleChange : handleChange,
                                 handleSubmit : handleSubmit,
                                 _id : _id,
-                                session : session
+                                session : session,
+                                database : "Items"
                             })}
                         />
                     }
@@ -150,7 +151,8 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                                 handleChange : handleChange,
                                 handleSubmit : handleSubmit,
                                 _id : _id,
-                                session : session
+                                session : session,
+                                database : "Items"
                             })}
                         />
                     }
@@ -181,7 +183,8 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                                 handleChange : handleChange,
                                 handleSubmit : handleSubmit,
                                 _id : _id,
-                                session : session
+                                session : session,
+                                database : "Items"
                             })}
                         />
                     }
@@ -205,6 +208,7 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                             onChangeText = {onChangeCategory}
                             style = {{paddingVertical : 5}}
                             onSubmitEditing = {() => submit({
+                                database : "Items",
                                 type : 'category',
                                 value : categoryValue,
                                 onEnd : onEnd,
@@ -241,7 +245,8 @@ export default function ItemMetadata({shop, favorite, size, price, category, col
                                 handleChange : handleChange,
                                 handleSubmit : handleSubmit,
                                 _id : _id,
-                                session : session
+                                session : session,
+                                database : "Items"
                             })}
                         />
                     }

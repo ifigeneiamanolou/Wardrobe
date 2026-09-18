@@ -38,9 +38,15 @@ export default function Home() {
             image : dict['image'],
             _id : dict['_id'],
             name : dict['name'],
+            description : dict['description'],
             favorite : dict['favorite'] == "yes" ? true : false
         };
-        setOutfits(prev => [...prev, outfit]);
+
+        if(!(dict['_id'] in outfits.map((v) => v._id))){
+            setOutfits(prev => [...prev, outfit]);
+        } else {
+            console.log('Duplicate outfit key: ', dict['_id'])
+        }
     };
 
     const styleItems = useAnimatedStyle(() => ({
@@ -150,7 +156,7 @@ export default function Home() {
                 ) : (
                     <FlatList
                         ItemSeparatorComponent={<View className = "h-2"/>}              // Space between the rows
-                        contentContainerStyle = {{padding : 10}}                        // Padding around the list
+                        contentContainerStyle = {{padding : 10}}                         // Padding around the list}   
                         data = {outfits}
                         horizontal = {false}
                         numColumns = {2}

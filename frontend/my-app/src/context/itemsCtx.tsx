@@ -67,7 +67,11 @@ export function ItemProvider({children} : PropsWithChildren){
                 if(!(sizes.includes(dict['size']))){   
                     setSizes(sizes.concat(dict['size']));
                 }
-                setItems(prev => [...prev, item]);
+                if(!(dict['_id'] in items.map((v) => v._id))){
+                    setItems(prev => [...prev, item]);
+                } else {
+                    console.log('Duplicate item key: ', dict['_id'])
+                }
             }
         })
         setIsLoading(false);
