@@ -1,10 +1,9 @@
 {
   "expo": {
     "name": "MyWardrobe",
-    "slug": "MyWardrobe",
+    "slug": "my-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "platforms": [
       "android"
@@ -49,7 +48,15 @@
       "expo-splash-screen",
       "expo-status-bar",
       "expo-web-browser",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-splash-screen",
+          {
+            "backgroundColor": "#e5ddf5",
+            "image": "./assets/images/android-icon-foreground.png",
+            "imageWidth": 500
+          }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

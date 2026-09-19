@@ -38,7 +38,8 @@ async def format_output_outfits(results : list):
 async def format_user_output(results : list):
     for index, result in enumerate(results):
         if 'image' not in result.keys():
-            results[index] = {
+            results[index] = { 
+                "push_token" : result['push_token'],
                 "username" : result['username'],
                 "email" : result['email'],
                 "image" : ""
@@ -48,6 +49,7 @@ async def format_user_output(results : list):
         b = base64.b64encode(bytes(image))
         b64_image = b.decode('utf-8')
         data = {
+            "push_token" : result['push_token'],
             "username" : result['username'],
             "email" : result['email'],
             "image" : b64_image

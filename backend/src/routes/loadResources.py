@@ -1,19 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from src.services.authentication import get_current_user
-from src.services.database import load_cluster, load_outfits_items, find_all_users, find_requests
+from src.services.database import load_outfits_items, find_all_users, find_requests
 from src.services.formatOutput import format_output_items, format_user_output, format_image, format_output_outfits
 from src.exceptions.database import DatabaseError, DatabaseUnavailableError, NoRequestsError
 from src.models.pydantic import User
-from pymongo import MongoClient
 from typing import Annotated
+from src.routes.dependancies import MONGO_DEP
 
 router = APIRouter()
 
 @router.get("/outfits")
 async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)]
+    client : MONGO_DEP
 ):
     # Extract all outfits from the database for the current user
     results = await load_outfits_items(client, user.username, "Outfits")
@@ -28,7 +28,7 @@ async def get_outfits(
 @router.get("/items")
 async def get_items(
     user : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)]
+    client : MONGO_DEP
 ):
     # Extract all items from the database for the current user
     results = await load_outfits_items(client, user.username)
@@ -54,7 +54,7 @@ async def get_profile(
 @router.get("/users")
 async def get_users(
     user : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)]
+    client : MONGO_DEP
 ):
     try:
         result = await find_all_users(client, user.username)
@@ -68,7 +68,7 @@ async def get_users(
 @router.get("/notifications")
 async def get_notifications(
     user : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)]
+    client : MONGO_DEP
 ):
     try:
         result = await find_requests(client, user.id, False)
@@ -83,7 +83,7 @@ async def get_notifications(
 @router.get("/friends")
 async def get_friends(
     user : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)]
+    client : MONGO_DEP
 ):
     try:
         result = await find_requests(client, user.id, True)

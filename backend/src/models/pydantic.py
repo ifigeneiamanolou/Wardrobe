@@ -10,6 +10,7 @@ class User(BaseModel):
     email : str
     name : str 
     image : Optional[str] = None
+    push_token : str
 
 class NewUser(BaseModel):
     username : str
@@ -70,5 +71,12 @@ class Outfit(BaseModel):
     title : str
     description : str
     favorite : str
+
+class Notification(BaseModel):
+    username : str
+    push_token : str
+    title : str
+    body : str
+
 
 

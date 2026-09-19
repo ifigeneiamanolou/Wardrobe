@@ -1,17 +1,17 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from typing import Annotated
 from src.services.authentication import get_current_user, hash
-from src.services.database import (load_cluster, change_favorite, delete_item_outfit, edit_value, 
+from src.services.database import ( change_favorite, delete_item_outfit, edit_value, 
                                    edit_profile_picture, edit_profile_details, find_user, 
                                    find_user_by_email, make_friend_request, accept_friend_request,
                                    delete_friend)
 from src.models.pydantic import User, editFavorite, deleteData, editData, UserDetails, requestData
 from src.services.s3storage import upload_file_to_bucket, delete_item_from_bucket
-from pymongo import MongoClient
 import os
 from src.exceptions.database import DatabaseUnavailableError, DatabaseError, UserNotFound, FriendshipNotFound
 import uuid
 import shutil
+from src.routes.dependancies import MONGO_DEP
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMP_DIR = os.path.join(BASE_DIR, '../../data/temp')
@@ -21,7 +21,7 @@ router = APIRouter()
 @router.post("/favorite")
 async def toggle_favorite(
     _ : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)],
+    client : MONGO_DEP,
     data : editFavorite
 ):
     try:
@@ -32,7 +32,7 @@ async def toggle_favorite(
 @router.post("/delete")
 async def delete_item(
     _ : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)],
+    client : MONGO_DEP,
     data : deleteData
 ):
     try:
@@ -43,7 +43,7 @@ async def delete_item(
 @router.post("/value")
 async def edit_item_value(
     _ : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)],
+    client : MONGO_DEP,
     data : editData
 ):
     try:
@@ -54,7 +54,7 @@ async def edit_item_value(
 @router.post("/profile/picture")
 async def toggle_favorite(
     user : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)],
+    client : MONGO_DEP,
     data : UploadFile = File(...)
 ):  
     # Save the uploaded image temporarily in local storage
@@ -88,7 +88,7 @@ async def toggle_favorite(
 @router.post("/profile/details")
 async def toggle_favorite(
     user : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)],
+    client : MONGO_DEP,
     data : UserDetails
 ):  
     try:
@@ -130,7 +130,7 @@ async def toggle_favorite(
 @router.post("/friend/request")
 async def get_friends(
     user : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)],
+    client : MONGO_DEP,
     data : requestData
 ):
     try:
@@ -146,7 +146,7 @@ async def get_friends(
 @router.post("/friend/delete")
 async def get_friends(
     user : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)],
+    client : MONGO_DEP,
     data : requestData
 ):
     try:
@@ -162,7 +162,7 @@ async def get_friends(
 @router.post("/accept/request")
 async def get_friends(
     user : Annotated[User, Depends(get_current_user)],
-    client : Annotated[MongoClient, Depends(load_cluster)],
+    client : MONGO_DEP,
     data : requestData
 ):
     try:

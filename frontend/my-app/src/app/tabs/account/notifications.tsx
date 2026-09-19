@@ -7,12 +7,16 @@ import { useSession } from "@/src/context/ctx";
 import LoadingDots from "react-native-loading-dots";
 import colors from "@/src/constants/colors";
 import showAlert from "@/src/components/alert";
+import { sendNotification } from "@/src/apis/friends";
 
 export default function Notifications(){
     const [requests, setRequests] = useState<User[]>([]);
     const [noRessources, setNoRessources] = useState(false);
     const [loading, setLoading] = useState(false);
     const session = useSession();
+
+    // Avoid sending to unregistered devices   MOVE TO CONTEXT !!!!!!!!!
+    const [unregistered, setUnregistered] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchRessources = async () => {
@@ -27,20 +31,30 @@ export default function Notifications(){
         fetchRessources();
     }, []);
 
-    const pressAccept = async (username : string) => {
+    const pressAccept = async (item : User) => {
         await acceptRequest({
-            username : username,        // Username from which the request came
+            username : item.username,        // Username from which the request came
             noRessources : () => {
                 showAlert('Error', 'User or friendship not found');
                 setRequests(requests?.filter((user : User) => {
-                    return user.username !== username
+                    return user.username !== item.username
                 }))
             },
-            onEnd : () => {
-                showAlert('Success', `User ${username} is now on your friend list!`);
+            onEnd : async () => {
+                showAlert('Success', `User ${item.username} is now on your friend list!`);
                 setRequests(requests?.filter((user : User) => {
-                    return user.username !== username
-                }))
+                    return user.username !== item.username
+                }));
+                await sendNotification({
+                    push_token : item.push_token,
+                    title : "Friend Request Accepted",
+                    body : `User ${item.username} is now your friend!`,
+                    username : item.username,
+                    session : session,
+                    onUnregistered : (push_token : string) => {
+                        setUnregistered([...unregistered, push_token]);
+                    }
+                });
             },
             session : session
         })
@@ -68,7 +82,7 @@ export default function Notifications(){
                         <UserCard 
                             request = {'Accept'} 
                             item = {item}
-                            onPress={() => pressAccept(item.username)}
+                            onPress={() => pressAccept(item)}
                         />
                     )}
                     ItemSeparatorComponent = {() => <View className="h-2"/>}

@@ -25,6 +25,7 @@ type User = {
     image : string;
     username : string;
     email : string;
+    push_token : string;
 }
 
 interface DragPayload {

@@ -9,6 +9,15 @@ type loadProps = {
     noRessources : () => void;
 }
 
+type NotificationProps = {
+    push_token : string;    // Expo push token registered with the user
+    title : string;
+    body : string;
+    username : string;      // User to where message will go to
+    session : Session;
+    onUnregistered : (push_token : string) => void;
+}
+
 type requestProps = {
     username : string;
     session : Session;
@@ -49,6 +58,7 @@ export async function loadRequests({session, onEnd, noRessources} : loadProps){
         const users : User[] = []
         for(const request of requests){
             const user : User = {
+                'push_token' : request['push_token'],
                 'email' : request['email'],
                 'image' : request['image'],
                 'username' : request['username']
@@ -95,6 +105,7 @@ export async function loadFriends({session, onEnd, noRessources} : loadProps){
         const users : User[] = []
         for(const request of requests){
             const user : User = {
+                "push_token" : request['push_token'],
                 'email' : request['email'],
                 'image' : request['image'],
                 'username' : request['username']
@@ -176,7 +187,7 @@ export async function makeRequest({username, onEnd, session, noRessources} : req
             return;
         };
 
-        // Given the request was successful delete the user from the list apiUsers
+        // Function to call given the request was successful
         onEnd(username);
     } catch(err){
         console.log("Upload error", err);
@@ -219,5 +230,45 @@ export async function deleteFriend({username, onEnd, session, noRessources} : re
     } catch(err){
         console.log("Delete error", err);
         showAlert('Error', 'Delete operation failed!');
+    }
+}
+
+export async function sendNotification({push_token, title, body, username, session, onUnregistered} : NotificationProps){
+    const url = `${constants['BACKEND_URL']}/notifications/send`;
+    const requestObj = {
+        method : 'POST',
+        headers : {
+            'Accept' : 'application/json',
+            'Content-Type' : 'application/json',
+            'Authorization' : `Bearer ${session?.session}`
+        },
+        body : JSON.stringify({
+            'username' : username,
+            'push_token' : push_token,
+            'title' : title,
+            'body' : body
+        })
+    };
+
+    try{
+        const response = await fetch(url, requestObj);
+
+        if(response.status == 401){
+            session?.signOut();
+            return;
+        };
+
+        if(response.status == 406){
+            console.log(`Device with token ${push_token} is unregistered`);
+            onUnregistered(push_token);
+            return;
+        };
+
+        if(!response.ok){
+            console.log(`Unable to send notification to device with token ${push_token}`)
+            return;
+        };
+    } catch(err){
+        console.log(`Unable to send notification to device with token ${push_token} with error: ${err}`);
     }
 }

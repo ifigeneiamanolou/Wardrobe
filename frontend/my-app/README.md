@@ -26,11 +26,10 @@ The app can be previewed using Expo Go (built for Expo 57).
 3) fix the permissions (prompted once on log in if not accepted -> settings -> read external storage -> checks !)
 4) fix the metadata on the outfit page and make a view/edit feature
 5) add constraints on outfits created (ie only 1 shirt etc)
-6) make the android build -> to view notifications, google and apple login 
+6) make the android build -> google and apple login 
 7) Make a feature of viewing only the liked items
 8) Make the feed
 9) Add username on outfit when something is saved from the feed 
-10) fix the splash image, app icon etc
 
 
 # plus 

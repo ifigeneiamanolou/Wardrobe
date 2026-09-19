@@ -77,9 +77,9 @@ export default function Account() {
             </View>
 
             {/* Menu navigation */}
-            <View className = "flex flex-grow gap-4 pt-2">
+            <View className = "flex-1 flex-grow gap-4 pt-2">
                 {/* Friends */}
-                <View className = "flex-1 flex-row bg-blush rounded-md  items-center gap-4 p-4">
+                <View className = "flex-1 flex-row bg-blush rounded-md  items-center gap-4 p-2">
                     <Ionicon name = "share-social" size = {24} color = {colors['White']}/>
                     <Text className = "flex grow font-bold text-lg text-white">Friends</Text>
                     <TouchableOpacity onPress = {() => {router.navigate("/tabs/account/friends")}}>
@@ -88,7 +88,7 @@ export default function Account() {
                 </View>
 
                 {/* Settings */}
-                <View className = "flex-1 flex-row bg-blush rounded-md items-center gap-4 p-4">
+                <View className = "flex-1 flex-row bg-blush rounded-md items-center gap-4 p-2">
                     <Ionicon name = "settings" size = {24} color = {colors['White']}/>
                     <Text className = "flex grow font-bold text-lg text-white">Settings</Text>
                     <TouchableOpacity onPress = {() => {router.navigate("/tabs/account/settings")}}>
@@ -97,7 +97,7 @@ export default function Account() {
                 </View>
 
                 {/* Notifications */}
-                <View className = "flex-1 flex-row bg-blush rounded-md items-center gap-4 p-4">
+                <View className = "flex-1 flex-row bg-blush rounded-md items-center gap-4 p-2">
                     <Ionicon name = "notifications" size = {24} color = {colors['White']} />
                     <Text className = "flex grow font-bold text-lg text-white">Notifications</Text>
                     <TouchableOpacity onPress = {() => {router.navigate("/tabs/account/notifications")}}>
@@ -106,7 +106,7 @@ export default function Account() {
                 </View>
 
                 {/* Privacy */}
-                <View className = "flex-1 flex-row bg-blush rounded-md items-center gap-4 p-4">
+                <View className = "flex-1 flex-row bg-blush rounded-md items-center gap-4 p-2">
                     <Ionicon name = "lock-closed" size = {24} color = {colors['White']}/>
                     <Text className = "flex grow font-bold text-lg text-white">Security and permissions</Text>
                     <TouchableOpacity onPress = {() => {router.navigate("/tabs/account/privacy")}}>

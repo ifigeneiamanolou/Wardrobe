@@ -12,7 +12,7 @@ import datetime
 MONGO_URI = f"mongodb+srv://ifigeneiamanolou26_db_user:{mongodb_key}@closetcluster.6sudtpr.mongodb.net/Authentication"
 
 # Attempt connecting to the MongoDB cluster for a set number of times
-async def load_cluster(retries : int = 10, delay : int = 3):
+def load_cluster(retries : int = 10, delay : int = 3):
     for i in range(1, retries + 1):
         client = None
         try:
@@ -23,11 +23,12 @@ async def load_cluster(retries : int = 10, delay : int = 3):
                 connectTimeoutMS= 30000,
                 waitQueueTimeoutMS= 20000
             )
-            client.admin.command("ping")
-            yield client
-            return
+            client.admin.command("ping")     # Ensure proper connection
+            return client
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
             print(f"Attempt {i}/{retries} to connect to db")
+            if client:
+                client.close()
             if i < retries:
                 time.sleep(delay)
     raise RuntimeError("Cound not connect to mongoDB server")
@@ -266,35 +267,47 @@ async def edit_profile_details(
     except Exception as exc:
         raise DatabaseError() from exc
 
+# we want to find users that ARE NOT MY FRIENDS
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def find_all_users(client : MongoClient, username : str):
     try:
+        user = await find_user(username, client)
         collection = client["Authentication"]["Users"]
         result = collection.aggregate([
-            { 
+            {       # Match users that are not me 
                 '$match' : {
                     'username' : {'$ne' : username}
                 }
-            },
-            {
+            },  
+            {       # Look up the usernames of their friends
                 '$lookup' : {
                     'from' : 'Friendships',
-                    'localField' : '_id',
-                    'foreignField' : 'id_1',
+                    'let' : { "id_search": "$_id" },
+                    "pipeline": [
+                        { "$match": { "$expr": { "$eq": ["$id_1", "$$id_search"] }}},
+                        { "$project": {  "_id": 0, "friend_id": "$id_2"}}
+                    ],
                     'as' : 'friends_1'
                 }
             },
             {
                 '$lookup' : {
                     'from' : 'Friendships',
-                    'localField' : '_id',
-                    'foreignField' : 'id_2',
+                    'let' : { "id_search": "$_id" },
+                    "pipeline": [
+                        { "$match": { "$expr": { "$eq": ["$id_2", "$$id_search"] }}},
+                        { "$project": {  "_id": 0, "friend_id": "$id_1"}}
+                    ],
                     'as' : 'friends_2'
                 }
-            },
+            },      # Add a field with the concatenated arrays
             {'$addFields' : {'friends' : {'$concatArrays' : ['$friends_1', '$friends_2']}}},
-            {'$match' : {'friends' : {'$size' : 0}}},
-            {'$project' : {'username' : 1, 'email' : 1, 'image' : 1, '_id' : 0}}
+            {       # Check if they are my friend
+                '$match' : {
+                    'friends.friend_id' : {'$nin' : [user.id]}
+                }
+            },      # Select the details of the users that are not my friends
+            {'$project' : {'username' : 1, 'email' : 1, 'image' : 1, 'push_token' : 1, '_id' : 0}}
         ])
         return list(result)
     except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
@@ -389,6 +402,7 @@ async def find_requests(client : MongoClient, user_id : str, accepted : bool):
             if 'image' in result['friend'].keys():
                 formatted_image = await format_image(result['friend']['image'])
             friends.append({
+                'push_token' : result['friend']['push_token'],
                 'username' : result['friend']['username'],
                 'email' : result['friend']['email'],
                 'image' : formatted_image
@@ -455,4 +469,33 @@ async def save_outfit(
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
         raise DatabaseError() from exc
+
+async def add_push_notification(id : str, push_token : str, client : MongoClient):
+    payload = {
+        "ticket_id" : id,
+        "push_token" : push_token,                         
+        "created_at" : datetime.datetime.now()
+    }
+
+    try:
+        items_collection = client["Notifications"]["Receipt_ids"]
+        result = items_collection.insert_one(payload)
+        return result.inserted_id
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+async def retrieve_push_notifications(created_at, client : MongoClient):
+    document_to_find = {"created_at" : created_at}
+
+    try:
+        items_collection = client["Notifications"]["Receipt_ids"]
+        results = items_collection.find(document_to_find)
+        return results
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
     

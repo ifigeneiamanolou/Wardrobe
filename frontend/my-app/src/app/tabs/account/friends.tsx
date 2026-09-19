@@ -31,21 +31,21 @@ export default function Friends(){
         fetchRessources();
     }, []);
 
-    const deleteItem = async (username : string) => {
+    const deleteItem = async (item : User) => {
         await deleteFriend({
-            username : username,
+            username : item.username,
             session : session,
             noRessources : () => {
                 showAlert('Error', 'User or friendship not found');
                 setFriends(friends?.filter((user : User) => {
-                    return user.username !== username
+                    return user.username !== item.username
                 }))
             },
             onEnd : () => {
-                showAlert('Success', `User ${username} is now deleted!`);
+                showAlert('Success', `User ${item.username} is now deleted!`);
                 setFriends(friends?.filter((user : User) => {
-                    return user.username !== username
-                }))
+                    return user.username !== item.username
+                }));
             },
         })
     };
@@ -75,7 +75,7 @@ export default function Friends(){
                         <UserCard 
                             request = {'Friends'} 
                             item = {item}
-                            onPress = {() => deleteItem(item.username)}
+                            onPress = {() => deleteItem(item)}
                         />
                     )}
                 />

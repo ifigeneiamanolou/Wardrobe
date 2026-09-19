@@ -26,20 +26,20 @@ from fastapi import APIRouter
 from typing import Annotated
 from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
-from src.models.pydantic import User, UserInDb, UserNewPassword, NewUser
+from src.models.pydantic import User, UserNewPassword, NewUser
 from datetime import timedelta
-from pymongo import MongoClient
 from src.services.authentication import authenticate_user, create_access_token, hash, get_current_user, logout_token, oauth2_scheme
-from src.services.database import find_user, find_user_by_email, create_user, load_cluster, change_password
+from src.services.database import find_user, find_user_by_email, create_user, change_password
 from src.exceptions.database import DatabaseError, DatabaseUnavailableError, UserAlreadyExistsError
 from src.config.conf import MINUTES_TO_EXPIRE
+from src.routes.dependancies import MONGO_DEP
 
 router = APIRouter()
 
 @router.post("/token")
 async def login(
     form_data : Annotated[OAuth2PasswordRequestForm, Depends()],
-    client : Annotated[MongoClient, Depends(load_cluster)]
+    client : MONGO_DEP
 ):
     # Find a user in the database
     try:
@@ -72,7 +72,7 @@ async def read_users_me(current_user : Annotated[User, Depends(get_current_user)
     return current_user
 
 @router.post("/signup")
-async def signup(user : NewUser, cluster : Annotated[MongoClient, Depends(load_cluster)]):
+async def signup(user : NewUser, cluster : MONGO_DEP):
     # Verify that there is no such user in the system otherwise raise an exception
     try:
         existing_user = await find_user(user.username, cluster)
@@ -112,7 +112,7 @@ async def logout(token : Annotated[str, Depends(oauth2_scheme)]):
     await logout_token(token)
 
 @router.post("/change/password")
-async def forgot_password(user : UserNewPassword, client : Annotated[MongoClient, Depends(load_cluster)]):
+async def forgot_password(user : UserNewPassword, client : MONGO_DEP):
     # Verify that there is such a user in the system otherwise raise an exception
     try:
         existing_user = await find_user(user.username, client)

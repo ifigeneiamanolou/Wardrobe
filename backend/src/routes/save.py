@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends
 from typing import Annotated
-from pymongo import MongoClient
 from src.models.pydantic import ClothingItem, User, Outfit
 from src.services.authentication import get_current_user
-from src.services.database import load_cluster, save_clothing, save_outfit
+from src.services.database import save_clothing, save_outfit
 from src.services.predictions import predict_category, predict_color, read_image
 from src.services.s3storage import upload_file_to_bucket
 from src.models.parsers import load_clothing_item
@@ -11,6 +10,7 @@ import os
 import uuid
 import shutil
 import base64
+from src.routes.dependancies import MONGO_DEP
 
 router = APIRouter()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +20,7 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 @router.post("/item")
 async def save_item(
     item : Annotated[ClothingItem, Depends(load_clothing_item)], 
-    cluster : Annotated[MongoClient, Depends(load_cluster)],
+    cluster : MONGO_DEP,
     user : Annotated[User, Depends(get_current_user)]
 ):
     # Save the uploaded image temporarily in local storage
@@ -58,7 +58,7 @@ async def save_item(
 @router.post("/outfit")
 async def save_item(
     outfit : Outfit, 
-    cluster : Annotated[MongoClient, Depends(load_cluster)],
+    cluster : MONGO_DEP,
     user : Annotated[User, Depends(get_current_user)]
 ):
     # Save the uploaded image temporarily in local storage

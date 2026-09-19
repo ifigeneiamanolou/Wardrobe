@@ -19,8 +19,7 @@ export default function Index() {
   const session = useSession();
   const [checking, setChecking] = useState(true);
   const [isValid, setIsValid] = useState(false);
-  const [notification, setNotification] = useState<Notifications.Notification | undefined>(undefined);
-  
+
   async function check(){
     if(session?.session){
       setChecking(false);
@@ -44,9 +43,9 @@ export default function Index() {
       check();
     }
 
-    // Register notification and response listeners
+    // Register push notification listeners
     const notificationListener = Notifications.addNotificationReceivedListener(notification => {
-      setNotification(notification);
+      console.log(notification.request)
     });
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
