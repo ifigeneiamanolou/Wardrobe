@@ -31,7 +31,6 @@ The app can be previewed using Expo Go (built for Expo 57).
 8) Make the feed
 9) Add username on outfit when something is saved from the feed 
 
-
 # plus 
 1) activate redis for all heavy tasks
 2) containers with docker

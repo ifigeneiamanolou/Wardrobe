@@ -11,6 +11,7 @@ redis_password = os.getenv("REDIS_PASSWORD")
 secret_key = os.getenv("SECRET_KEY")
 mongodb_key = os.getenv("MONGO_KEY")
 aws_key = os.getenv("AWS_ACCESS_KEY")
+web_client_id = os.getenv("GOOGLE_WEB_CLIENT_ID")
 aws_secret_key = os.getenv("AWS_SECRET_KEY")
 aws_region = 'us-east-1'
 

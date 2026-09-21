@@ -3,7 +3,7 @@ from typing import Annotated
 from src.services.authentication import get_current_user, hash
 from src.services.database import ( change_favorite, delete_item_outfit, edit_value, 
                                    edit_profile_picture, edit_profile_details, find_user, 
-                                   find_user_by_email, make_friend_request, accept_friend_request,
+                                   make_friend_request, accept_friend_request,
                                    delete_friend)
 from src.models.pydantic import User, editFavorite, deleteData, editData, UserDetails, requestData
 from src.services.s3storage import upload_file_to_bucket, delete_item_from_bucket
@@ -92,7 +92,7 @@ async def toggle_favorite(
     data : UserDetails
 ):  
     try:
-        existing_user = await find_user(user.username, client)
+        existing_user = await find_user(user.username, client, "username")
     except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
     except DatabaseUnavailableError:
@@ -101,7 +101,7 @@ async def toggle_favorite(
         raise HTTPException(status_code = status.HTTP_409_CONFLICT, detail = "Another user with the same username")
 
     try:
-        existing_user_email = await find_user_by_email(user.email, client)
+        existing_user_email = await find_user(user.email, client, "email")
     except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search by email")
     except DatabaseUnavailableError:

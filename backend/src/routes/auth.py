@@ -26,11 +26,11 @@ from fastapi import APIRouter
 from typing import Annotated
 from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
-from src.models.pydantic import User, UserNewPassword, NewUser
+from src.models.pydantic import User, UserNewPassword, NewUser, GoogleLogIn
 from datetime import timedelta
-from src.services.authentication import authenticate_user, create_access_token, hash, get_current_user, logout_token, oauth2_scheme
-from src.services.database import find_user, find_user_by_email, create_user, change_password
-from src.exceptions.database import DatabaseError, DatabaseUnavailableError, UserAlreadyExistsError
+from src.services.authentication import authenticate_user, create_access_token, hash, get_current_user, logout_token, oauth2_scheme, validate_google_token, create_account_link
+from src.services.database import find_user, create_user, change_password
+from src.exceptions.database import DatabaseError, DatabaseUnavailableError, UserAlreadyExistsError, EmailNotVerified
 from src.config.conf import MINUTES_TO_EXPIRE
 from src.routes.dependancies import MONGO_DEP
 
@@ -85,7 +85,7 @@ async def signup(user : NewUser, cluster : MONGO_DEP):
 
     # Verify that there is no such email in the system otherwise raise an exception
     try:
-        existing_user_email = await find_user_by_email(user.email, cluster)
+        existing_user_email = await find_user(user.email, cluster, "email")
     except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search by email")
     except DatabaseUnavailableError:
@@ -115,7 +115,7 @@ async def logout(token : Annotated[str, Depends(oauth2_scheme)]):
 async def forgot_password(user : UserNewPassword, client : MONGO_DEP):
     # Verify that there is such a user in the system otherwise raise an exception
     try:
-        existing_user = await find_user(user.username, client)
+        existing_user = await find_user(user.username, client, "username")
     except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
     except DatabaseUnavailableError:
@@ -134,4 +134,45 @@ async def forgot_password(user : UserNewPassword, client : MONGO_DEP):
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
     except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful password change")
-    
+
+
+@router.post("/token/google")
+async def login(
+    data : GoogleLogIn,
+    client : MONGO_DEP
+):
+    # Validate the google token
+    try:
+        result = await validate_google_token(data.idToken)
+    except ValueError:
+        raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Invalid Google Token")
+
+    # Check if a user already exists and link otherwise create a new account
+    try:
+        user = await create_account_link(
+            result.get('name'), 
+            result.get('image'), 
+            result.get('provider_sub'), 
+            result.get('email'), 
+            result.get('email_verified'),
+            client
+        )
+    except EmailNotVerified:
+        raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Google email is not verified")
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")  
+
+    # Generate an access token
+    access_token_expires = timedelta(minutes = MINUTES_TO_EXPIRE)
+    if isinstance(user, NewUser):
+        token_version = 1
+    else:
+        token_version = user.token_version
+    token = create_access_token(
+        data = {"sub" : user.username, "token_version" : token_version},
+        expires_delta = access_token_expires
+    )
+    return {"access_token" : token, "token_type" : "bearer"}
+ 

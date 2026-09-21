@@ -1,10 +1,13 @@
 {
-  "extends" : "expo/tsconfig.base",
   "compilerOptions": {
     "jsx": "react",
     "strict": true,
-    "types": ["node"],
-    "typeRoots": ["node_modules/@types"],
+    "types": [
+      "node"
+    ],
+    "typeRoots": [
+      "node_modules/@types"
+    ],
     "paths": {
       "@/*": [
         "./*"
@@ -17,5 +20,6 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }

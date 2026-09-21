@@ -35,10 +35,10 @@ def load_cluster(retries : int = 10, delay : int = 3):
 
 # Find whether a user exists in the database based on username
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def find_user(username : str, client : MongoClient):
+async def find_user(value : str, client : MongoClient, key : str):
     try:
         users_collection = client["Authentication"]["Users"]
-        document_to_find = {"username" : username}
+        document_to_find = {key : value}
         result = users_collection.find_one(document_to_find)
 
         if result is None:
@@ -81,7 +81,8 @@ async def create_user(user : NewUser, client : MongoClient):
         "password" : user.password,
         "email" : user.email,
         "token_version" : await get_counter(client, 'token_version', user.username),
-        "push_token" : user.push_token
+        "push_token" : user.push_token,
+        "provider_sub" : user.provider_sub       # empty string if account is created without google  
     }
 
     try:
@@ -93,23 +94,6 @@ async def create_user(user : NewUser, client : MongoClient):
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except PyMongoError as exc:
-        raise DatabaseError() from exc
-
-# Find whether a user exists in the database by email
-@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def find_user_by_email(email : str, client : MongoClient):
-    try:
-        users_collection = client["Authentication"]["Users"]
-        document_to_find = {"email" : email}
-        result = users_collection.find_one(document_to_find)
-        if result is None:
-            return None
-        return UserInDb(**result)
-    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
-        raise DatabaseUnavailableError() from exc
-    except (OperationFailure) as exc:
-        raise DatabaseError() from exc
-    except Exception as exc:
         raise DatabaseError() from exc
 
 # Change the password of the given user
@@ -251,7 +235,8 @@ async def edit_profile_details(
     name : str | None = None, 
     username : str | None = None,
     email : str | None = None, 
-    password : str | None = None
+    password : str | None = None,
+    provider_sub : str | None = None
 ):
     try:
         collection = client["Authentication"]["Users"]
@@ -261,6 +246,7 @@ async def edit_profile_details(
         if username: update_operation.update({'$set' : {'username' : username}})
         if email: update_operation.update({'$set' : {'email' : email}})
         if password: update_operation.update({'$set' : {'password' : password}})
+        if provider_sub: update_operation.update({'$set' : {'provider_sub' : provider_sub}})
         await collection.update_one(document_to_find, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
         raise DatabaseUnavailableError() from exc

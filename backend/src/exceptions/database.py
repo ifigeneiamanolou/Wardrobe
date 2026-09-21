@@ -25,3 +25,6 @@ class NoRequestsError(DatabaseError):
 
 class NoFriendshipsError(DatabaseError):
     pass
+
+class EmailNotVerified(DatabaseError):
+    pass

@@ -15,7 +15,7 @@ export default function Notifications(){
     const [loading, setLoading] = useState(false);
     const session = useSession();
 
-    // Avoid sending to unregistered devices   MOVE TO CONTEXT !!!!!!!!!
+    // Avoid sending to unregistered devices  
     const [unregistered, setUnregistered] = useState<string[]>([]);
 
     useEffect(() => {

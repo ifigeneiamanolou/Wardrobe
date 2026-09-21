@@ -17,7 +17,9 @@ class NewUser(BaseModel):
     email : str
     name : str 
     push_token : str
-    password : str
+    image : Optional[str] = None
+    password : Optional[str] = None
+    provider_sub : Optional[str] = None
 
 class UserDetails(BaseModel):
     name : Optional[str] = None
@@ -77,6 +79,9 @@ class Notification(BaseModel):
     push_token : str
     title : str
     body : str
+
+class GoogleLogIn(BaseModel):
+    idToken : str 
 
 
 

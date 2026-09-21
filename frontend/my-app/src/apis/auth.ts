@@ -2,6 +2,7 @@ import constants from "../constants/app";
 import showAlert from "../components/alert";
 import {router} from 'expo-router';
 import { Session } from "../context/ctx";
+import { setShouldAnimateExitingForTag } from "react-native-reanimated/lib/typescript/core";
 
 type changePasswordParams = {
     username : string;
@@ -32,6 +33,11 @@ type UserCheckParams = {
     onEnd : () => void,
     onChange : (value : boolean) => void,
     session : Session
+}
+
+type GoogleLogInParams = {
+    session : Session;
+    idToken : string | undefined;
 }
 
 export const logOut = async ({session} : logOutParams) => {
@@ -94,10 +100,17 @@ export async function login({username, password, onEnd, session} : changePasswor
         },
         body : data.toString()
     };
+
     return fetch(url, configObj)
     .then(async (response) => {
+        if(response.status == 401){
+            showAlert('Error', "Username or password isn' valid");
+            return;
+        };
+
         if(!response.ok){
             showAlert('Error', 'Log in failed');
+            console.log('log in error status: ', response.status)
             return;
         };
         const dict = await response.json();
@@ -158,4 +171,32 @@ export async function validate({session, onEnd, onChange} : UserCheckParams){
     .finally(() => {
         onEnd();
     })
+}
+
+export async function googleSubmit({idToken, session} : GoogleLogInParams){
+    const requestObj = { // TO DO : MOVE TO HTTPS REQUEST
+        method : "POST",
+        headers : {'Content-Type' : 'application/json'},
+        body : JSON.stringify({
+            "idToken" : idToken,
+        })
+    }
+    const url = `${constants.BACKEND_URL}/auth/token/google`;
+
+    const response = await fetch(url, requestObj);
+    const data = await response.json();
+
+    if(response.status == 401){
+        showAlert('Error', data.detail);
+        return;
+    }
+
+    if(!response.ok){
+        showAlert('Error', 'Log in failed');
+        console.log('log in error status: ', response.status)
+        return;
+    };
+
+    // Sign in if the request was successful
+    session?.signIn(data);    
 }

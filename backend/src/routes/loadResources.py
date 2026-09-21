@@ -25,6 +25,16 @@ async def get_outfits(
     # Load the images from AWS S3 and return one by one in the frontend
     return StreamingResponse(format_output_outfits(results),  media_type="application/x-ndjson")
 
+@router.get("/outfits/friends")
+async def get_outfits(
+    user : Annotated[User, Depends(get_current_user)],
+    client : MONGO_DEP
+):
+    # Extract all friends
+
+    pass
+
+
 @router.get("/items")
 async def get_items(
     user : Annotated[User, Depends(get_current_user)],

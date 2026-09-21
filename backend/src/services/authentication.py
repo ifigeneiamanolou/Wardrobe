@@ -1,7 +1,8 @@
 from fastapi.security import OAuth2PasswordBearer
-from src.services.database import find_user, load_cluster
-from src.models.pydantic import TokenData
-from src.config.conf import secret_key
+from src.services.database import find_user, load_cluster, edit_profile_details,create_user
+from src.models.pydantic import TokenData, NewUser, UserWithToken
+from src.exceptions.database import EmailNotVerified
+from src.config.conf import secret_key, web_client_id
 from pwdlib import PasswordHash
 from datetime import timedelta, timezone, datetime
 import jwt
@@ -11,6 +12,8 @@ from typing import Annotated
 import uuid
 from src.config import cache
 from pymongo import MongoClient
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 password_hash = PasswordHash.recommended()
@@ -54,7 +57,7 @@ async def authenticate_user(username : str, password : str, client : MongoClient
     Returns:
         UserInDb | bool : user details found in the database or false if authentication fails
     """
-    user = await find_user(username, client)
+    user = await find_user(username, client, "username")
     if not user:
         verify_password(password, DUMMY_HASH)
         return False
@@ -129,7 +132,7 @@ async def get_current_user(
         raise credentials_exception
 
     # Check if the user is in the database based on username
-    user = await find_user(username = token_data.username, client = client)
+    user = await find_user(token_data.username, client, "username")
     if user is None:
         raise credentials_exception
 
@@ -165,3 +168,65 @@ async def logout_token(token : str):
             await cache.revoke_token(jti, ttl_seconds)
     except (InvalidTokenError, PyJWTError):
         raise credentials_exception
+
+##########################################################
+# Google sign in
+##########################################################
+async def validate_google_token(token : str):
+    try:
+        # Validate the google token
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), web_client_id)
+        name = idinfo.get('name') + ' ' + idinfo.get('family_name')
+        image = idinfo.get('photo')
+        provider_sub = idinfo['sub']
+        email = idinfo['email']
+        email_verified = idinfo.get('email_verified')
+        return{
+            "name" : name,
+            "image" : image,
+            "provider_sub" : provider_sub,
+            "email" : email,
+            "email_verified" : email_verified
+        }
+    except ValueError:
+        raise
+
+async def create_account_link(
+    name : str,
+    image : str,
+    provider_sub : str,
+    email : str,
+    email_verified : bool,
+    client : MongoClient
+):
+    try:
+        # Check if a user with the same provider sub already exists
+        user = await find_user(provider_sub, client, "provider_sub")
+
+        # Check if a user already exists with the same email - link accounts
+        if user is None:
+            existing = await find_user(email, client, "email")
+
+            if existing and email_verified:
+                await edit_profile_details(
+                    client, 
+                    existing.username, 
+                    provider_sub = provider_sub
+                )
+                user = existing
+            # Raise an error if the email is not verified
+            elif existing and not email_verified:
+                raise EmailNotVerified()
+            # Create a brand new user with a push token
+            else:
+                user = NewUser(
+                    username = email,
+                    email = email,
+                    name = name,
+                    provider_sub = provider_sub,
+                    image = image
+                )
+                await create_user(user, client)
+        return user
+    except Exception:
+        raise

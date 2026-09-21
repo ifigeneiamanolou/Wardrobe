@@ -3,7 +3,7 @@ import * as yup from 'yup';
 import {useFormik} from 'formik';
 import '../../global.css';
 import Ionicon from 'react-native-vector-icons/Ionicons';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity} from 'react-native';
 import { Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import colors from '../constants/colors';
@@ -78,11 +78,11 @@ export default function signUp(){
             importance : Notifications.AndroidImportance.DEFAULT,
             vibrationPattern : [0, 250, 250, 250],  // vibrate, pause, vibrate, pause (ms)
             lightColor: '#FF231F7C'
-        })
+        });
     
         // Check current permissions
-        const {status : existingStatus} = await Notifications.getPermissionsAsync()
-        let finalStatus = existingStatus
+        const {status : existingStatus} = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
     
         // Request permission if not granted
         if(finalStatus !== 'granted'){
@@ -92,24 +92,24 @@ export default function signUp(){
                 showAlert('Attention', "You won't be able to receive notifications!");
                 const {status} = await Notifications.requestPermissionsAsync();
                 finalStatus = status;
-            }
-        }
+            };
+        };
     
         if(!projectId){
             showAlert('Attention', 'Project id not found');
             return;
-        }
+        };
     
         try{
             const pushToken = (await Notifications.getExpoPushTokenAsync({
                 projectId : projectId
-            })).data
+            })).data;
             return pushToken;
         } catch (err){
             console.log('Failed to generate push token : ', err);
             showAlert('Error', 'Failed to activate notifications');
         }
-    }
+    };
 
     return(
         <SafeAreaView className = 'flex-1 bg-white'>
@@ -242,33 +242,7 @@ export default function signUp(){
                                 {formik.isSubmitting ? 'Signing up ...' : 'Sign up'} 
                             </Text>
                         </TouchableOpacity>
-                    </View>  
-
-                    {/* Divider */}
-                    <View className = 'flex flex-row items-center gap-3'>
-                        <View className = 'flex-1 h-[1px] bg-border' />
-                        <Text className = 'w-50 text-center text-slate-gray'> or </Text>
-                        <View className = 'flex-1 h-[1px] bg-border' />
-                    </View>
-
-                    {/* Sign in with google or apple */}
-                    <View className='flex flex-col gap-4'>
-                        <TouchableOpacity 
-                           className='flex flex-row border border-slate-gray rounded-lg items-center justify-center py-4' 
-                            onPress = {() => {}}
-                        > 
-                            <Ionicon name="logo-google" color={colors['Graphite']} size={24} />
-                            <Text className='font-bold text-graphite' > Sign up with Google </Text>
-                        </TouchableOpacity>
-            
-                        <TouchableOpacity 
-                            className='flex flex-row border border-slate-gray rounded-lg items-center py-4 justify-center' 
-                            onPress = {() => formik.handleSubmit()}
-                           > 
-                            <Ionicon name="logo-apple" color={colors['Graphite']} size={24} />
-                            <Text className='font-bold text-graphite' > Sign up with Apple </Text>
-                        </TouchableOpacity>
-                    </View>
+                    </View> 
                 </View>
             </View>
         </SafeAreaView>

@@ -1,0 +1,55 @@
+services:
+  frontend:
+    build: 
+      context: ./frontend/my-app
+    container_name: frontend_expo_server
+    ports:
+      -"19006:19006"
+    env_file:
+      - ./frontend/.env
+
+  backend:
+    build:
+      context: ./backend
+    container_name: fastapi_backend_server
+    ports:
+      -"8000:8000"
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+      - mongo
+
+  # Connect on mongodb://localhost:27017 through Mongo Compass to visualize
+  mongo:    
+    image: mongodb/mongodb-community-server:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      -"27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=ifigeneiaManolou
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_INITDB_DATABASE=Authentication
+    volumes:
+      - mongodb: /data/db 
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      # Initial script to create databases, collections and an IAM role
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: cache
+    restart: always
+    ports:
+      -"6379:6379"
+    volumes:
+      - redis-data:/data
+    # Ensure access from outside the container
+    # Enable OAF persistence to avoid data loss from crashes
+    command: redis-server --bind 0.0.0.0 --requirepass ${REDIS_PASSWORD} --appendonly yes --maxmemory 256mb
+
+  volumes:
+    mongodb:
+      external : true
+    redis-data:
+      name: redis_cache_data
