@@ -8,6 +8,7 @@ import FeedIcons from "./feedIcons";
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import LikeAnimation from "./likeAnimation";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import CommentContainer from "./commentContainer";
 
 type Props = {
     item : Content;
@@ -17,12 +18,14 @@ type Props = {
     height : number;
 };
 
-const icons = ['heart-outline', 'chatbubble-sharp', 'arrow-down-sharp'];
+const icons = ['heart-outline', 'chatbubble-sharp', 'bookmark-outline'];
 const values = ['Like', 'Comment', 'Save'];
 
 export default function FeedCard({item, isActive, shouldPreload, width, height} : Props){
     const {url, description, urlProfile, username} = item;
     const [liked, setLiked] = useState<boolean>(false);
+    const [saved, setSaved] = useState<boolean>(false);
+    const [showComments, setShowComments] = useState<boolean>(false);
     const [showLikeAnimation, setShowLikeAnimation] = useState<boolean>(false);
 
     const handleLike = () => {
@@ -31,15 +34,21 @@ export default function FeedCard({item, isActive, shouldPreload, width, height} 
             setShowLikeAnimation(true);
         }
         iconsMenu.icons[0].icon = liked ? 'heart' : 'heart-outline';
-        // change in db
+        // change in db --> trigger change in user profile vector
     }
 
     const handleComment = () => {
+        setShowComments(true);
+    }
 
+    const hideComment = () => {
+        setShowComments(false);
     }
 
     const handleSave = () => {
-
+        setSaved(!saved);
+        iconsMenu.icons[2].icon = saved ? 'bookmark' : 'bookmark-outline';
+        // change in db --> trigger change in user profile vector
     } 
 
     const onPress = [handleLike, handleComment, handleSave];
@@ -80,6 +89,13 @@ export default function FeedCard({item, isActive, shouldPreload, width, height} 
                         />
                     </Animated.View>
                 }
+
+                {/* Comment pop up */}
+                <CommentContainer 
+                    show = {showComments} 
+                    onHide = {hideComment} 
+                    heightContainer={height}
+                />
             </GestureDetector>
         </View>
     )
