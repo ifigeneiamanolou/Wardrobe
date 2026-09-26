@@ -1,0 +1,10 @@
+1) Make sure the docker container is running
+2) Fix the readmes
+3) Make sure the drag and drop and the scaling animations are working properly
+4) Make a vertical feed
+5) Load saved outfits as well in the index page
+6) Make sure redis is properly implemented
+7) Fix the classification algorithms
+8) Make a settings page
+9) Build a CI/CD pipeline
+10) Fix the quality of the code overall (exceptions and pydantic models mainly)

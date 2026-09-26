@@ -1,6 +1,6 @@
 from fastapi.security import OAuth2PasswordBearer
 from src.services.database import find_user, load_cluster, edit_profile_details,create_user
-from src.models.pydantic import TokenData, NewUser, UserWithToken
+from src.models.pydantic import TokenData, NewUser
 from src.exceptions.database import EmailNotVerified
 from src.config.conf import secret_key, web_client_id
 from pwdlib import PasswordHash
@@ -10,7 +10,7 @@ from jwt.exceptions import InvalidTokenError, PyJWTError
 from fastapi import HTTPException, status, Depends
 from typing import Annotated
 import uuid
-from src.config import cache
+from src.utils import redis_client
 from pymongo import MongoClient
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -125,7 +125,7 @@ async def get_current_user(
             raise credentials_exception
 
         # Check if the JTI is in the redis blacklit
-        if await cache.is_revoked(jti):
+        if await redis_client.is_revoked(jti):
             raise credentials_exception
         token_data = TokenData(username = username)
     except (InvalidTokenError, PyJWTError) as e:
@@ -165,7 +165,7 @@ async def logout_token(token : str):
         ttl_seconds = max(0, now - exp)
 
         if(ttl_seconds > 0):
-            await cache.revoke_token(jti, ttl_seconds)
+            await redis_client.revoke_token(jti, ttl_seconds)
     except (InvalidTokenError, PyJWTError):
         raise credentials_exception
 

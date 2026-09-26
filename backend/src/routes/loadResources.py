@@ -7,9 +7,12 @@ from src.exceptions.database import DatabaseError, DatabaseUnavailableError, NoR
 from src.models.pydantic import User
 from typing import Annotated
 from src.routes.dependancies import MONGO_DEP
+from src.utils.redis_wrapper import cache
+from src.utils.redis_client import build_key
 
 router = APIRouter()
 
+@cache(ttl = 600, prefix = "outfits", key_builder = build_key)
 @router.get("/outfits")
 async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],
@@ -30,11 +33,16 @@ async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],
     client : MONGO_DEP
 ):
-    # Extract all friends
+    # Extract friends of the user
+    friends = await find_requests(client, user.id, True, False)
+    friends = list(friends)
+    if not friends:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No friends")
 
-    pass
+    # Load the saved outfits of the above users
+    
 
-
+@cache(ttl = 600, prefix = "items", key_builder = build_key)
 @router.get("/items")
 async def get_items(
     user : Annotated[User, Depends(get_current_user)],
@@ -50,6 +58,7 @@ async def get_items(
     # Load the images from AWS S3 and return one by one in the frontend
     return StreamingResponse(format_output_items(results),  media_type="application/x-ndjson")
 
+@cache(ttl = 600, prefix = "profiles", key_builder = build_key)
 @router.get("/profile")
 async def get_profile(
     user : Annotated[User, Depends(get_current_user)],
@@ -61,6 +70,7 @@ async def get_profile(
        "url" : formatted_image
     }
 
+@cache(ttl = 600, prefix = "users", key_builder = build_key)
 @router.get("/users")
 async def get_users(
     user : Annotated[User, Depends(get_current_user)],
@@ -75,6 +85,7 @@ async def get_users(
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
     return {'users' : formatted_result}
 
+@cache(ttl = 600, prefix = "notifications", key_builder = build_key)
 @router.get("/notifications")
 async def get_notifications(
     user : Annotated[User, Depends(get_current_user)],
@@ -90,6 +101,7 @@ async def get_notifications(
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
     return {'requests' : result}
 
+@cache(ttl = 600, prefix = "friends", key_builder = build_key)
 @router.get("/friends")
 async def get_friends(
     user : Annotated[User, Depends(get_current_user)],

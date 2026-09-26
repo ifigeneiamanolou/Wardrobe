@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TextInput, TouchableOpacity, Text, Image} from 'react-native';
+import { View, TextInput, TouchableOpacity, Text} from 'react-native';
 import { useFormik } from 'formik';
 import { Link } from 'expo-router';
 import * as yup from 'yup';
@@ -24,8 +24,6 @@ const LoginSchema = yup.object().shape({
     password : yup.string()
         .required("Password is required")
 });
-
-const googleIcon = require("@/assets/images/GoogleIcon.png");
 
 export default function Login(){
     useEffect(() => {
@@ -73,13 +71,13 @@ export default function Login(){
         } catch (err : any){
             console.log('Google sign in error, ', err);
             if(err.code == statusCodes.SIGN_IN_CANCELLED){
-                showAlert('Canceled', 'User sign in cancelled');
+                showAlert('Canceled', 'User sign in was cancelled');
             } else if (err.code == statusCodes.PLAY_SERVICES_NOT_AVAILABLE){
                 showAlert('Not available', 'Google play services not available');
             } else if (err.code == statusCodes.IN_PROGRESS){
                 showAlert('In progress', 'Sign in already in progress');
             } else {
-                showAlert('Error', 'Google Sign in not possible!');
+                showAlert('Error', 'Google sign is not possible!');
             }
         }
     };
@@ -171,15 +169,15 @@ export default function Login(){
                         {/* Sign in with google or apple */}
                         <View className='flex flex-col gap-4'>
                             <TouchableOpacity 
-                                className='flex flex-row border border-slate-gray rounded-lg items-center justify-center p-1' 
+                                className='flex flex-row border border-slate-gray rounded-lg items-center justify-center p-1 gap-1' 
                                 onPress = {() => googleLogIn()}
                             > 
-                                <Image source={{uri : googleIcon}} style = {{height : 10, width : 10}}/>
+                                <Ionicon name = "logo-google" size = {24} color = {colors['Graphite']}/>
                                 <Text className='font-bold text-graphite' > Sign in with Google </Text>
                             </TouchableOpacity>
             
                             <TouchableOpacity 
-                                className='flex flex-row border border-slate-gray rounded-lg items-center p-1 justify-center' 
+                                className='flex flex-row border border-slate-gray rounded-lg items-center p-1 justify-center gap-1' 
                                 onPress = {() => formik.handleSubmit()}
                             > 
                                 <Ionicon name="logo-apple" color={colors['Graphite']} size={24} />

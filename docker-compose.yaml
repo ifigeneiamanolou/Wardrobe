@@ -1,13 +1,4 @@
 services:
-  frontend:
-    build: 
-      context: ./frontend/my-app
-    container_name: frontend_expo_server
-    ports:
-      -"19006:19006"
-    env_file:
-      - ./frontend/.env
-
   backend:
     build:
       context: ./backend

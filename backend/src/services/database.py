@@ -1,13 +1,13 @@
-from pymongo import MongoClient
 from src.models.pydantic import ClothingItem, UserInDb, UserWithToken, NewUser
-import uuid
-import time
 from pymongo.errors import AutoReconnect, DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
 from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical, UserNotFound, FriendshipNotFound, NoFriendshipsError, NoRequestsError
 from src.utils.db_backoff import with_retry
 from src.services.formatOutput import format_image
 from src.config.conf import mongodb_key
 import datetime
+from pymongo import MongoClient
+import uuid
+import time
 
 MONGO_URI = f"mongodb+srv://ifigeneiamanolou26_db_user:{mongodb_key}@closetcluster.6sudtpr.mongodb.net/Authentication"
 
@@ -355,9 +355,14 @@ async def accept_friend_request(client : MongoClient, user_id : str, new_usernam
     except Exception as exc:
         raise DatabaseError() from exc
 
-# Load all pending requests received
+# Load all pending requests received or all friends
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def find_requests(client : MongoClient, user_id : str, accepted : bool):
+async def find_requests(
+    client : MongoClient, 
+    user_id : str, 
+    accepted : bool,
+    return_image : bool = True      # By default return the image data of the user profile
+):
     try:
         friends_collection = client['Authentication']['Friendships']
         result_cursor = friends_collection.aggregate([
@@ -385,14 +390,15 @@ async def find_requests(client : MongoClient, user_id : str, accepted : bool):
             raise NoRequestsError()
         for result in results:
             formatted_image = ""
-            if 'image' in result['friend'].keys():
-                formatted_image = await format_image(result['friend']['image'])
-            friends.append({
+            data = {
                 'push_token' : result['friend']['push_token'],
                 'username' : result['friend']['username'],
-                'email' : result['friend']['email'],
-                'image' : formatted_image
-            })
+                'email' : result['friend']['email']
+            }
+            if 'image' in result['friend'].keys() and return_image:
+                formatted_image = await format_image(result['friend']['image'])
+                data.update({'image' : formatted_image})
+            friends.append(data)
         return friends
     except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
         raise DatabaseUnavailableError(exc) from exc

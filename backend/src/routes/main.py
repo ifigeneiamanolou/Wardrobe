@@ -1,27 +1,31 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware 
 from src.routes.auth import router as auth_router
 from src.routes.save import router as save_router
 from src.routes.loadResources import router as load_router
-from src.config.cache import init_redis, close
+from src.utils.redis_pool import create_pool, close_pool, generate_client
 from src.services.notificationsServices import check_for_receipts
 from src.routes.notifications import router as notification_router
 from src.routes.edit import router as edit_router
 from src.services.database import load_cluster
+from typing import Annotated
+from redis.asyncio import Redis
 import asyncio
+from redis.exceptions import ConnectionError
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await init_redis()
-    client = await asyncio.to_thread(load_cluster)        # Blocking operation
-    app.state.mongo_client = client
-    task = asyncio.create_task(check_for_receipts(client))
-    yield
+    await create_pool()
+    client = await asyncio.to_thread(load_cluster)      # Blocking operation
+    app.state.mongo_client = client                     # Persist mongodb client
+    task = asyncio.create_task(check_for_receipts(client))      # Check push receipts
+
+    yield           # Run the server
 
     task.cancel()
     client.close()
-    await close()
+    await close_pool()
 
 app = FastAPI(lifespan = lifespan) 
 
@@ -39,6 +43,14 @@ app.include_router(save_router, prefix = "/save", tags = ["save"])
 app.include_router(load_router, prefix = "/load", tags = ["load"])
 app.include_router(edit_router, prefix = "/edit", tags = ["edit"])
 app.include_router(notification_router, prefix = "/notifications", tags = ["notifications"])
+
+@app.get("/health")
+async def get_message(redis_client : Annotated[Redis, Depends(generate_client)]):
+    try:
+        await redis_client.ping()
+        return {"state" : "healthy", "redis" : "connected"}
+    except ConnectionError:
+        return {"state" : "unhealthy", "redis" : "disconnected"}
 
 if __name__ == "__main__":
     import uvicorn

@@ -2,7 +2,6 @@ import constants from "../constants/app";
 import showAlert from "../components/alert";
 import {router} from 'expo-router';
 import { Session } from "../context/ctx";
-import { setShouldAnimateExitingForTag } from "react-native-reanimated/lib/typescript/core";
 
 type changePasswordParams = {
     username : string;
@@ -182,7 +181,6 @@ export async function googleSubmit({idToken, session} : GoogleLogInParams){
         })
     }
     const url = `${constants.BACKEND_URL}/auth/token/google`;
-
     const response = await fetch(url, requestObj);
     const data = await response.json();
 

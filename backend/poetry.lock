@@ -881,6 +881,28 @@ uvicorn = {version = ">=0.17.6", extras = ["standard"]}
 standard = ["uvicorn[standard] (>=0.15.0)"]
 
 [[package]]
+name = "fastapi-redis-sdk"
+version = "0.8.0"
+description = "The official Redis integration with FastAPI"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "fastapi_redis_sdk-0.8.0-py3-none-any.whl", hash = "sha256:1f8d56e0279cc4941bfd6b4440d5e1bdf836ba35c10524f647aac823141ac8bd"},
+    {file = "fastapi_redis_sdk-0.8.0.tar.gz", hash = "sha256:a414e25ca1f41c277b06de6a640ddb1e8389e7d654280342746ce4d087dc04ed"},
+]
+
+[package.dependencies]
+anyio = ">=4.13.0"
+fastapi = ">=0.115.0"
+pydantic = ">=2.12.5"
+pydantic-settings = ">=2.0.0"
+redis = ">=6.0.0"
+
+[package.extras]
+otel = ["opentelemetry-api (>=1.20)", "opentelemetry-sdk (>=1.20)"]
+
+[[package]]
 name = "fastar"
 version = "0.12.0"
 description = "High-level bindings for the Rust tar crate"
@@ -4910,4 +4932,4 @@ dev = ["pytest", "setuptools"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13, <4.0"
-content-hash = "85e840114bac4585a2cdde06981790201245102d9368c4027659d4d7d42f9327"
+content-hash = "99f5c498e62860cfbb745af57bb75f1d9e24acf5e8b8e346525a10c36adafdab"

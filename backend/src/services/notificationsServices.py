@@ -41,7 +41,7 @@ async def send_notification(push_token : str, title : str, body : str):
     return response_body['data']
 
 async def retrieve_receipts(ticket_ids : list[str]):
-    print(f'Fetching receipt for notification with id {id}')
+    print(f'Fetching receipt for notification with id {ticket_ids}')
     url = "https://exp.host/--/api/v2/push/getReceipts"
     response = requests.post(
         url = url, 
