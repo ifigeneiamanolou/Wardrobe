@@ -67,6 +67,20 @@ export default function Outfit() {
         size : string | null,
         color : string | null
     ) => {
+        const selectedTypes = droppedImages.map((v) => v.item.category)
+        if(!('Top' in selectedTypes) && !('Pullover' in selectedTypes) && !('Shirt' in selectedTypes) && !('Dress' in selectedTypes)){
+            showAlert('Attention', 'Add a top, pullover or shirt to the outfit!');
+            return;
+        };
+        if(!('Trouser' in selectedTypes) && !('Dress' in selectedTypes)){
+            showAlert('Attention', 'Add a bottom or dress to the outfit!');
+            return;
+        }
+        if(!('Ankle Boot' in selectedTypes) && !('Sneaker' in selectedTypes) && !('Sandal' in selectedTypes)){
+            showAlert('Attention', 'Add a shoe to the outfit!');
+            return;
+        }
+
         setOpenPopUp(false);
         setUpperPrice(upperPrice ?? 1000);
         setSelectedColor(color ?? '');

@@ -9,6 +9,7 @@ from src.services.notificationsServices import check_for_receipts
 from src.routes.notifications import router as notification_router
 from src.routes.edit import router as edit_router
 from src.services.database import load_cluster
+from src.services.feed import update_feed_daily
 from typing import Annotated
 from redis.asyncio import Redis
 import asyncio
@@ -20,10 +21,12 @@ async def lifespan(app: FastAPI):
     client = await asyncio.to_thread(load_cluster)      # Blocking operation
     app.state.mongo_client = client                     # Persist mongodb client
     task = asyncio.create_task(check_for_receipts(client))      # Check push receipts
+    taskFeed = asyncio.create_task(update_feed_daily(client))   # Update feed
 
     yield           # Run the server
 
     task.cancel()
+    taskFeed.close()
     client.close()
     await close_pool()
 

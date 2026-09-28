@@ -68,8 +68,10 @@ class requestData(BaseModel):
     username : str
 
 class Outfit(BaseModel):
+    _id : str
     image : str
-    items : list[str]
+    items : list[str]       # LIST OF IDS
+    user_id : str
     title : str
     description : str
     favorite : str

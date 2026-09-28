@@ -101,11 +101,11 @@ async def check_receipts_batch(results : list):
 async def check_for_receipts(client : MongoClient):
     while True:
         await asyncio.sleep(60)
+        
         entries = await retrieve_push_notifications(
             datetime.now() - timedelta(minutes = 15),
             client
         )
-
         if entries:
             await retrieve_receipts(entries)
 

@@ -1,11 +1,14 @@
-from src.models.pydantic import ClothingItem, UserInDb, UserWithToken, NewUser
+from cv2 import NORMCONV_FILTER
+import numpy as np
+from src.models.pydantic import ClothingItem, UserWithToken, NewUser
 from pymongo.errors import AutoReconnect, DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
-from src.exceptions.database import DatabaseUnavailableError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical, UserNotFound, FriendshipNotFound, NoFriendshipsError, NoRequestsError
+from src.exceptions.database import DatabaseUnavailableError, NoFriendshipsError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical, UserNotFound, FriendshipNotFound, NoRequestsError, ItemNotFound
 from src.utils.db_backoff import with_retry
 from src.services.formatOutput import format_image
 from src.config.conf import mongodb_key
 import datetime
-from pymongo import MongoClient
+from pymongo import AsyncMongoClient
+from pymongo import UpdateOne
 import uuid
 import time
 
@@ -16,7 +19,7 @@ def load_cluster(retries : int = 10, delay : int = 3):
     for i in range(1, retries + 1):
         client = None
         try:
-            client = MongoClient(
+            client = AsyncMongoClient(
                 MONGO_URI, 
                 serverSelectionTimeoutMS=60000,
                 socketTimeoutMS=  45000,          
@@ -35,11 +38,11 @@ def load_cluster(retries : int = 10, delay : int = 3):
 
 # Find whether a user exists in the database based on username
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def find_user(value : str, client : MongoClient, key : str):
+async def find_user(value : str, client : AsyncMongoClient, key : str):
     try:
         users_collection = client["Authentication"]["Users"]
         document_to_find = {key : value}
-        result = users_collection.find_one(document_to_find)
+        result = await users_collection.find_one(document_to_find)
 
         if result is None:
             return None
@@ -53,10 +56,10 @@ async def find_user(value : str, client : MongoClient, key : str):
 
 # Get an incremented counter number given its name and key
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def get_counter(client : MongoClient, name : str, key : str):
+async def get_counter(client : AsyncMongoClient, name : str, key : str):
     try:
         counters_collection = client["Authentication"]["counters"]
-        sequence_document = counters_collection.find_one_and_update(
+        sequence_document = await counters_collection.find_one_and_update(
             {'_id': f"{name}:{key}"},
             {'$inc' : {'sequence_number' : 1}},
             return_document = True,
@@ -73,9 +76,10 @@ async def get_counter(client : MongoClient, name : str, key : str):
 
 # Create a new user in the database
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def create_user(user : NewUser, client : MongoClient):
+async def create_user(user : NewUser, client : AsyncMongoClient):
+    user_id = str(uuid.uuid4())
     payload = {
-        "_id" : str(uuid.uuid4()),
+        "_id" : user_id,
         "username" : user.username,
         "name" : user.name,
         "password" : user.password,
@@ -85,10 +89,18 @@ async def create_user(user : NewUser, client : MongoClient):
         "provider_sub" : user.provider_sub       # empty string if account is created without google  
     }
 
+    recommendations_payload = {
+        "user_id" : user_id,
+        "profile" : None,        # No interaction data available on sign up,
+        "recommended_items" : [],
+        "interaction_count" : 0,
+        "comnputed_at" : None
+    }
+
     try:
         users_collection = client["Authentication"]["Users"]
-        result = users_collection.insert_one(payload)
-        return result.inserted_id
+        recommendations_collection = client["Clothing"]["Recommendations"]
+        result = await users_collection.insert_one(payload)
     except DuplicateKeyError as exc:
         raise UserAlreadyExistsError() from exc
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
@@ -96,15 +108,27 @@ async def create_user(user : NewUser, client : MongoClient):
     except PyMongoError as exc:
         raise DatabaseError() from exc
 
+    try:
+        recommendations_collection = client["Clothing"]["Recommendations"]
+        await recommendations_collection.insert_one(recommendations_payload)
+    except DuplicateKeyError as exc:
+        raise UserAlreadyExistsError() from exc
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except PyMongoError as exc:
+        raise DatabaseError() from exc
+
+    return result.inserted_id
+
 # Change the password of the given user
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def change_password(username : str, password : str, client : MongoClient):
+async def change_password(username : str, password : str, client : AsyncMongoClient):
     try:
         users_collection = client["Authentication"]["Users"]
         query_filter = {'username' : username}
 
         # Check if the password is the same
-        result = users_collection.find_one(query_filter)
+        result = await users_collection.find_one(query_filter)
 
         if result["password"] == password:
             raise PasswordIsIdentical()
@@ -113,7 +137,7 @@ async def change_password(username : str, password : str, client : MongoClient):
             '$set' : {'password' : password},
             '$inc' : {'token_version' : await get_counter(client, 'token_version', username)}
         }
-        users_collection.update_one(query_filter, update_operation)
+        await users_collection.update_one(query_filter, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except PyMongoError as exc:
@@ -121,7 +145,7 @@ async def change_password(username : str, password : str, client : MongoClient):
 
 # Save the uploaded photo of a clothing item along with metadata in the db
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def save_clothing(client : MongoClient, item : ClothingItem, color : str, 
+async def save_clothing(client : AsyncMongoClient, item : ClothingItem, color : str, 
                         category : str, username : str, url : str):
     payload = {
         "_id" : str(uuid.uuid4()),
@@ -141,12 +165,12 @@ async def save_clothing(client : MongoClient, item : ClothingItem, color : str,
 
         # Check if such an item exists
         document_to_find = {"name" : item.name}
-        result = items_collection.find_one(document_to_find)
+        result = await items_collection.find_one(document_to_find)
         if result is not None:
             raise ItemExists()
 
         # Insert the item in the database
-        result = items_collection.insert_one(payload)
+        result = await items_collection.insert_one(payload)
         return result.inserted_id
     except ItemExists:
         raise
@@ -157,11 +181,11 @@ async def save_clothing(client : MongoClient, item : ClothingItem, color : str,
 
 # Find all items/outfits of a user                               
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def load_outfits_items(client : MongoClient, username : str, collection : str = "Items"):
+async def load_outfits_items(client : AsyncMongoClient, username : str, collection : str = "Items"):
     try:
         items_collection = client["Clothing"][collection]
         document_to_find = {'username' : username}
-        results = items_collection.find(document_to_find)
+        results = await items_collection.find(document_to_find)
         return results
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
@@ -172,14 +196,14 @@ async def load_outfits_items(client : MongoClient, username : str, collection : 
 
 # Update the value under the key 'favorite' in the items table for the item with the corresponding id                             
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def change_favorite(client : MongoClient, id : str, favorite : bool, collection : str = "Items"):
+async def change_favorite(client : AsyncMongoClient, id : str, favorite : bool, collection : str = "Items"):
     try:
         items_collection = client["Clothing"][collection]
         document_to_find = {'_id' : id}
         update_operation = {
             '$set' : {'favorite' : 'yes' if favorite else 'no'}
         }
-        items_collection.update_one(document_to_find, update_operation)
+        await items_collection.update_one(document_to_find, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
@@ -187,11 +211,11 @@ async def change_favorite(client : MongoClient, id : str, favorite : bool, colle
 
 # Delete the item/outfit with the corresponding id
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def delete_item_outfit(client : MongoClient, id : str, collection : str = "Items"):
+async def delete_item_outfit(client : AsyncMongoClient, id : str, collection : str = "Items"):
     try:
         items_collection = client["Clothing"][collection]
         document_to_find = {'_id' : id}
-        items_collection.delete_one(document_to_find)
+        await items_collection.delete_one(document_to_find)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
@@ -199,14 +223,14 @@ async def delete_item_outfit(client : MongoClient, id : str, collection : str = 
 
 # Edit the value of a key of an outfit
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def edit_value(client : MongoClient, id : str, value : str, category : str, collection : str = "Items"):
+async def edit_value(client : AsyncMongoClient, id : str, value : str, category : str, collection : str = "Items"):
     try:
         items_collection = client["Clothing"][collection]
         document_to_find = {'_id' : id}
         update_operation = {
             '$set' : {category : value}
         }
-        items_collection.update_one(document_to_find, update_operation)
+        await items_collection.update_one(document_to_find, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
@@ -214,14 +238,14 @@ async def edit_value(client : MongoClient, id : str, value : str, category : str
 
 # Edit the profile picture of a user
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def edit_profile_picture(client : MongoClient, username : str, image : str):
+async def edit_profile_picture(client : AsyncMongoClient, username : str, image : str):
     try:
         collection = client["Authentication"]["Users"]
         document_to_find = {'username' : username}
         update_operation = {
             '$set' : {'image' : image}
         }
-        collection.update_one(document_to_find, update_operation)
+        await collection.update_one(document_to_find, update_operation)
     except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
@@ -230,7 +254,7 @@ async def edit_profile_picture(client : MongoClient, username : str, image : str
 # Edit the profile details of a user
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def edit_profile_details(
-    client : MongoClient, 
+    client : AsyncMongoClient, 
     old_username : str,
     name : str | None = None, 
     username : str | None = None,
@@ -255,11 +279,11 @@ async def edit_profile_details(
 
 # we want to find users that ARE NOT MY FRIENDS
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def find_all_users(client : MongoClient, username : str):
+async def find_all_users(client : AsyncMongoClient, username : str):
     try:
         user = await find_user(username, client)
         collection = client["Authentication"]["Users"]
-        result = collection.aggregate([
+        result = await collection.aggregate([
             {       # Match users that are not me 
                 '$match' : {
                     'username' : {'$ne' : username}
@@ -271,7 +295,7 @@ async def find_all_users(client : MongoClient, username : str):
                     'let' : { "id_search": "$_id" },
                     "pipeline": [
                         { "$match": { "$expr": { "$eq": ["$id_1", "$$id_search"] }}},
-                        { "$project": {  "_id": 0, "friend_id": "$id_2"}}
+                        { "$project": {"_id": 0, "friend_id": "$id_2"}}
                     ],
                     'as' : 'friends_1'
                 }
@@ -295,7 +319,7 @@ async def find_all_users(client : MongoClient, username : str):
             },      # Select the details of the users that are not my friends
             {'$project' : {'username' : 1, 'email' : 1, 'image' : 1, 'push_token' : 1, '_id' : 0}}
         ])
-        return list(result)
+        return await result.to_list()
     except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
         raise DatabaseUnavailableError(exc) from exc
     except Exception as exc:
@@ -303,11 +327,11 @@ async def find_all_users(client : MongoClient, username : str):
 
 # Make friendship request
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def make_friend_request(client : MongoClient, user_id : str, new_username : str):
+async def make_friend_request(client : AsyncMongoClient, user_id : str, new_username : str):
     try:
         # Find the id of the new user
         users_collection = client["Authentication"]["Users"]
-        result = users_collection.find_one({'username' : new_username})
+        result = await users_collection.find_one({'username' : new_username})
         if result is None:
             raise UserNotFound()
         request_id = result['_id']
@@ -320,7 +344,7 @@ async def make_friend_request(client : MongoClient, user_id : str, new_username 
             "created_at" : datetime.datetime.now(),
             "accepted" : 0,
         }
-        result = friends_collection.insert_one(payload)
+        result = await friends_collection.insert_one(payload)
         return result.inserted_id
     except (ConnectionFailure, ServerSelectionTimeoutError, AutoReconnect) as exc:
         raise DatabaseUnavailableError(exc) from exc
@@ -329,11 +353,11 @@ async def make_friend_request(client : MongoClient, user_id : str, new_username 
 
 # Accept a friendship request
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def accept_friend_request(client : MongoClient, user_id : str, new_username : str):
+async def accept_friend_request(client : AsyncMongoClient, user_id : str, new_username : str):
     try:
         # Find the id of the user from which the request came
         users_collection = client["Authentication"]["Users"]
-        result = users_collection.find_one({'username' : new_username})
+        result = await users_collection.find_one({'username' : new_username})
         if result is None:
             raise UserNotFound()
         request_id = result['_id']
@@ -344,7 +368,7 @@ async def accept_friend_request(client : MongoClient, user_id : str, new_usernam
             'id_1' : min(request_id, user_id),
             'id_2' : max(request_id, user_id)
         })
-        result = friends_collection.update_one(document_to_find, {
+        result = await friends_collection.update_one(document_to_find, {
             '$set' : {'accepted' : 1, "accepted_at" : datetime.datetime.now()}
         })
 
@@ -358,14 +382,14 @@ async def accept_friend_request(client : MongoClient, user_id : str, new_usernam
 # Load all pending requests received or all friends
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def find_requests(
-    client : MongoClient, 
+    client : AsyncMongoClient, 
     user_id : str, 
     accepted : bool,
     return_image : bool = True      # By default return the image data of the user profile
 ):
     try:
         friends_collection = client['Authentication']['Friendships']
-        result_cursor = friends_collection.aggregate([
+        result_cursor = await friends_collection.aggregate([
             {'$match' : {
                 'accepted' : 1 if accepted else 0,
                 '$or' : [{'id_1' : user_id}, {'id_2' : user_id}]
@@ -384,7 +408,7 @@ async def find_requests(
             {'$unwind' : '$friend'},
             {'$unset' : 'otherUser'}
         ])
-        results = list(result_cursor)
+        results = await result_cursor.to_list()
         friends = []
         if len(results) == 0:
             raise NoRequestsError()
@@ -405,18 +429,18 @@ async def find_requests(
     except Exception as exc:
         raise 
 
-async def delete_friend(client : MongoClient, user_id : str, username : str):
+async def delete_friend(client : AsyncMongoClient, user_id : str, username : str):
     try:
         # Find the id of the user from which the request came
         users_collection = client["Authentication"]["Users"]
-        result = users_collection.find_one({'username' : username})
+        result = await users_collection.find_one({'username' : username})
         if result is None:
             raise UserNotFound()
         request_id = result['_id']
 
         # Delete the corresponding entry in the friendships table
         friends_collection = client['Authentication']['Friendships']
-        result = friends_collection.delete_one({
+        result = await friends_collection.delete_one({
             'id_1' : min(request_id, user_id),
             'id_2' : max(request_id, user_id)
         })
@@ -429,17 +453,19 @@ async def delete_friend(client : MongoClient, user_id : str, username : str):
         raise DatabaseError() from exc
 
 async def save_outfit(
-    items : list[str], url : str, client : MongoClient, username : str,
-    name : str, favorite : str, description : str
+    items : list[str], url : str, client : AsyncMongoClient, user_id : str,
+    name : str, favorite : str, description : str, feature_vector : np.ndarray
 ):
-    
     payload = {
         "_id" : str(uuid.uuid4()),
         "name" : name,
         "description" : description,
         "items" : items,
         "favorite" : favorite,
-        "username" : username,
+        "user_id" : user_id,
+        "number_of_likes" : 0,
+        "created_at" : datetime.datetime.now(),
+        "feature_vector" : feature_vector,
         "url" : url              # URL to the stored image in the S3 bucket
     }
         
@@ -448,12 +474,12 @@ async def save_outfit(
     
         # Check if such an item exists
         document_to_find = {"name" : name}
-        result = items_collection.find_one(document_to_find)
+        result = await items_collection.find_one(document_to_find)
         if result is not None:
             raise ItemExists()
     
         # Insert the item in the database
-        result = items_collection.insert_one(payload)
+        result = await items_collection.insert_one(payload)
         return result.inserted_id
     except ItemExists:
         raise
@@ -462,7 +488,7 @@ async def save_outfit(
     except Exception as exc:
         raise DatabaseError() from exc
 
-async def add_push_notification(id : str, push_token : str, client : MongoClient):
+async def add_push_notification(id : str, push_token : str, client : AsyncMongoClient):
     payload = {
         "ticket_id" : id,
         "push_token" : push_token,                         
@@ -471,23 +497,231 @@ async def add_push_notification(id : str, push_token : str, client : MongoClient
 
     try:
         items_collection = client["Notifications"]["Receipt_ids"]
-        result = items_collection.insert_one(payload)
+        result = await items_collection.insert_one(payload)
         return result.inserted_id
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
         raise DatabaseError() from exc
 
-async def retrieve_push_notifications(created_at, client : MongoClient):
+async def retrieve_push_notifications(created_at, client :AsyncMongoClient):
     document_to_find = {"created_at" : created_at}
 
     try:
         items_collection = client["Notifications"]["Receipt_ids"]
-        results = items_collection.find(document_to_find)
+        results = await items_collection.find(document_to_find)
         return results
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
         raise DatabaseError() from exc
 
+async def save_interaction(
+    user_id : str, 
+    item_id : int, 
+    interaction_type : str, 
+    client : AsyncMongoClient,
+    weight : int
+):
+    payload = {
+        "user_id" : user_id,
+        "item_id" : item_id,
+        "interaction_type" : interaction_type,
+        "weight" : weight
+    }
+
+    try:
+        items_collection = client["Feed"]["Interactions"]
+        result = await items_collection.insert_one(payload)
+        return result.inserted_id
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+async def fetch_user_profile_vector(client : AsyncMongoClient, user_id : str):
+    document_to_find = {"user_id" : user_id}
     
+    try:
+        items_collection = client["Clothing"]["Recommendations"]
+        result = await items_collection.find_one(document_to_find)
+
+        if result and result.get("profile"):
+            return result.get("profile")
+        else:
+            return None
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+async def fetch_user_recommendations(client : AsyncMongoClient, user_id : str):
+    document_to_find = {"user_id" : user_id}
+    
+    try:
+        items_collection = client["Clothing"]["Recommendations"]
+        result = await items_collection.find_one(document_to_find)
+
+        if result and len(result.get("recommended_items")) != 0:
+            return result.get("recommended_items")
+        else:
+            raise ItemNotFound      # Raise an exception if there are no recommendations
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+async def fetch_item_feature_vector(client : AsyncMongoClient, item_id : str):
+    document_to_find = {"_id" : item_id}
+
+    try:
+        items_collection = client["Clothing"]["Items"]
+        result = await items_collection.find_one(document_to_find)
+    
+        if result and result.get("feature_vector") and result.get("created_at"):
+            return list(result.get("feature_vector")), result.get("created_at")
+        else:
+            raise ItemNotFound
+    except ItemNotFound:
+        raise
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+async def update_recommendations(
+    client : AsyncMongoClient, 
+    user_id : str, 
+    recommended_items : list[dict],
+    profile : list[int] | None = None
+):
+    collection = client["Clothing"]["Recommendations"]
+    document_to_find = {"user_id" : user_id}
+    payload = {
+        "profile" : profile,
+        "recommended_items" : recommended_items,
+    }
+
+    if profile is not None:         # Daily full update
+        payload.update({
+            "profile" : profile,
+            "computed_at" : datetime.datetime.now()
+        })
+    else:               # Triggered on user interaction
+        payload.update({
+            "last_incremental_update" : datetime.datetime.now()
+        })
+
+    try:
+        await collection.update_one(document_to_find, {"$set" : payload})
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+# Bulk update operation to remove number of calls
+async def update_recommendations_batch(
+    client : AsyncMongoClient, 
+    user_ids : list[str], 
+    scores : list[float],
+    item_id : str
+):
+    collection = client["Clothing"]["Recommendations"]
+    operation = [UpdateOne(
+        filter = {"user_id" : user_id},
+        update = {
+            '$push' : {"recommended_items" : {
+                '$each' : [{"item_id" : item_id, "score" : float(score)}],
+                '$sort' : {'score' : -1},
+                '$slice' : 100      # Maximum number of recommended items
+            }}, 
+            '$set' : {"last_incremental_update" : datetime.datetime.now()}
+        }
+    ) for user_id, score in zip(user_ids, scores)]
+
+    try:
+        await collection.bulk_write(operation, ordered = False)
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+async def load_favorite_items(client : AsyncMongoClient, user_id : str):
+    collection = client["Clothing"]["Outfits"]
+    friends_collection = client["Authentication"]["Friendships"]
+
+    try:
+        # Fetch a list the ids of all friends of the current user
+        result_cursor = await friends_collection.aggregate([
+            {'$match' : {
+                'accepted' : 1,
+                '$or' : [{'id_1' : user_id}, {'id_2' : user_id}]
+            }},
+            {'$addFields' : { 'otherUser' : { '$cond' : {
+                'if' : {'$eq' : ['$id_1', user_id]},
+                'then' : '$id_2',
+                'else' : '$id_1'
+            }}}},
+            {'$project' : {'otherUser' : 1}}        # Only return the ids of the friends
+        ])
+        friends = await result_cursor.to_list()
+
+        # Handle the case no friends are found
+        if len(friends) == 0:
+            raise NoFriendshipsError
+
+        # Find all outfits created by them in the db (max 1000)
+        outfits_cursor = await collection.aggregate([
+            {'$match' : {'user_id' : {'$in' : friends}}},
+            {'$sort' : {'number_of_likes' : -1}},            # descending order
+            {'$limit' : 100}
+        ])
+        outfits = await outfits_cursor.to_list()
+        
+        # Handle the case no outfits have been created
+        if len(outfits) == 0:
+            raise ItemNotFound
+        return outfits
+    except (NoFriendshipsError, ItemNotFound):
+        raise
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+async def fetch_friend_profiles(client : AsyncMongoClient, user_id : str):
+    collection = client["Clothing"]["Recommendations"]
+    friends_collection = client["Authentication"]["Friendships"]
+    try:
+        result_cursor = await friends_collection.aggregate([
+            {'$match' : {
+                'accepted' : 1,
+                '$or' : [{'id_1' : user_id}, {'id_2' : user_id}]
+            }},
+            {'$addFields' : { 'otherUser' : { '$cond' : {
+                'if' : {'$eq' : ['$id_1', user_id]},
+                'then' : '$id_2',
+                'else' : '$id_1'
+            }}}},
+            {'$project' : {'otherUser' : 1}}        # Only return the ids of the friends
+        ])
+
+        friends = await result_cursor.to_list()
+        
+        # Handle the case no friends are found
+        if len(friends) == 0:
+            raise NoFriendshipsError
+
+        # Find the profiles of the above users
+        recommendation_cursor = await collection.aggregate([
+            {'$match' : {'user_id' : {'$in' : [f["otherUser"] for f in friends]}}},
+            {'$project' : {'_id' : 0, 'user_id' : 1, 'profile' : 1, 'recommended_items' : 1}}
+        ])
+        result = await recommendation_cursor.to_list()
+        return result
+    except NoFriendshipsError:
+            raise
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc

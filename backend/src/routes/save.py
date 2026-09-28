@@ -6,11 +6,13 @@ from src.services.database import save_clothing, save_outfit
 from src.services.predictions import predict_category, predict_color, read_image
 from src.services.s3storage import upload_file_to_bucket
 from src.models.parsers import load_clothing_item
+from src.services.feed import on_item_create, update_interaction
 import os
 import uuid
 import shutil
 import base64
 from src.routes.dependancies import MONGO_DEP
+from sympy import O
 
 router = APIRouter()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -56,7 +58,7 @@ async def save_item(
     return {"message" : f"Item saved successfully with id {idNum}!"}
 
 @router.post("/outfit")
-async def save_item(
+async def save_outfit(
     outfit : Outfit, 
     cluster : MONGO_DEP,
     user : Annotated[User, Depends(get_current_user)]
@@ -71,9 +73,15 @@ async def save_item(
         # Upload the image in an S3 bucket
         url = await upload_file_to_bucket(path)
 
+        # Compute the outfit's feature vector and merge it into all friend's recommendations
+        feature_vector = on_item_create(user.id, cluster, outfit)
+
         # Save the outfit in the database
-        idNum = await save_outfit(outfit.items, url, cluster, user.username, 
-                                  outfit.title, outfit.favorite, outfit.description)
+        idNum = await save_outfit(outfit.items, url, cluster, user.user_id,
+                                  outfit.title, outfit.favorite, outfit.description, feature_vector)
+        
+        # Update the user profile vector and his recommendations
+        await update_interaction(user.id, idNum, "create")
     except Exception:               # SPECIFIC HTTP EXCEPTIONS !!!!!!!!!!!!!!
         raise
     finally:

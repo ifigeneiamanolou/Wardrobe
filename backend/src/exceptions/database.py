@@ -28,3 +28,6 @@ class NoFriendshipsError(DatabaseError):
 
 class EmailNotVerified(DatabaseError):
     pass
+
+class ItemNotFound(DatabaseError):
+    pass

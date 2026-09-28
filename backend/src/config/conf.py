@@ -61,3 +61,24 @@ NAMED_COLORS = {
     "sky blue":     (135, 206, 235),
     "sandy brown":  (244, 164, 96),
 }
+
+# Category labels for classification
+NAMED_CATEGORIES = [
+    'Top',
+    'Trouser',
+    'Pullover',
+    'Dress',
+    'Coat',
+    'Sandal',
+    'Shirt',
+    'Sneaker',
+    'Bag',
+    'Ankle boot'
+]
+
+# Interaction weights
+INTERACTION_WEIGHTS = {
+    "like" : 1,
+    "save" : 3,
+    "create" : 5
+}

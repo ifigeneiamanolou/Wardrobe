@@ -8,3 +8,6 @@
 8) Make a settings page
 9) Build a CI/CD pipeline
 10) Fix the quality of the code overall (exceptions and pydantic models mainly)
+
+future plans:
+1) initial quiz
