@@ -7,9 +7,9 @@ from src.config.conf import NAMED_COLORS, NAMED_CATEGORIES, INTERACTION_WEIGHTS
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import MinMaxScaler, MultiLabelBinarizer
-from src.services.database import (save_interaction, fetch_item_feature_vector, fetch_user_profile_vector, 
+from src.services.database import (delete_interaction, save_interaction, fetch_item_feature_vector, fetch_user_profile_vector, 
                                    update_recommendations, fetch_user_recommendations, fetch_friend_profiles,
-                                   update_recommendations_batch)
+                                   update_recommendations_batch, delete_interaction)
 from sklearn.decomposition import PCA
 import scipy.sparse as sp
 from sklearn.metrics.pairwise import cosine_similarity
@@ -63,12 +63,12 @@ def create_feature_vector(outfit : Outfit):
         normalized_price = scaler.fit_transform(np.array(whole_price).reshape(-1, 1))
 
     # Combine the price, number of items, category and color in a sparse matrix
-    return np.concatenate([categories, colors, [normalized_price, number_items], description])
+    return np.concatenate([categories, colors, [normalized_price, number_items], tfidf_compressed])
 
 async def update_feed_daily(client : MongoClient):
     while True:
         await asyncio.sleep(60 * 60 * 24)     # Wait one full day
-
+        print("Performing daily task ....")
         # Find all active users
 
         # Find all outfits generated
@@ -116,46 +116,49 @@ async def on_item_create(user_id : int, client : MongoClient, outfit : Outfit):
     
     return feature_vector
 
-async def update_interaction(user_id : int, item_id : int, interaction_type : str, client : MongoClient):
+async def update_interaction(
+    user_id : int, 
+    item_id : int, 
+    interaction_type : str, 
+    client : MongoClient,
+    deleted : bool = False
+):
     # Raise a value error if needed
     if interaction_type not in INTERACTION_WEIGHTS.keys():
         raise ValueError("Interaction type is invalid!")
 
-    try:
-        # Store the interaction in the db
-        await save_interaction(
-            user_id, 
-            item_id, 
-            interaction_type, 
-            client, 
-            INTERACTION_WEIGHTS.get(interaction_type)
-        )
+    # Store the interaction in the db
+    if deleted:
+        await delete_interaction(user_id, item_id, interaction_type,client)
+    else:
+        await save_interaction(user_id, item_id, interaction_type, client)
 
-        # Extract the item's precomputed vector
-        feature_vector, created_at = await fetch_item_feature_vector(client, item_id)
+    # Extract the item's precomputed vector
+    feature_vector, created_at = await fetch_item_feature_vector(client, item_id)
 
-        # Compute and factor in the interaction date
-        weighted_feature_vector = apply_weight(
-            np.array(feature_vector), 
-            INTERACTION_WEIGHTS.get(interaction_type), 
-            created_at
-        )
+    # Compute and factor in the interaction date
+    weighted_feature_vector = apply_weight(
+        np.array(feature_vector), 
+        INTERACTION_WEIGHTS.get(interaction_type), 
+        created_at
+    )
         
-        # Extract the user profile vector or create a new one with zeros
-        profile_vector = await fetch_user_profile_vector(client, user_id)
-        if not profile_vector:
-            profile_vector = np.zeros_like(feature_vector)
+    # Extract the user profile vector or create a new one with zeros
+    profile_vector = await fetch_user_profile_vector(client, user_id)
+    if not profile_vector:
+        profile_vector = np.zeros_like(feature_vector)
         
-        # Add the new interaction's weighted vector 
+    # Add the new interaction's weighted vector 
+    if deleted:
+        updated_profile_vector = profile_vector - weighted_feature_vector
+    else:
         updated_profile_vector = profile_vector + weighted_feature_vector
 
-        # Rescore the outfits against the cached candidate set
-        old_recommendations = await fetch_user_recommendations(client, user_id)
-        scores = cosine_similarity(old_recommendations, updated_profile_vector)[:, 0]
-        recommendation_list = [{"item_id" : item_id_key, "score" : score} for item_id_key, score in zip(old_recommendations, scores)]
-        ranked_tuples = sorted(recommendation_list, key = lambda x : x['score'], reverse = True)[:100]
+    # Rescore the outfits against the cached candidate set
+    old_recommendations = await fetch_user_recommendations(client, user_id)
+    scores = cosine_similarity(old_recommendations, updated_profile_vector)[:, 0]
+    recommendation_list = [{"item_id" : item_id_key, "score" : score} for item_id_key, score in zip(old_recommendations, scores)]
+    ranked_tuples = sorted(recommendation_list, key = lambda x : x['score'], reverse = True)[:100]
         
-        # Update the user recommendations table
-        await update_recommendations(client, user_id, ranked_tuples, updated_profile_vector)
-    except Exception as e:
-        raise           # Raise the exception to be caught in the endpoint
+    # Update the user recommendations table
+    await update_recommendations(client, user_id, ranked_tuples, updated_profile_vector)

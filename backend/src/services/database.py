@@ -2,12 +2,12 @@ from cv2 import NORMCONV_FILTER
 import numpy as np
 from src.models.pydantic import ClothingItem, UserWithToken, NewUser
 from pymongo.errors import AutoReconnect, DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
-from src.exceptions.database import DatabaseUnavailableError, NoFriendshipsError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical, UserNotFound, FriendshipNotFound, NoRequestsError, ItemNotFound
+from src.exceptions.database import DatabaseUnavailableError, NoFriendshipsError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical, UserNotFound, FriendshipNotFound, NoRequestsError, ItemNotFound, NoOutfitsCreated
 from src.utils.db_backoff import with_retry
 from src.services.formatOutput import format_image
-from src.config.conf import mongodb_key
+from src.config.conf import mongodb_key, INTERACTION_WEIGHTS
 import datetime
-from pymongo import AsyncMongoClient
+from pymongo import AsyncMongoClient, MongoClient
 from pymongo import UpdateOne
 import uuid
 import time
@@ -177,7 +177,7 @@ async def save_clothing(client : AsyncMongoClient, item : ClothingItem, color : 
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
-            raise DatabaseError() from exc
+        raise DatabaseError() from exc
 
 # Find all items/outfits of a user                               
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
@@ -212,10 +212,17 @@ async def change_favorite(client : AsyncMongoClient, id : str, favorite : bool, 
 # Delete the item/outfit with the corresponding id
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def delete_item_outfit(client : AsyncMongoClient, id : str, collection : str = "Items"):
+    items_collection = client["Clothing"][collection]
+    comments_collection = client["Authentication"]["Comments"]
+    comment_to_find = {"outfit_id" : id}
+    document_to_find = {'_id' : id}
     try:
-        items_collection = client["Clothing"][collection]
-        document_to_find = {'_id' : id}
+        # Delete the item/outfit
         await items_collection.delete_one(document_to_find)
+
+        # If outfit, delete comments
+        if collection == "Outfits":
+            await comments_collection.delete_many(comment_to_find)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
@@ -464,6 +471,7 @@ async def save_outfit(
         "favorite" : favorite,
         "user_id" : user_id,
         "number_of_likes" : 0,
+        "users_ids_saved" : [],
         "created_at" : datetime.datetime.now(),
         "feature_vector" : feature_vector,
         "url" : url              # URL to the stored image in the S3 bucket
@@ -483,6 +491,34 @@ async def save_outfit(
         return result.inserted_id
     except ItemExists:
         raise
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+async def save_delete_outfit(client : AsyncMongoClient, user_id : str, item_id : str, delete : bool = False):
+    document_to_find = {"_id" : item_id}
+    if delete:
+        update_operation = {"$pop" : {"users_ids_saved" : user_id}}
+    else:
+        update_operation = {"$push" : {"users_ids_saved" : user_id}}
+    outfits_collection = client["Clothing"]["Outfits"]
+        
+    try:
+        await outfits_collection.update_one(document_to_find, update_operation, upsert = False)
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+async def increment_decrement_likes(client : MongoClient, item_id : int, increment : bool = True):
+    document_to_find = {"item_id" : item_id}
+    number_to_change = 1 if increment else -1
+    update_operation = {'$inc' : {'number_of_likes' : number_to_change}}
+    collection = client["Clothing"]["Outfits"]
+
+    try:
+        await collection.update_one(document_to_find, update_operation, upsert = False)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
@@ -520,25 +556,48 @@ async def save_interaction(
     user_id : str, 
     item_id : int, 
     interaction_type : str, 
-    client : AsyncMongoClient,
-    weight : int
+    client : AsyncMongoClient
 ):
+    # Raise a value error if needed
+    if interaction_type not in INTERACTION_WEIGHTS.keys():
+        raise ValueError("Interaction type is invalid!")
+    
     payload = {
         "user_id" : user_id,
         "item_id" : item_id,
         "interaction_type" : interaction_type,
-        "weight" : weight
+        "weight" : INTERACTION_WEIGHTS[interaction_type]
     }
 
     try:
-        items_collection = client["Feed"]["Interactions"]
-        result = await items_collection.insert_one(payload)
+        interactions_collection = client["Feed"]["Interactions"]
+        result = await interactions_collection.insert_one(payload)
         return result.inserted_id
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
         raise DatabaseError() from exc
 
+async def delete_interaction(
+    user_id : str, 
+    item_id : int, 
+    interaction_type : str, 
+    client : AsyncMongoClient,
+):
+    # Raise a value error if needed
+    if interaction_type not in INTERACTION_WEIGHTS.keys():
+        raise ValueError("Interaction type is invalid!")
+
+    query_filter = {"user_id" : user_id, "item_id" : item_id, "interaction_type" : interaction_type}
+    interactions_collection = client["Feed"]["Interactions"]
+    try:
+        result = await interactions_collection.delete_one(query_filter)
+        return result.inserted_id
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+    
 async def fetch_user_profile_vector(client : AsyncMongoClient, user_id : str):
     document_to_find = {"user_id" : user_id}
     
@@ -557,7 +616,6 @@ async def fetch_user_profile_vector(client : AsyncMongoClient, user_id : str):
 
 async def fetch_user_recommendations(client : AsyncMongoClient, user_id : str):
     document_to_find = {"user_id" : user_id}
-    
     try:
         items_collection = client["Clothing"]["Recommendations"]
         result = await items_collection.find_one(document_to_find)
@@ -565,7 +623,7 @@ async def fetch_user_recommendations(client : AsyncMongoClient, user_id : str):
         if result and len(result.get("recommended_items")) != 0:
             return result.get("recommended_items")
         else:
-            raise ItemNotFound      # Raise an exception if there are no recommendations
+            return await load_favorite_items(client, user_id)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
@@ -680,7 +738,7 @@ async def load_favorite_items(client : AsyncMongoClient, user_id : str):
         
         # Handle the case no outfits have been created
         if len(outfits) == 0:
-            raise ItemNotFound
+            raise NoOutfitsCreated
         return outfits
     except (NoFriendshipsError, ItemNotFound):
         raise
@@ -720,8 +778,26 @@ async def fetch_friend_profiles(client : AsyncMongoClient, user_id : str):
         result = await recommendation_cursor.to_list()
         return result
     except NoFriendshipsError:
-            raise
+        raise NoOutfitsCreated
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
         raise DatabaseError() from exc
+
+async def create_comment(client : AsyncMongoClient, comment : str, outfit_id : str, user_id : str):
+    payload = {
+        "outfit_id" : outfit_id,
+        "user_id" : user_id,
+        "created_at" : datetime.datetime.now(),
+        "comment" : comment
+    }
+    collection = client["Authentication"]["Comments"]
+
+    try:
+        await collection.insert_one(payload)
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+    
+# function to load comments for a given outfit  !!!!!!!!!!!!!

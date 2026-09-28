@@ -31,3 +31,6 @@ class EmailNotVerified(DatabaseError):
 
 class ItemNotFound(DatabaseError):
     pass
+
+class NoOutfitsCreated(DatabaseError):
+    pass

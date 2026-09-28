@@ -85,5 +85,14 @@ class Notification(BaseModel):
 class GoogleLogIn(BaseModel):
     idToken : str 
 
+class ChangeFeed(BaseModel):
+    delete : bool
+    item_id : str
+
+class CommentData(BaseModel):
+    outfit_id : str
+    user_id : str
+    comment : str
+
 
 
