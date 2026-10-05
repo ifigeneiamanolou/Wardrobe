@@ -3,44 +3,75 @@ services:
     build:
       context: ./backend
     container_name: fastapi_backend_server
-    ports:
-      -"8000:8000"
+    ports: [
+      "8000:8000"
+    ]
     env_file:
       - ./.env
     depends_on:
-      - redis
-      - mongo
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
 
   # Connect on mongodb://localhost:27017 through Mongo Compass to visualize
   mongo:    
     image: mongodb/mongodb-community-server:latest
     container_name: mongodb
     restart: always
-    ports:
-      -"27017:27017"
+    ports: [
+      "127.0.0.1:27017:27017"     # Map the port on my device to the port in the container
+    ]
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=ifigeneiaManolou
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
       - MONGO_INITDB_DATABASE=Authentication
-    volumes:
-      - mongodb: /data/db 
+      - APP_DB_USER=${APP_DB_USER}
+      - APP_DB_PASSWORD=${APP_DB_PASSWORD}
+    volumes:    # Grants access to the volume to the locally running mongo database
+      - mongodb:/data/db     # Location the volume is mounted inside the container
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       # Initial script to create databases, collections and an IAM role
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping').ok", "--quiet"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
 
   redis:
     image: redis:7.4-alpine
     container_name: cache
     restart: always
-    ports:
-      -"6379:6379"
+    ports: [
+      "127.0.0.1:6379:6379"
+    ]
     volumes:
       - redis-data:/data
     # Ensure access from outside the container
     # Enable OAF persistence to avoid data loss from crashes
-    command: redis-server --bind 0.0.0.0 --requirepass ${REDIS_PASSWORD} --appendonly yes --maxmemory 256mb
+    command: redis-server --bind 0.0.0.0 --requirepass ${REDIS_PASSWORD} --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]      # Command to perform the check
+      interval: 1m30s                         # Time interval between checks
+      timeout: 30s                            # Maximum docker waits for the service
+      retries: 5                              # Maxium retries until failure
+      start_period: 30s                       # Delay until health check after running the container
 
-  volumes:
-    mongodb:
-      external : true
-    redis-data:
-      name: redis_cache_data
+# Volumes are persistent stores of data using by Docker
+# When creating a new volume this is created within the Docker host
+# When you mount the volume into a container that directory is mounted to the container
+# These volumes are managed by Docker and isolated from the core functionality of the host
+# They are the prefered way of persisting data used by Docker containers
+# Advantages:
+# 1) Easier to back up; the content of the writable layer is deleted when stopping the container
+# 2) They work on both Windows and Linux containers
+# 3) Volumes can be safely shared between containers
+# 4) Volumes can be prepopulated on build time
+# 5) It is much faster than writing to a container's writable layer and they don't increase its size
+volumes:      # Docker compose up creates the volumes if they don't exist
+  mongodb:
+    driver : local
+  redis-data:
+    driver : local
+  

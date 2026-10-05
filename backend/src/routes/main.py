@@ -26,7 +26,6 @@ async def lifespan(app: FastAPI):
     yield           # Run the server
 
     task.cancel()
-    taskFeed.close()
     client.close()
     await close_pool()
 

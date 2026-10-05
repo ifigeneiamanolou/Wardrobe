@@ -7,7 +7,11 @@
 7) Fix the classification algorithms
 8) Make a settings page
 9) Build a CI/CD pipeline
-10) Fix the quality of the code overall (exceptions and pydantic models mainly)
+10) Fix the quality of the code overall (exceptions and pydantic models mainly, and centralized constants and sectrets)
+11) check google log in is working
+12) the bag animation is opposite (it is squezing on the upper part of the motion !!!!!)
 
 future plans:
 1) initial quiz
+2) ability to log in with apple
+3) improved notifications using native FCM push notifications instead of the Expo API

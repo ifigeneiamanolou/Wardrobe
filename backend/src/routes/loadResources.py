@@ -28,6 +28,22 @@ async def get_outfits(
     # Load the images from AWS S3 and return one by one in the frontend
     return StreamingResponse(format_output_outfits(results),  media_type="application/x-ndjson")
 
+@cache(ttl = 600, prefix = "outfits", key_builder = build_key)
+@router.get("/outfits/saved")
+async def get_outfits(
+    user : Annotated[User, Depends(get_current_user)],
+    client : MONGO_DEP
+):
+    # Extract all outfits from the database for the current user
+    results = await load_saved_outfits(client, user.username, "Outfits")
+    results = list(results)
+
+    if not results:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No saved outfits")
+
+    # Load the images from AWS S3 and return one by one in the frontend
+    return StreamingResponse(format_output_outfits(results),  media_type="application/x-ndjson")
+
 @router.get("/outfits/friends")
 async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],

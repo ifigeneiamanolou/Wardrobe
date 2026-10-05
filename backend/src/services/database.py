@@ -7,7 +7,7 @@ from src.utils.db_backoff import with_retry
 from src.services.formatOutput import format_image
 from src.config.conf import mongodb_key, INTERACTION_WEIGHTS
 import datetime
-from pymongo import AsyncMongoClient, MongoClient
+from pymongo import AsyncMongoClient
 from pymongo import UpdateOne
 import uuid
 import time
@@ -15,7 +15,7 @@ import time
 MONGO_URI = f"mongodb+srv://ifigeneiamanolou26_db_user:{mongodb_key}@closetcluster.6sudtpr.mongodb.net/Authentication"
 
 # Attempt connecting to the MongoDB cluster for a set number of times
-def load_cluster(retries : int = 10, delay : int = 3):
+async def load_cluster(retries : int = 10, delay : int = 3):
     for i in range(1, retries + 1):
         client = None
         try:
@@ -26,7 +26,7 @@ def load_cluster(retries : int = 10, delay : int = 3):
                 connectTimeoutMS= 30000,
                 waitQueueTimeoutMS= 20000
             )
-            client.admin.command("ping")     # Ensure proper connection
+            await client.admin.command("ping")     # Ensure proper connection
             return client
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
             print(f"Attempt {i}/{retries} to connect to db")
@@ -511,7 +511,7 @@ async def save_delete_outfit(client : AsyncMongoClient, user_id : str, item_id :
     except Exception as exc:
         raise DatabaseError() from exc
 
-async def increment_decrement_likes(client : MongoClient, item_id : int, increment : bool = True):
+async def increment_decrement_likes(client : AsyncMongoClient, item_id : int, increment : bool = True):
     document_to_find = {"item_id" : item_id}
     number_to_change = 1 if increment else -1
     update_operation = {'$inc' : {'number_of_likes' : number_to_change}}
@@ -801,3 +801,4 @@ async def create_comment(client : AsyncMongoClient, comment : str, outfit_id : s
         raise DatabaseError() from exc
     
 # function to load comments for a given outfit  !!!!!!!!!!!!!
+# method to load from saved item from other users
