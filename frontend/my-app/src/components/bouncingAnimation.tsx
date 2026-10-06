@@ -53,12 +53,12 @@ export default function AnimatedBag({label} : props){
                     reduceMotion : ReduceMotion.System
                 }),
                 withTiming(0.8, {
-                    duration : 600,
+                    duration : 200,
                     easing : Easing.in(Easing.cubic),
                     reduceMotion : ReduceMotion.System
                 }),
                 withTiming(1.3, {
-                    duration : 200,
+                    duration : 600,
                     easing : Easing.out(Easing.cubic),
                     reduceMotion : ReduceMotion.System
                 }),

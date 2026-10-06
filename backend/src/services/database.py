@@ -84,9 +84,10 @@ async def create_user(user : NewUser, client : AsyncMongoClient):
         "name" : user.name,
         "password" : user.password,
         "email" : user.email,
-        "token_version" : await get_counter(client, 'token_version', user.username),
-        "push_token" : user.push_token,
-        "provider_sub" : user.provider_sub       # empty string if account is created without google  
+        "token_version" : await get_counter(client, 'token_version', user.username),     # Used to invalidate JTIs on corruption or change
+        "push_token" : user.push_token,          # Used for expo push notifications API
+        "provider_sub" : user.provider_sub,       # empty string if account is created without google
+        "item_ids_saved" : []                     # saved outfits by the user
     }
 
     recommendations_payload = {
@@ -436,6 +437,7 @@ async def find_requests(
     except Exception as exc:
         raise 
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def delete_friend(client : AsyncMongoClient, user_id : str, username : str):
     try:
         # Find the id of the user from which the request came
@@ -459,6 +461,7 @@ async def delete_friend(client : AsyncMongoClient, user_id : str, username : str
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def save_outfit(
     items : list[str], url : str, client : AsyncMongoClient, user_id : str,
     name : str, favorite : str, description : str, feature_vector : np.ndarray
@@ -496,13 +499,14 @@ async def save_outfit(
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def save_delete_outfit(client : AsyncMongoClient, user_id : str, item_id : str, delete : bool = False):
-    document_to_find = {"_id" : item_id}
+    document_to_find = {"_id" : user_id}
     if delete:
-        update_operation = {"$pop" : {"users_ids_saved" : user_id}}
+        update_operation = {"$pop" : {"item_ids_saved" : item_id}}
     else:
-        update_operation = {"$push" : {"users_ids_saved" : user_id}}
-    outfits_collection = client["Clothing"]["Outfits"]
+        update_operation = {"$push" : {"item_ids_saved" : item_id}}
+    outfits_collection = client["Authentication"]["Users"]
         
     try:
         await outfits_collection.update_one(document_to_find, update_operation, upsert = False)
@@ -511,6 +515,7 @@ async def save_delete_outfit(client : AsyncMongoClient, user_id : str, item_id :
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def increment_decrement_likes(client : AsyncMongoClient, item_id : int, increment : bool = True):
     document_to_find = {"item_id" : item_id}
     number_to_change = 1 if increment else -1
@@ -524,6 +529,7 @@ async def increment_decrement_likes(client : AsyncMongoClient, item_id : int, in
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def add_push_notification(id : str, push_token : str, client : AsyncMongoClient):
     payload = {
         "ticket_id" : id,
@@ -540,6 +546,7 @@ async def add_push_notification(id : str, push_token : str, client : AsyncMongoC
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def retrieve_push_notifications(created_at, client :AsyncMongoClient):
     document_to_find = {"created_at" : created_at}
 
@@ -552,6 +559,7 @@ async def retrieve_push_notifications(created_at, client :AsyncMongoClient):
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def save_interaction(
     user_id : str, 
     item_id : int, 
@@ -578,6 +586,7 @@ async def save_interaction(
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def delete_interaction(
     user_id : str, 
     item_id : int, 
@@ -597,7 +606,8 @@ async def delete_interaction(
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
         raise DatabaseError() from exc
-    
+
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def fetch_user_profile_vector(client : AsyncMongoClient, user_id : str):
     document_to_find = {"user_id" : user_id}
     
@@ -614,6 +624,7 @@ async def fetch_user_profile_vector(client : AsyncMongoClient, user_id : str):
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def fetch_user_recommendations(client : AsyncMongoClient, user_id : str):
     document_to_find = {"user_id" : user_id}
     try:
@@ -629,6 +640,7 @@ async def fetch_user_recommendations(client : AsyncMongoClient, user_id : str):
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def fetch_item_feature_vector(client : AsyncMongoClient, item_id : str):
     document_to_find = {"_id" : item_id}
 
@@ -647,6 +659,7 @@ async def fetch_item_feature_vector(client : AsyncMongoClient, item_id : str):
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def update_recommendations(
     client : AsyncMongoClient, 
     user_id : str, 
@@ -677,7 +690,8 @@ async def update_recommendations(
     except Exception as exc:
         raise DatabaseError() from exc
 
-# Bulk update operation to remove number of calls
+# Bulk update operation for the recommendations to remove number of calls
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def update_recommendations_batch(
     client : AsyncMongoClient, 
     user_ids : list[str], 
@@ -704,6 +718,7 @@ async def update_recommendations_batch(
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def load_favorite_items(client : AsyncMongoClient, user_id : str):
     collection = client["Clothing"]["Outfits"]
     friends_collection = client["Authentication"]["Friendships"]
@@ -747,6 +762,7 @@ async def load_favorite_items(client : AsyncMongoClient, user_id : str):
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def fetch_friend_profiles(client : AsyncMongoClient, user_id : str):
     collection = client["Clothing"]["Recommendations"]
     friends_collection = client["Authentication"]["Friendships"]
@@ -784,6 +800,7 @@ async def fetch_friend_profiles(client : AsyncMongoClient, user_id : str):
     except Exception as exc:
         raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def create_comment(client : AsyncMongoClient, comment : str, outfit_id : str, user_id : str):
     payload = {
         "outfit_id" : outfit_id,
@@ -799,6 +816,40 @@ async def create_comment(client : AsyncMongoClient, comment : str, outfit_id : s
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
         raise DatabaseError() from exc
+
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def load_saved_outfits(client : AsyncMongoClient, item_ids : list[str]):
+    collection = client["Clothing"]["Outfits"]
+
+    # Raise an exception if the user hasn't saved any outfits
+    if len(item_ids) == 0:
+        raise NoOutfitsCreated
+
+    try:
+        result_cursor = await collection.aggregate(
+            {'$match' : {'_id' : {'$in' : item_ids}}}
+        )
+        result = await result_cursor.to_list()
+        return result
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+       raise DatabaseError() from exc
+
+
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def load_items_from_outfit(client : AsyncMongoClient, item_ids : list[str]):
+    collection = client["Clothing"]["Items"]
+    image_urls = []
+    try:
+        for item_id in item_ids:
+            document_to_find = {'_id' : item_id}
+            result = await collection.find_one(document_to_find)
+            image_urls.append(result['url'])
+        return image_urls
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+       raise DatabaseError() from exc
     
 # function to load comments for a given outfit  !!!!!!!!!!!!!
-# method to load from saved item from other users

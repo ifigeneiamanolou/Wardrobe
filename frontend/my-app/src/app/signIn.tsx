@@ -169,7 +169,7 @@ export default function Login(){
                         {/* Sign in with google or apple */}
                         <View className='flex flex-col gap-4'>
                             <TouchableOpacity 
-                                className='flex flex-row border border-slate-gray rounded-lg items-center justify-center p-1 gap-1' 
+                                className='flex flex-row border border-slate-gray rounded-lg items-center justify-center p-4 gap-1' 
                                 onPress = {() => googleLogIn()}
                             > 
                                 <Ionicon name = "logo-google" size = {24} color = {colors['Graphite']}/>
@@ -177,7 +177,7 @@ export default function Login(){
                             </TouchableOpacity>
             
                             <TouchableOpacity 
-                                className='flex flex-row border border-slate-gray rounded-lg items-center p-1 justify-center gap-1' 
+                                className='flex flex-row border border-slate-gray rounded-lg items-center p-4 justify-center gap-1' 
                                 onPress = {() => formik.handleSubmit()}
                             > 
                                 <Ionicon name="logo-apple" color={colors['Graphite']} size={24} />

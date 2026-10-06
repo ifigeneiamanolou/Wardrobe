@@ -45,7 +45,8 @@ async def login(
     try:
         user = await authenticate_user(form_data.username, form_data.password, client)
     except DatabaseError:
-        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
+        raise
+        # raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
     except DatabaseUnavailableError:
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
 
@@ -75,7 +76,7 @@ async def read_users_me(current_user : Annotated[User, Depends(get_current_user)
 async def signup(user : NewUser, cluster : MONGO_DEP):
     # Verify that there is no such user in the system otherwise raise an exception
     try:
-        existing_user = await find_user(user.username, cluster)
+        existing_user = await find_user(user.username, cluster, "username")
     except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = "Unsuccessful user search")
     except DatabaseUnavailableError:

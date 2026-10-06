@@ -25,7 +25,7 @@ async def close_pool():
     """ Close the connection pool on app shutdown"""
     global pool
     if pool:
-        pool.aclose()
+        await pool.aclose()
 
 async def generate_client():
     """ Dependancy to provide a client from the pool """

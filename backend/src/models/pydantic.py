@@ -11,6 +11,8 @@ class User(BaseModel):
     name : str 
     image : Optional[str] = None
     push_token : str
+    item_ids_saved : list[str]
+    
 
 class NewUser(BaseModel):
     username : str

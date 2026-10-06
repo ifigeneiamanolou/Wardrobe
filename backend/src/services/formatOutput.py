@@ -2,6 +2,15 @@ import base64
 import json
 from src.services.s3storage import load_photo
 
+async def format_items_from_outfit(urls : list[str]):
+    decoded_images = []
+    for image in urls:
+        formatted_image = await load_photo(image)
+        b = base64.b64encode(bytes(formatted_image))
+        b64_image = b.decode('utf-8')
+        decoded_images.append(b64_image)
+    return decoded_images
+
 async def format_output_items(results : list):
     for result in results:
         image = await load_photo(result['url'])
