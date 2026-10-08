@@ -96,5 +96,8 @@ class CommentData(BaseModel):
     user_id : str
     comment : str
 
+class ItemsFromOutfit(BaseModel):
+    item_ids : list[str]
+
 
 

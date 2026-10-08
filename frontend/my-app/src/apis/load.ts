@@ -29,7 +29,6 @@ type loadUsersProps = {
 
 type ItemsFromOutfitProps = {
     session : Session;
-    onEnd : () => void;
     item_ids : [string];
 }
 
@@ -221,13 +220,14 @@ export async function fetchUsers({session, onEnd} : loadUsersProps){
     }
 }
 
-export async function loadItemsFromOutfit({session, onEnd, item_ids} : ItemsFromOutfitProps){
+export async function loadItemsFromOutfit({session, item_ids} : ItemsFromOutfitProps){
     try{
         const response = await fetch(`${constants['BACKEND_URL']}/load/outfits/items`, {
             method : 'GET',
             headers : {
                 'Authorization' : `Bearer ${session?.session}`
-            }
+            },
+            body : JSON.stringify({item_ids : item_ids})
         });
         
         if(response.status == 401){
@@ -241,8 +241,8 @@ export async function loadItemsFromOutfit({session, onEnd, item_ids} : ItemsFrom
         };
 
         const result = await response.json();
-        const users = result['users'];
-        onEnd();
+        const images = await result['items'];
+        return images;
     } catch(err){
         console.log("Loading error", err);
         showAlert('Error', 'Loading of user details failed!');

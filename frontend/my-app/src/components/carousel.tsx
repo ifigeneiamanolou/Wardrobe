@@ -4,6 +4,8 @@ import Ionicon from 'react-native-vector-icons/Ionicons';
 import LoadingDots from "react-native-loading-dots";
 import { Item } from "../types/cards";
 import colors from "../constants/colors";
+import { loadItemsFromOutfit } from "../apis/load";
+import { useSession } from "../context/ctx";
 
 type props = {
     height : number;            // Height of the part of the screen to blur out without the menu and the upper navigation
@@ -17,6 +19,7 @@ type propsImage = {
 }
 
 export default function Carousel({height, width, item_ids, onPress} : props){
+    const session = useSession();
     const imageW = width * 0.7;
     const imageH = height * 1.54;
     const [images, setImages] = useState<Item[]>([]);
@@ -24,7 +27,12 @@ export default function Carousel({height, width, item_ids, onPress} : props){
 
     // Load the items on component mounting given a list of item ids
     useEffect(() => {
-        
+        const loadItems = async() => {
+            const imagesLoaded = await loadItemsFromOutfit({session, item_ids});
+            setImages(imagesLoaded);
+            setLoading(false);
+        };
+        loadItems();
     }, []);
 
     // Avoid rendering the image multiple times between re-renders

@@ -7,7 +7,6 @@ import colors from "@/src/constants/colors";
 import { Outfit } from "@/src/types/cards";
 import OutfitCard from '@/src/components/outfitCard';
 import { loadSavedOutfits } from "@/src/apis/load";
-import { on } from "node:cluster";
 
 export default function SavedOutfits(){
     const session = useSession();

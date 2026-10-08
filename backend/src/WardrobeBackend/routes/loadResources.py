@@ -4,7 +4,7 @@ from src.WardrobeBackend.services.authentication import get_current_user
 from src.WardrobeBackend.services.database import load_outfits_items, find_all_users, find_requests, load_saved_outfits, load_items_from_outfit
 from src.WardrobeBackend.services.formatOutput import format_items_from_outfit, format_output_items, format_user_output, format_image, format_output_outfits, format_items_from_outfit
 from src.WardrobeBackend.exceptions.database import DatabaseError, DatabaseUnavailableError, NoRequestsError
-from src.WardrobeBackend.models.pydantic import User
+from src.WardrobeBackend.models.pydantic import User, ItemsFromOutfit
 from typing import Annotated
 from src.WardrobeBackend.routes.dependancies import MONGO_DEP
 from src.WardrobeBackend.utils.redis_wrapper import cache
@@ -54,22 +54,24 @@ async def get_outfits(
 @cache(ttl = 600, prefix = "outfits_items", key_builder = build_key)
 @router.get("/outfits/items")
 async def get_outfits(
-    user : Annotated[User, Depends(get_current_user)],
+    _ : Annotated[User, Depends(get_current_user)],
     client : MONGO_DEP,
+    data : ItemsFromOutfit
 ):
     # Extract all items for a given outfit
     try:
-        result = await load_items_from_outfit(client, user.item_ids_saved)
+        result = await load_items_from_outfit(client, data.item_ids)
     except DatabaseError:
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful loading of friends")
     except DatabaseUnavailableError:
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
 
     # Load the images from AWS S3 and return them to the frontend as a list
-    return await format_items_from_outfit(result)
+    images = await format_items_from_outfit(result)
+    return {"items" : images}
 
 # THIS IS TO BE USED FOR THE FEED !!!!!!!!!!!!!!!!!!!!!!!!!
-# HAVE TO BUILD SOME KIND OF RECOMMENDATION PIPELINE
+# HAVE TO BUILD SOME KIND OF RECOMMENDATION PIPELINE    
 @router.get("/outfits/friends")
 async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],
