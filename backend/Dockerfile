@@ -28,12 +28,12 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 WORKDIR /code
 
 # Copy the poetry dependancy files
-COPY pyproject.toml poetry.lock /code/
+COPY pyproject.toml poetry.lock ./
 
 # Install the dependancies
 RUN poetry config installer.max-workers 4
 RUN for i in 1 2 3 4 5; do \
-      poetry install --no-interaction --no-ansi && break || \
+      poetry install --no-interaction --no-ansi --no-root && break || \
       { echo "Retry $i..."; sleep 10; }; \
     done
 
@@ -44,4 +44,4 @@ EXPOSE 8000
 COPY . /code
 
 # Run the python script "main"
-CMD ["python3", "src/routes/main.py"]
+CMD ["python3", "src/WardrobeBackend/routes/main.py"]

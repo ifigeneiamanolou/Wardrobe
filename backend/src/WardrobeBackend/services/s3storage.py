@@ -1,10 +1,10 @@
 import boto3
 from botocore.exceptions import ClientError
 from boto3.s3.transfer import S3UploadFailedError
-from src.config.conf import bucket_name
+from src.WardrobeBackend.config.conf import bucket_name
 import os
-from src.exceptions.s3storage import S3UploadError, S3DownloadError, S3DeleteError
-from src.config.conf import aws_key, aws_secret_key, aws_region
+from src.WardrobeBackend.exceptions.s3storage import S3UploadError, S3DownloadError, S3DeleteError
+from src.WardrobeBackend.config.conf import aws_key, aws_secret_key, aws_region
 
 async def upload_file_to_bucket(file_name : str, bucket_name_param : str = bucket_name):
     key = os.path.basename(file_name)

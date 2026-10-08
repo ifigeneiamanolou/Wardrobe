@@ -1,17 +1,17 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from typing import Annotated
-from src.services.authentication import get_current_user, hash
-from src.services.database import ( change_favorite, delete_item_outfit, edit_value, 
+from src.WardrobeBackend.services.authentication import get_current_user, hash
+from src.WardrobeBackend.services.database import ( change_favorite, delete_item_outfit, edit_value, 
                                    edit_profile_picture, edit_profile_details, find_user, 
                                    make_friend_request, accept_friend_request,
                                    delete_friend)
-from src.models.pydantic import User, editFavorite, deleteData, editData, UserDetails, requestData
-from src.services.s3storage import upload_file_to_bucket, delete_item_from_bucket
+from src.WardrobeBackend.models.pydantic import User, editFavorite, deleteData, editData, UserDetails, requestData
+from src.WardrobeBackend.services.s3storage import upload_file_to_bucket, delete_item_from_bucket
 import os
-from src.exceptions.database import DatabaseUnavailableError, DatabaseError, UserNotFound, FriendshipNotFound
+from src.WardrobeBackend.exceptions.database import DatabaseUnavailableError, DatabaseError, UserNotFound, FriendshipNotFound
 import uuid
 import shutil
-from src.routes.dependancies import MONGO_DEP
+from src.WardrobeBackend.routes.dependancies import MONGO_DEP
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMP_DIR = os.path.join(BASE_DIR, '../../data/temp')

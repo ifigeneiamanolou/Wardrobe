@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
-from src.services.authentication import get_current_user
-from src.services.database import load_outfits_items, find_all_users, find_requests, load_saved_outfits, load_items_from_outfit
-from src.services.formatOutput import format_items_from_outfit, format_output_items, format_user_output, format_image, format_output_outfits, format_items_from_outfit
-from src.exceptions.database import DatabaseError, DatabaseUnavailableError, NoRequestsError
-from src.models.pydantic import User
+from src.WardrobeBackend.services.authentication import get_current_user
+from src.WardrobeBackend.services.database import load_outfits_items, find_all_users, find_requests, load_saved_outfits, load_items_from_outfit
+from src.WardrobeBackend.services.formatOutput import format_items_from_outfit, format_output_items, format_user_output, format_image, format_output_outfits, format_items_from_outfit
+from src.WardrobeBackend.exceptions.database import DatabaseError, DatabaseUnavailableError, NoRequestsError
+from src.WardrobeBackend.models.pydantic import User
 from typing import Annotated
-from src.routes.dependancies import MONGO_DEP
-from src.utils.redis_wrapper import cache
-from src.utils.redis_client import build_key
+from src.WardrobeBackend.routes.dependancies import MONGO_DEP
+from src.WardrobeBackend.utils.redis_wrapper import cache
+from src.WardrobeBackend.utils.redis_client import build_key
 
 router = APIRouter()
 
@@ -32,7 +32,7 @@ async def get_outfits(
     # Load the images from AWS S3 and return one by one in the frontend
     return StreamingResponse(format_output_outfits(results),  media_type="application/x-ndjson")
 
-@cache(ttl = 600, prefix = "outfits", key_builder = build_key)
+@cache(ttl = 600, prefix = "outfits_saved", key_builder = build_key)
 @router.get("/outfits/saved")
 async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],
@@ -51,7 +51,7 @@ async def get_outfits(
     # Load the images from AWS S3 and return one by one in the frontend
     return StreamingResponse(format_output_outfits(results),  media_type="application/x-ndjson")
 
-@cache(ttl = 600, prefix = "outfits", key_builder = build_key)
+@cache(ttl = 600, prefix = "outfits_items", key_builder = build_key)
 @router.get("/outfits/items")
 async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],
@@ -68,7 +68,8 @@ async def get_outfits(
     # Load the images from AWS S3 and return them to the frontend as a list
     return await format_items_from_outfit(result)
 
-
+# THIS IS TO BE USED FOR THE FEED !!!!!!!!!!!!!!!!!!!!!!!!!
+# HAVE TO BUILD SOME KIND OF RECOMMENDATION PIPELINE
 @router.get("/outfits/friends")
 async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],

@@ -18,6 +18,7 @@ type Outfit = {
     name : string;
     favorite : boolean;
     _id : string;
+    item_ids : [string];            // List of ids for the items inside the outfit
 }
 
 // User cards for friends feature
@@ -26,6 +27,7 @@ type User = {
     username : string;
     email : string;
     push_token : string;
+    item_ids_saved : [string];          // List of ids the user has saved from his friend through the feed
 }
 
 interface DragPayload {

@@ -1,7 +1,7 @@
 # Connection pools allow multiple requests to use the same connection
 # Advantages: higher throughput, reduced overhead
 from redis.asyncio import ConnectionPool, Redis
-from src.config import conf
+from src.WardrobeBackend.config import conf
 
 pool : ConnectionPool = None
 

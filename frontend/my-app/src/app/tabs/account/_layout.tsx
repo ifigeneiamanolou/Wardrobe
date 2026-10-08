@@ -9,13 +9,13 @@ export default function AccountLayout(){
             headerShadowVisible : false,
             headerTintColor : colors['White']
         }}>
-            <Stack.Screen name = "index" options = {{headerShown : false}}/>
-            <Stack.Screen name = "edit"  options = {{headerShown : false}}/>
+            <Stack.Screen name = "index" options = {{headerShown : false}}/>    {/* Menu */}    
+            <Stack.Screen name = "edit"  options = {{headerShown : false}}/>        
             <Stack.Screen name = "friends"  options = {{headerShown : false}}/>
             <Stack.Screen name = "addFriend"  options = {{headerShown : false}}/>
             <Stack.Screen name = "notifications"  options = {{headerShown : false}}/>
             <Stack.Screen name = "privacy"   options = {{headerShown : false}}/>
-            <Stack.Screen name = "settings"  options = {{headerShown : false}}/>
+            <Stack.Screen name = "savedOutfits"  options = {{headerShown : false}}/>
         </Stack>
     );
 }

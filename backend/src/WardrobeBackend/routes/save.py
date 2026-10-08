@@ -1,18 +1,17 @@
 from fastapi import APIRouter, Depends
 from typing import Annotated
-from src.models.pydantic import ClothingItem, User, Outfit
-from src.services.authentication import get_current_user
-from src.services.database import save_clothing, save_outfit
-from src.services.predictions import predict_category, predict_color, read_image
-from src.services.s3storage import upload_file_to_bucket
-from src.models.parsers import load_clothing_item
-from src.services.feed import on_item_create, update_interaction
+from src.WardrobeBackend.models.pydantic import ClothingItem, User, Outfit
+from src.WardrobeBackend.services.authentication import get_current_user
+from src.WardrobeBackend.services.database import save_clothing, save_outfit
+from src.WardrobeBackend.services.predictions import predict_category, predict_color, read_image
+from src.WardrobeBackend.services.s3storage import upload_file_to_bucket
+from src.WardrobeBackend.models.parsers import load_clothing_item
+from src.WardrobeBackend.services.feed import on_item_create, update_interaction
 import os
 import uuid
 import shutil
 import base64
-from src.routes.dependancies import MONGO_DEP
-from sympy import O
+from src.WardrobeBackend.routes.dependancies import MONGO_DEP
 
 router = APIRouter()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

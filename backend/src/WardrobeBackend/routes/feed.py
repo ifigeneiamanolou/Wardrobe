@@ -1,11 +1,11 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
-from src.models.pydantic import User, ChangeFeed, CommentData
-from src.exceptions.database import DatabaseError, DatabaseUnavailableError, NoOutfitsCreated, NoFriendshipsError, ItemNotFound
-from src.routes.dependancies import MONGO_DEP
-from src.services.database import fetch_user_recommendations, increment_decrement_likes, save_delete_outfit, create_comment
-from src.services.authentication import get_current_user
-from src.services.feed import update_interaction
+from src.WardrobeBackend.models.pydantic import User, ChangeFeed, CommentData
+from src.WardrobeBackend.exceptions.database import DatabaseError, DatabaseUnavailableError, NoOutfitsCreated, NoFriendshipsError, ItemNotFound
+from src.WardrobeBackend.routes.dependancies import MONGO_DEP
+from src.WardrobeBackend.services.database import fetch_user_recommendations, increment_decrement_likes, save_delete_outfit, create_comment
+from src.WardrobeBackend.services.authentication import get_current_user
+from src.WardrobeBackend.services.feed import update_interaction
 router = APIRouter()
 
 async def safe_update_interaction(*args):

@@ -80,8 +80,9 @@ export default function ImageContainer({image, name, type, _id, onFlip, saved, d
                         type : type,
                         session : session
                     })}>
-                    <Ionicons name = "trash" size = {24} color = {colors['White']} className = "pr-2" />
+                        <Ionicons name = "trash" size = {24} color = {colors['White']} className = "pr-2" />
                     </TouchableOpacity> 
+                    
                     <TouchableOpacity onPress = {onFlip}>
                         <Feather name = "refresh-cw" size = {22} color = {colors['White']} className = "pr-2" />
                     </TouchableOpacity> 

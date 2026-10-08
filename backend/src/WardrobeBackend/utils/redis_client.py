@@ -1,7 +1,7 @@
-from src.config import conf
+from src.WardrobeBackend.config import conf
 from redis.asyncio import Redis
 from fastapi import HTTPException, status
-from src.models.pydantic import User
+from src.WardrobeBackend.models.pydantic import User
 from pymongo import MongoClient
 from typing import Optional
 

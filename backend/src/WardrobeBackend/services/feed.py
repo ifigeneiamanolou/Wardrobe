@@ -1,13 +1,13 @@
 from math import cos
 
 from pymongo import MongoClient
-from src.exceptions.database import NoFriendshipsError
-from src.models.pydantic import Outfit, ClothingItem
-from src.config.conf import NAMED_COLORS, NAMED_CATEGORIES, INTERACTION_WEIGHTS
+from src.WardrobeBackend.exceptions.database import NoFriendshipsError
+from src.WardrobeBackend.models.pydantic import Outfit, ClothingItem
+from src.WardrobeBackend.config.conf import NAMED_COLORS, NAMED_CATEGORIES, INTERACTION_WEIGHTS
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import MinMaxScaler, MultiLabelBinarizer
-from src.services.database import (delete_interaction, save_interaction, fetch_item_feature_vector, fetch_user_profile_vector, 
+from src.WardrobeBackend.services.database import (delete_interaction, save_interaction, fetch_item_feature_vector, fetch_user_profile_vector, 
                                    update_recommendations, fetch_user_recommendations, fetch_friend_profiles,
                                    update_recommendations_batch, delete_interaction)
 from sklearn.decomposition import PCA

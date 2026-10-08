@@ -1,8 +1,8 @@
 from fastapi.security import OAuth2PasswordBearer
-from src.services.database import find_user, load_cluster, edit_profile_details,create_user
-from src.models.pydantic import TokenData, NewUser
-from src.exceptions.database import EmailNotVerified
-from src.config.conf import secret_key, web_client_id
+from src.WardrobeBackend.services.database import find_user, load_cluster, edit_profile_details,create_user
+from src.WardrobeBackend.models.pydantic import TokenData, NewUser
+from src.WardrobeBackend.exceptions.database import EmailNotVerified
+from src.WardrobeBackend.config.conf import secret_key, web_client_id
 from pwdlib import PasswordHash
 from datetime import timedelta, timezone, datetime
 import jwt
@@ -10,7 +10,7 @@ from jwt.exceptions import InvalidTokenError, PyJWTError
 from fastapi import HTTPException, status, Depends
 from typing import Annotated
 import uuid
-from src.utils import redis_client
+from src.WardrobeBackend.utils import redis_client
 from pymongo import MongoClient
 from google.oauth2 import id_token
 from google.auth.transport import requests

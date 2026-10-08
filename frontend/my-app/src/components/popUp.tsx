@@ -1,6 +1,6 @@
 // Reusable pop up component from the bottom right corner with react native reanimated
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Modal } from "react-native";
 import Animated from "react-native-reanimated";
 import { useSharedValue, withTiming, useAnimatedStyle, Easing, ReduceMotion } from "react-native-reanimated";
@@ -78,7 +78,7 @@ const PopUp = ({ visible, children, background}: Props) => {
     <Modal
       transparent
       visible={visible}
-      onRequestClose={() => {}}
+      onRequestClose={() => {console.log('Pop closed!')}}
     >
       <View className="flex-1 justify-center items-center bg-graphite/50">
         <Animated.View 

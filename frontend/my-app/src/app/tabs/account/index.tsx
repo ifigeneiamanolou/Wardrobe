@@ -87,15 +87,6 @@ export default function Account() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Settings */}
-                <View className = "flex-1 flex-row bg-blush rounded-md items-center gap-4 p-2">
-                    <Ionicon name = "settings" size = {24} color = {colors['White']}/>
-                    <Text className = "flex grow font-bold text-lg text-white">Settings</Text>
-                    <TouchableOpacity onPress = {() => {router.navigate("/tabs/account/settings")}}>
-                        <Ionicon name = "arrow-forward" size = {24} color = {colors['White']}/>
-                    </TouchableOpacity>
-                </View>
-
                 {/* Notifications */}
                 <View className = "flex-1 flex-row bg-blush rounded-md items-center gap-4 p-2">
                     <Ionicon name = "notifications" size = {24} color = {colors['White']} />
@@ -107,9 +98,18 @@ export default function Account() {
 
                 {/* Privacy */}
                 <View className = "flex-1 flex-row bg-blush rounded-md items-center gap-4 p-2">
-                    <Ionicon name = "lock-closed" size = {24} color = {colors['White']}/>
+                    <Ionicon name = "lock-closed" size = {24} color = {colors['White']}/>        
                     <Text className = "flex grow font-bold text-lg text-white">Security and permissions</Text>
                     <TouchableOpacity onPress = {() => {router.navigate("/tabs/account/privacy")}}>
+                        <Ionicon name = "arrow-forward" size = {24} color = {colors['White']}/>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Saved items */}
+                <View className = "flex-1 flex-row bg-blush rounded-md items-center gap-4 p-2">
+                    <Ionicon name = "save" size = {24} color = {colors['White']}/>
+                    <Text className = "flex grow font-bold text-lg text-white">Saved outfits</Text>
+                    <TouchableOpacity onPress = {() => {router.navigate("/tabs/account/savedOutfits")}}>
                         <Ionicon name = "arrow-forward" size = {24} color = {colors['White']}/>
                     </TouchableOpacity>
                 </View>

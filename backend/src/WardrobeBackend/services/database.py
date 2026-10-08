@@ -1,11 +1,11 @@
 from cv2 import NORMCONV_FILTER
 import numpy as np
-from src.models.pydantic import ClothingItem, UserWithToken, NewUser
+from src.WardrobeBackend.models.pydantic import ClothingItem, UserWithToken, NewUser
 from pymongo.errors import AutoReconnect, DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
-from src.exceptions.database import DatabaseUnavailableError, NoFriendshipsError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical, UserNotFound, FriendshipNotFound, NoRequestsError, ItemNotFound, NoOutfitsCreated
-from src.utils.db_backoff import with_retry
-from src.services.formatOutput import format_image
-from src.config.conf import mongodb_key, INTERACTION_WEIGHTS
+from src.WardrobeBackend.exceptions.database import DatabaseUnavailableError, NoFriendshipsError, UserAlreadyExistsError, DatabaseError, ItemExists, PasswordIsIdentical, UserNotFound, FriendshipNotFound, NoRequestsError, ItemNotFound, NoOutfitsCreated
+from src.WardrobeBackend.utils.db_backoff import with_retry
+from src.WardrobeBackend.services.formatOutput import format_image
+from src.WardrobeBackend.config.conf import mongodb_key, INTERACTION_WEIGHTS
 import datetime
 from pymongo import AsyncMongoClient
 from pymongo import UpdateOne
@@ -31,7 +31,7 @@ async def load_cluster(retries : int = 10, delay : int = 3):
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
             print(f"Attempt {i}/{retries} to connect to db")
             if client:
-                client.close()
+                await client.close()
             if i < retries:
                 time.sleep(delay)
     raise RuntimeError("Cound not connect to mongoDB server")
@@ -470,11 +470,10 @@ async def save_outfit(
         "_id" : str(uuid.uuid4()),
         "name" : name,
         "description" : description,
-        "items" : items,
+        "item_ids" : items,
         "favorite" : favorite,
         "user_id" : user_id,
         "number_of_likes" : 0,
-        "users_ids_saved" : [],
         "created_at" : datetime.datetime.now(),
         "feature_vector" : feature_vector,
         "url" : url              # URL to the stored image in the S3 bucket
@@ -835,7 +834,6 @@ async def load_saved_outfits(client : AsyncMongoClient, item_ids : list[str]):
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
        raise DatabaseError() from exc
-
 
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def load_items_from_outfit(client : AsyncMongoClient, item_ids : list[str]):

@@ -15,3 +15,5 @@ future plans:
 1) initial quiz
 2) ability to log in with apple
 3) improved notifications using native FCM push notifications instead of the Expo API
+4) web scraping for clothing items recommendation
+5) comment section

@@ -39,7 +39,8 @@ export default function Home() {
             _id : dict['_id'],
             name : dict['name'],
             description : dict['description'],
-            favorite : dict['favorite'] == "yes" ? true : false
+            favorite : dict['favorite'] == "yes" ? true : false,
+            item_ids : dict['item_ids']
         };
 
         if(!(dict['_id'] in outfits.map((v) => v._id))){
@@ -161,7 +162,7 @@ export default function Home() {
                         horizontal = {false}
                         numColumns = {2}
                         className='flex-1 bg-white'
-                        renderItem={({item}) => (<OutfitCard outfit = {item}/>)}
+                        renderItem={({item}) => (<OutfitCard outfit = {item} saved = {false}/>)}
                         columnWrapperStyle = {{
                             justifyContent : 'space-between'
                         }}       // Space between the columns

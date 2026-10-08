@@ -1,5 +1,5 @@
 [project]
-name = "src"
+name = "WardrobeBackend"
 version = "0.1.0"
 description = ""
 authors = [

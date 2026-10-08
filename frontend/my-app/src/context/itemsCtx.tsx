@@ -1,3 +1,5 @@
+// The context provider is needed to not have to load clothing items both on the library page and
+// the outfit creation page
 import { createContext, PropsWithChildren, use, useEffect, useState } from "react";
 import { Item } from "../types/cards";
 import React from "react";

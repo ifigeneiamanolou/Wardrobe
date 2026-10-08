@@ -1,4 +1,4 @@
-from src.models.pydantic import ClothingItem, Outfit
+from src.WardrobeBackend.models.pydantic import ClothingItem, Outfit
 from typing import Optional, Literal
 from fastapi import Form, UploadFile, File
 

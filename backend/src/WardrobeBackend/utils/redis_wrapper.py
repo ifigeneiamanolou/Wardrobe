@@ -2,8 +2,8 @@ import redis.asyncio as redis
 import json
 import hashlib
 from functools import wraps
-from typing import Callable, Optional, Any
-from src.utils.redis_client import get_cache, set_cache
+from typing import Callable, Optional
+from src.WardrobeBackend.utils.redis_client import get_cache, set_cache
 
 redis_client: redis.Redis = None
 

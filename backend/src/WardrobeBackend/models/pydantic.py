@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal, Optional
 from fastapi import UploadFile
-from src.config.conf import NAMED_COLORS
+from src.WardrobeBackend.config.conf import NAMED_COLORS
 
 class User(BaseModel):
     model_config = ConfigDict(populate_by_name=True)

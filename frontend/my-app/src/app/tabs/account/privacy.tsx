@@ -79,3 +79,9 @@ export default function Privacy(){
         </View>
     )
 }
+
+// privacy settings:
+// camera
+// file storage
+// media library ??
+// notifications

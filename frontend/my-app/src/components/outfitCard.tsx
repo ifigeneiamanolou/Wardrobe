@@ -10,10 +10,12 @@ import { StyleSheet } from "react-native";
 import ImageContainer from "./imageContainer";
 
 type props = {
-    outfit : Outfit
+    outfit : Outfit;
+    saved : boolean;        // If true the outfit is another user's and we have saved it
+                            // If false the outfit has been created by us
 }
 
-export default function ItemCard({outfit} : props){
+export default function ItemCard({outfit, saved} : props){
     const flipped = useSharedValue<boolean>(false);
     const flip = () => {
         flipped.value = !flipped.value
@@ -29,7 +31,7 @@ export default function ItemCard({outfit} : props){
                         type = "Outfits"
                         _id = {outfit._id}
                         onFlip = {flip}
-                        saved = {false}     // CONDITIONAL !!!!!!!!
+                        saved = {saved}   
                         database = "Outfits"
                     />
                 }
@@ -39,7 +41,8 @@ export default function ItemCard({outfit} : props){
                         favorite = {outfit.favorite}
                         _id = {outfit._id}
                         onFlip = {flip}
-                        saved = {false}   // CONDITIONAL !!!!!!!!!!
+                        saved = {saved}  
+                        item_ids={outfit.item_ids}
                     /> 
                 }
                 duration = {500}

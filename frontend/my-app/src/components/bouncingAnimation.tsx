@@ -26,79 +26,25 @@ export default function AnimatedBag({label} : props){
 
     // Trigger a repeated animation sequence on mount
     useEffect(() => {
-        // Animate the vertical position of the ball
-        translateY.value = withRepeat(
-            withSequence(
-                withTiming(-200, {
-                    duration : 400,
-                    easing : Easing.out(Easing.cubic),
-                    reduceMotion : ReduceMotion.System
-                }),
-                withTiming(0, {
-                    duration : 400,
-                    easing : Easing.in(Easing.cubic),
-                    reduceMotion : ReduceMotion.System
-                })
-            ),
-            -1,
-            false
-        );
+        translateY.value = withRepeat(withSequence(
+            withTiming(-200, { duration: 675, easing: Easing.out(Easing.quad) }),
+            withTiming(0,    { duration: 675, easing: Easing.in(Easing.quad) }),
+            withTiming(0,    { duration: 450 })      // rest on the floor (180 + 270)
+        ), -1, false);
 
-        // Animate the horizontal deformation of the ball
-        scaleX.value = withRepeat(
-            withSequence(
-                withTiming(1, {
-                    duration : 200,
-                    easing : Easing.inOut(Easing.cubic),
-                    reduceMotion : ReduceMotion.System
-                }),
-                withTiming(0.8, {
-                    duration : 200,
-                    easing : Easing.in(Easing.cubic),
-                    reduceMotion : ReduceMotion.System
-                }),
-                withTiming(1.3, {
-                    duration : 600,
-                    easing : Easing.out(Easing.cubic),
-                    reduceMotion : ReduceMotion.System
-                }),
-                withTiming(0.8, {
-                    duration : 200,
-                    easing : Easing.inOut(Easing.cubic),
-                    reduceMotion : ReduceMotion.System
-                })
-            ),
-            -1,
-            false
-        );
+        scaleX.value = withRepeat(withSequence(
+            withTiming(0.9, { duration: 675 }),
+            withTiming(0.9, { duration: 675 }),
+            withTiming(1.3, { duration: 180, easing: Easing.out(Easing.quad) }),
+            withTiming(1,   { duration: 270, easing: Easing.out(Easing.cubic) })
+        ), -1, false);
 
-        // Animate the vertical deformation of the ball
-        scaleY.value = withRepeat(
-            withSequence(
-                withTiming(1, {
-                    duration : 200,
-                    easing : Easing.inOut(Easing.cubic),
-                    reduceMotion : ReduceMotion.System
-                }),
-                withTiming(1.2, {
-                    duration : 600,
-                    easing : Easing.in(Easing.cubic),
-                    reduceMotion : ReduceMotion.System
-                }),
-                withTiming(0.8, {
-                    duration : 200,
-                    easing : Easing.out(Easing.cubic),
-                    reduceMotion : ReduceMotion.System
-                }),
-                withTiming(1.2, {
-                    duration : 200,
-                    easing : Easing.inOut(Easing.cubic),
-                    reduceMotion : ReduceMotion.System
-                })
-            ),
-            -1,
-            false
-        );
+        scaleY.value = withRepeat(withSequence(
+            withTiming(1.1, { duration: 675 }),
+            withTiming(1.1, { duration: 675 }),
+            withTiming(0.7, { duration: 180, easing: Easing.out(Easing.quad) }),
+            withTiming(1,   { duration: 270, easing: Easing.out(Easing.cubic) })
+        ), -1, false);
 
         return () => {
             cancelAnimation(translateY);

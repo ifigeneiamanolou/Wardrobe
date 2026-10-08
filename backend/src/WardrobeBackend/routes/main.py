@@ -1,15 +1,16 @@
 from contextlib import asynccontextmanager
+from json import load
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware 
-from src.routes.auth import router as auth_router
-from src.routes.save import router as save_router
-from src.routes.loadResources import router as load_router
-from src.utils.redis_pool import create_pool, close_pool, generate_client
-from src.services.notificationsServices import check_for_receipts
-from src.routes.notifications import router as notification_router
-from src.routes.edit import router as edit_router
-from src.services.database import load_cluster
-from src.services.feed import update_feed_daily
+from src.WardrobeBackend.routes.auth import router as auth_router
+from src.WardrobeBackend.routes.save import router as save_router
+from src.WardrobeBackend.routes.loadResources import router as load_router
+from src.WardrobeBackend.utils.redis_pool import create_pool, close_pool, generate_client
+from src.WardrobeBackend.services.notificationsServices import check_for_receipts
+from src.WardrobeBackend.routes.notifications import router as notification_router
+from src.WardrobeBackend.routes.edit import router as edit_router
+from src.WardrobeBackend.services.database import load_cluster
+from src.WardrobeBackend.services.feed import update_feed_daily
 from typing import Annotated
 from redis.asyncio import Redis
 import asyncio
@@ -18,15 +19,16 @@ from redis.exceptions import ConnectionError
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_pool()
-    client = await asyncio.to_thread(load_cluster)      # Blocking operation
+    client = await load_cluster()
     app.state.mongo_client = client                     # Persist mongodb client
     task = asyncio.create_task(check_for_receipts(client))      # Check push receipts
-    taskFeed = asyncio.create_task(update_feed_daily(client))   # Update feed
+    feed_task = asyncio.create_task(update_feed_daily(client))   # Update feed
 
     yield           # Run the server
 
     task.cancel()
-    client.close()
+    feed_task.cancel()
+    await client.close()
     await close_pool()
 
 app = FastAPI(lifespan = lifespan) 

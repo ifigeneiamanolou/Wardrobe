@@ -2,7 +2,7 @@ import cv2
 from PIL import Image
 import os
 from rembg import remove
-from src.config.conf import image_dir, model_dir, device, NAMED_COLORS
+from src.WardrobeBackend.config.conf import image_dir, model_dir, device, NAMED_COLORS
 from keras.saving import load_model
 import numpy as np
 from sklearn.cluster import KMeans

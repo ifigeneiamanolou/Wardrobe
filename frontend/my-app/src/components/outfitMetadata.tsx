@@ -8,6 +8,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { useSession } from "../context/ctx";
 import { submit } from "../apis/edit";
 import PopUp from "./popUp";
+import Carousel from "./carousel";
 
 type Props = {
     description : string;
@@ -15,27 +16,37 @@ type Props = {
     onFlip : () => void;
     saved : boolean;
     _id : string;
+    item_ids : [string];
 }
 
-export default function OutfitMetadata({favorite, onFlip, saved, description, _id} : Props){
+export default function OutfitMetadata({favorite, onFlip, saved, description, _id, item_ids} : Props){
     const [isFavorite, setIsFavorite] = useState(favorite);
     const session = useSession();
     const [editDescription, setEditDescription] = useState<boolean>(false);
     const [descriptionValue, setDescriptionValue] = useState<string>(description);
+    const [visible, setVisible] = useState<boolean>(false);     // Indicates if a popup has opened
+    const [height, setHeight] = useState<number>(0);
+    const [width, setWidth] = useState<number>(0);
 
     const toggleFavorite = () => {
         setIsFavorite(!isFavorite);
     };
 
-    const handleSubmit = (type : string) => {
+    const handleSubmit = () => {
         let previous = descriptionValue;
         setDescriptionValue('Loading ...');
         return previous;
     }
 
+    const zoomOutfit = () => {
+        setVisible(!visible);
+    }
     
     return(
-        <View className = "flex-1 bg-blush p-4 rounded-2xl">
+        <View className = "flex-1 bg-blush p-4 rounded-2xl" onLayout={(e) => {
+            setHeight(e.nativeEvent.layout.height);
+            setWidth(e.nativeEvent.layout.width);
+        }}>
             <View className = "flex-1 overflow-hidden w-full gap-2">
                 <View className="flex flex-row">
                     {/* Title */}
@@ -51,8 +62,7 @@ export default function OutfitMetadata({favorite, onFlip, saved, description, _i
                         />
                     </TouchableOpacity> 
 
-                    {/* TO CHANGE */}
-                    <TouchableOpacity onPress = {onFlip}>  
+                    <TouchableOpacity onPress = {zoomOutfit}>  
                         <Ionicon 
                             name = "eye" 
                             size = {22} 
@@ -61,14 +71,16 @@ export default function OutfitMetadata({favorite, onFlip, saved, description, _i
                         />
                     </TouchableOpacity> 
 
-                    <TouchableOpacity onPress={toggleFavorite}>
-                        <Ionicon 
-                            name = {isFavorite ? "heart" : "heart-outline"} 
-                            color = {isFavorite ? `${colors['Dusty rose']}` : `${colors['White']}`} 
-                            size = {24} 
-                            className = "flex"
-                        />
-                    </TouchableOpacity>
+                    {saved ? null : (
+                        <TouchableOpacity onPress={toggleFavorite}>
+                            <Ionicon 
+                                name = {isFavorite ? "heart" : "heart-outline"} 
+                                color = {isFavorite ? `${colors['Dusty rose']}` : `${colors['White']}`} 
+                                size = {24} 
+                                className = "flex"
+                            />
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* Description field */}
@@ -97,17 +109,23 @@ export default function OutfitMetadata({favorite, onFlip, saved, description, _i
                             })}
                         />
                     }
-                    <TouchableOpacity onPress={() => {setEditDescription(!editDescription)}}>
-                        <Feather 
-                            name = "edit" 
-                            size = {24} 
-                            color = {colors['White']} 
-                            className = "flex" 
-                        />
-                    </TouchableOpacity>
+
+                    {saved ? null : (
+                        <TouchableOpacity onPress={() => {setEditDescription(!editDescription)}}>
+                            <Feather 
+                                name = "edit" 
+                                size = {24} 
+                                color = {colors['White']} 
+                                className = "flex" 
+                            />
+                        </TouchableOpacity>
+                    )}
                 </View>
 
-                {/* Pop up */}
+                {/* Pop up with the zoomed outfit*/}
+                <PopUp visible = {visible} background={colors['White']}>
+                    <Carousel height = {height} width = {width} item_ids={item_ids} onPress={zoomOutfit}/>
+                </PopUp>
             </View>
         </View>
     );

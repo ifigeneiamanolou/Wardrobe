@@ -1,6 +1,6 @@
 import base64
 import json
-from src.services.s3storage import load_photo
+from src.WardrobeBackend.services.s3storage import load_photo
 
 async def format_items_from_outfit(urls : list[str]):
     decoded_images = []

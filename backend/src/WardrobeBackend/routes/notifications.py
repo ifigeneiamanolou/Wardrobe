@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from src.models.pydantic import Notification, User
-from src.services.notificationsServices import send_notification
-from src.utils.notification_backoff import retry
-from src.exceptions.expo import ExpoPushError, DeviceNotRegisteredError
-from src.exceptions.database import DatabaseError, DatabaseUnavailableError
-from src.services.database import add_push_notification
-from src.services.authentication import get_current_user
+from src.WardrobeBackend.models.pydantic import Notification, User
+from src.WardrobeBackend.services.notificationsServices import send_notification
+from src.WardrobeBackend.utils.notification_backoff import retry
+from src.WardrobeBackend.exceptions.expo import ExpoPushError, DeviceNotRegisteredError
+from src.WardrobeBackend.exceptions.database import DatabaseError, DatabaseUnavailableError
+from src.WardrobeBackend.services.database import add_push_notification
+from src.WardrobeBackend.services.authentication import get_current_user
 from typing import Annotated
-from src.routes.dependancies import MONGO_DEP
+from src.WardrobeBackend.routes.dependancies import MONGO_DEP
 
 router = APIRouter()
 
