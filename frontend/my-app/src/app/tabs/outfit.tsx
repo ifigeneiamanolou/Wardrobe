@@ -103,10 +103,28 @@ export default function Outfit() {
         setOpenPopUp(true);
     }
 
-    // Submit the picture to the db
+    // Submit the picture to the db (open the popup with the details after performing checks)
     const submit = async () => {
         if (droppedImages.length < 2){
-            showAlert('Error', 'At least 2 items are needed');
+            showAlert('Attention', 'At least 2 items are needed');
+            return;
+        }
+
+        const droppedTypes = droppedImages.map((v) => v.item.category);
+        if((!(droppedTypes.includes('Ankle Boot'))) && 
+            (!(droppedTypes.includes('Sandal'))) && 
+            (!(droppedTypes.includes('Sneakers')))){
+            showAlert('Attention', 'At least a shoe is required!');
+            return;
+        }
+
+        if((!(droppedTypes.includes('Dress'))) || 
+            ((!(droppedTypes.includes('Trouser'))) || (
+            ((!(droppedTypes.includes('Shirt'))) &&
+            (!(droppedTypes.includes('Pullover'))) && 
+            (!(droppedTypes.includes('Top')))))))
+        {
+            showAlert('Attention', 'At least a dress or a top with a bottom are needed!');
             return;
         }
         
