@@ -61,7 +61,8 @@ export async function loadRequests({session, onEnd, noRessources} : loadProps){
                 'push_token' : request['push_token'],
                 'email' : request['email'],
                 'image' : request['image'],
-                'username' : request['username']
+                'username' : request['username'],
+                'item_ids_saved' : request['item_ids_saved']
             }
             users.push(user)
         }
@@ -108,7 +109,8 @@ export async function loadFriends({session, onEnd, noRessources} : loadProps){
                 "push_token" : request['push_token'],
                 'email' : request['email'],
                 'image' : request['image'],
-                'username' : request['username']
+                'username' : request['username'],
+                'item_ids_saved' : request['item_ids_saved']
             }
             users.push(user)
         }

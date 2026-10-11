@@ -3,6 +3,11 @@ import { Session } from "../context/ctx";
 import showAlert from "../components/alert";
 import { EncodingType, File} from "expo-file-system";
 
+export enum InteractionTypes {
+    LIKE = "like",
+    SAVE = "save"
+}
+
 type deleteType = {
     _id : string;
     type : string;
@@ -41,6 +46,20 @@ type changeUserDetailsProps = {
     username : string;
     password : string;
     email : string;
+}
+
+type commentProps = {
+    session : Session;
+    outfit_id : string;
+    user_id : string;
+    comment : string;
+}
+
+type likeSaveProps = {
+    session : Session;
+    item_id : string;
+    deleteOption : boolean;       // If true the like/save is removed, if false the like is added or item is saved
+    type : InteractionTypes
 }
 
 export async function deleteItem({_id, type, session} : deleteType){
@@ -208,4 +227,59 @@ export async function changeUserDetails({session, name, username, email, passwor
         console.log("Upload error", err);
         showAlert('Error', 'Change of profile details failed!');
     })
+}
+
+export async function makeComment({session, outfit_id, user_id, comment} : commentProps){
+    const url = `${constants.BACKEND_URL}/feed/comment`;
+    const headers = {
+        'Authorization' : `Bearer ${session?.session}`,
+        'Content-Type' : 'application/json'
+    };
+    const request_obj = JSON.stringify({
+        'outfit_id' : outfit_id, 
+        'user_id' : user_id,
+        'comment' : comment
+    });
+
+    try{
+        const response = await fetch(url, {headers : headers, body : request_obj});
+        if(response.status == 401){
+            session?.signOut();
+            return;
+        }
+        if(!response.ok){
+            showAlert('Error', 'Failed to save comment');
+            return;
+        }
+    } catch(err){
+        console.log("Saving comment error:", err);
+        showAlert('Error', 'Comment upload failed!');
+    }
+}
+
+export async function likeSaveOutfit({item_id, session, type, deleteOption} : likeSaveProps){
+    const url = `${constants.BACKEND_URL}/feed/${type}`;
+    const headers = {
+        'Authorization' : `Bearer ${session?.session}`,
+        'Content-Type' : 'application/json'
+    };
+    const request_obj = JSON.stringify({
+        'item_id' : item_id,
+        'delete' : deleteOption
+    });
+
+    try{
+        const response = await fetch(url, {headers : headers, body : request_obj});
+        if(response.status == 401){
+            session?.signOut();
+            return;
+        }
+        if(!response.ok){
+            showAlert('Error', `Failed to ${type} the outfit`);
+            return;
+        }
+    } catch(err){
+        console.log("Upload error: ", err);
+        showAlert('Error', `Failed to ${type} outfit!`);
+    }
 }

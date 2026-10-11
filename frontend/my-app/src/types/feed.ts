@@ -1,10 +1,9 @@
-import { ListRenderItem } from "react-native";
-
 type Content = {
     url : string;
     description : string;
     urlProfile : string;
     username : string;
+    item_id : string;
 }
 
 type DescriptionContent = {

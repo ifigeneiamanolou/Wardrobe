@@ -9,6 +9,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import LikeAnimation from "./likeAnimation";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import CommentContainer from "./commentContainer";
+import { likeSaveOutfit, makeComment, InteractionTypes } from "../apis/edit";
+import { useSession } from "../context/ctx";
 
 type Props = {
     item : Content;
@@ -27,14 +29,23 @@ export default function FeedCard({item, isActive, shouldPreload, width, height} 
     const [saved, setSaved] = useState<boolean>(false);
     const [showComments, setShowComments] = useState<boolean>(false);
     const [showLikeAnimation, setShowLikeAnimation] = useState<boolean>(false);
+    const session = useSession();
 
-    const handleLike = () => {
+    const handleLike = async() => {
+        // Update the frontend
         setLiked(!liked);
         if(liked){
             setShowLikeAnimation(true);
         }
         iconsMenu.icons[0].icon = liked ? 'heart' : 'heart-outline';
-        // change in db --> trigger change in user profile vector
+
+        // Update the database
+        await likeSaveOutfit({
+            item_id : item.item_id,
+            deleteOption : !liked,
+            session : session,
+            type : InteractionTypes.LIKE
+        });
     }
 
     const handleComment = () => {
@@ -45,10 +56,18 @@ export default function FeedCard({item, isActive, shouldPreload, width, height} 
         setShowComments(false);
     }
 
-    const handleSave = () => {
+    const handleSave = async() => {
+        // Update the frontend
         setSaved(!saved);
         iconsMenu.icons[2].icon = saved ? 'bookmark' : 'bookmark-outline';
-        // change in db --> trigger change in user profile vector
+        
+        // Update the database
+        await likeSaveOutfit({
+            item_id : item.item_id,
+            deleteOption : !liked,
+            session : session,
+            type : InteractionTypes.LIKE
+        });
     } 
 
     const onPress = [handleLike, handleComment, handleSave];

@@ -10,7 +10,7 @@ import datetime
 from pymongo import AsyncMongoClient
 from pymongo import UpdateOne
 import uuid
-import time
+import asyncio
 
 MONGO_URI = f"mongodb+srv://ifigeneiamanolou26_db_user:{mongodb_key}@closetcluster.6sudtpr.mongodb.net/Authentication"
 
@@ -21,7 +21,7 @@ async def load_cluster(retries : int = 10, delay : int = 3):
         try:
             client = AsyncMongoClient(
                 MONGO_URI, 
-                serverSelectionTimeoutMS=60000,
+                serverSelectionTimeoutMS=100000,
                 socketTimeoutMS=  45000,          
                 connectTimeoutMS= 30000,
                 waitQueueTimeoutMS= 20000
@@ -33,7 +33,7 @@ async def load_cluster(retries : int = 10, delay : int = 3):
             if client:
                 await client.close()
             if i < retries:
-                time.sleep(delay)
+                await asyncio.sleep(delay)
     raise RuntimeError("Cound not connect to mongoDB server")
 
 # Find whether a user exists in the database based on username
@@ -85,14 +85,14 @@ async def create_user(user : NewUser, client : AsyncMongoClient):
         "password" : user.password,
         "email" : user.email,
         "token_version" : await get_counter(client, 'token_version', user.username),     # Used to invalidate JTIs on corruption or change
-        "push_token" : user.push_token,          # Used for expo push notifications API
+        "push_token" : user.push_token,           # Used for expo push notifications API
         "provider_sub" : user.provider_sub,       # empty string if account is created without google
         "item_ids_saved" : []                     # saved outfits by the user
     }
 
-    recommendations_payload = {
+    recommendations_payload = {     # Used to create an entry in the recommendations payloadfsdave
         "user_id" : user_id,
-        "profile" : None,        # No interaction data available on sign up,
+        "profile" : None,           # No interaction data available on sign up,
         "recommended_items" : [],
         "interaction_count" : 0,
         "comnputed_at" : None
@@ -849,5 +849,18 @@ async def load_items_from_outfit(client : AsyncMongoClient, item_ids : list[str]
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
        raise DatabaseError() from exc
+
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def load_feed(client : AsyncMongoClient, user_id : str):
+    collection = client["Clothing"]["Recommendations"]
+    document_to_find = {'user_id' : user_id}
+    try:
+        result = await collection.find_one(document_to_find)
+        return result['recommended_items']
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+       raise DatabaseError() from exc
+
     
 # function to load comments for a given outfit  !!!!!!!!!!!!!

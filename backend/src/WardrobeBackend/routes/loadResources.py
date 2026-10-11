@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from src.WardrobeBackend.services.authentication import get_current_user
-from src.WardrobeBackend.services.database import load_outfits_items, find_all_users, find_requests, load_saved_outfits, load_items_from_outfit
+from src.WardrobeBackend.services.database import load_outfits_items, find_all_users, find_requests, load_saved_outfits, load_items_from_outfit, load_feed
 from src.WardrobeBackend.services.formatOutput import format_items_from_outfit, format_output_items, format_user_output, format_image, format_output_outfits, format_items_from_outfit
 from src.WardrobeBackend.exceptions.database import DatabaseError, DatabaseUnavailableError, NoRequestsError
 from src.WardrobeBackend.models.pydantic import User, ItemsFromOutfit
@@ -69,23 +69,23 @@ async def get_outfits(
     # Load the images from AWS S3 and return them to the frontend as a list
     images = await format_items_from_outfit(result)
     return {"items" : images}
-
-# THIS IS TO BE USED FOR THE FEED !!!!!!!!!!!!!!!!!!!!!!!!!
-# HAVE TO BUILD SOME KIND OF RECOMMENDATION PIPELINE    
+ 
 @router.get("/outfits/friends")
 async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],
     client : MONGO_DEP
 ):
-    # Extract friends of the user
-    friends = await find_requests(client, user.id, True, False)
-    friends = list(friends)
-    if not friends:
-        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "No friends")
+    # load the precomputed recommended outfits in the application
+    try:
+        result = await load_feed(client, user.id)
+    except DatabaseError:
+        raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful loading of friends")
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
 
-    # Load the saved outfits of the above users
-    # TO DO !!!!!!!!!!!!!!!!!!!!
-    
+    if len(result) == 0:
+        raise HTTPException(status_code = status.HHTP_404_NOT_FOUND, detail = "No recommendations")
+    return {"feed" : result}
 
 @cache(ttl = 600, prefix = "items", key_builder = build_key)
 @router.get("/items")

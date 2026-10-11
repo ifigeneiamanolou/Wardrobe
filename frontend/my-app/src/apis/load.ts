@@ -27,6 +27,12 @@ type loadUsersProps = {
     onEnd : (users : User[]) => void;
 }
 
+type loadFeed = {
+    session : Session;
+    onEnd : () => void;
+    onNoData : () => void;
+}
+
 type ItemsFromOutfitProps = {
     session : Session;
     item_ids : [string];
@@ -311,5 +317,41 @@ export async function loadSavedOutfits({session, onLoad, onEmpty, onOutfitChunk}
 
     if(reader){
         reader.read().then(processText);
+    }
+}
+
+export async function loadFeed({session, onEnd, onNoData} : loadFeed){
+    try{
+        const response = await fetch(`${constants['BACKEND_URL']}/load/outfits/friends`, {
+            method : 'GET',
+            headers : {
+                'Authorization' : `Bearer ${session?.session}`
+            }
+        });
+        
+        if(response.status == 401){
+            session?.signOut();
+            return;
+        };
+
+        if(response.status == 404){
+            onNoData();
+            return;
+        }
+
+        if(!response.ok){
+            showAlert('Error', 'Loading of users failed!');
+            return;
+        };
+
+        const result = await response.json();
+        const feed = result['feed'];
+        return feed;
+    } catch(err){
+        console.log("Loading error", err);
+        showAlert('Error', 'Loading of user details failed!');
+        return null;
+    } finally{
+        onEnd();
     }
 }

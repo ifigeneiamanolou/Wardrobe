@@ -1,39 +1,51 @@
-from math import cos
-
 from pymongo import MongoClient
-from src.WardrobeBackend.exceptions.database import NoFriendshipsError
-from src.WardrobeBackend.models.pydantic import Outfit, ClothingItem
+from src.WardrobeBackend.models.pydantic import Outfit
 from src.WardrobeBackend.config.conf import NAMED_COLORS, NAMED_CATEGORIES, INTERACTION_WEIGHTS
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import MinMaxScaler, MultiLabelBinarizer
+from sklearn.preprocessing import MultiLabelBinarizer
 from src.WardrobeBackend.services.database import (delete_interaction, save_interaction, fetch_item_feature_vector, fetch_user_profile_vector, 
                                    update_recommendations, fetch_user_recommendations, fetch_friend_profiles,
                                    update_recommendations_batch, delete_interaction)
-from sklearn.decomposition import PCA
-import scipy.sparse as sp
+from sklearn.decomposition import TruncatedSVD
 from sklearn.metrics.pairwise import cosine_similarity
 import asyncio
 from datetime import datetime
 
 vectorizer = TfidfVectorizer()      # Term frequency-inverse document frequency
-MAX_ITEMS = 4
+svd = TruncatedSVD(n_components = 2)
+fitted = False                      # Indicates if the dimensionality reduction algorithm and TF-IDF have been fitted
+MAX_ITEMS = 500     # TO TUNE
+MAX_PRICE = 5       # TO TUNE
+FIT_LENGTH = 100    # Maximum number of descriptions to fetch to fit the models
 
-def create_feature_vector(outfit : Outfit):
+def fit_models(descriptions : list[str]) -> bool:
+    global fitted
+    if len(descriptions) < 2:       # Not enough data
+        return False
+    vectorizer.fit_transform(descriptions)
+
+    if np.shape(descriptions)[1] < 2:       # Not enough features
+        return False
+    svd.fit_transform(descriptions)
+    return True
+
+def on_application_startup():
+    global fitted, svd, vectorizer
+    # Check if the models have been fitted
+    if not fitted:
+        # If not fetch a given number of descriptions and fit the model
+        print("to do ... fitting")
+
+def create_feature_vector(outfit : Outfit) -> np.ndarray:
     """ Generate a feature vector for an outfit 
 
     Args:
         outfit (Outfit): outfit for which to create feature vector
         descriptions (list[str]) : all description in the database
     """
-    scaler = MinMaxScaler()     # Normalizer
-
     # Parse the description based on existing corpus
-    description = vectorizer.transform([outfit.description])
-
-    # Perform dimensionality reduction using PCA (requires a dense matrix)
-    pca_tfidf = PCA(n_components=2)
-    tfidf_compressed = pca_tfidf.transform(description.todense()).ravel()
+    description = svd.transform(vectorizer.transform([outfit.description])).ravel()
 
     # Parse the number of items
     number_items = len(outfit.items) / MAX_ITEMS
@@ -53,17 +65,16 @@ def create_feature_vector(outfit : Outfit):
     # Parse the price of the outfit
     prices = np.zeros((len(outfit.items), ))
     for index, item in enumerate(outfit.items):
-        prices.put(index, float(str(item.price).replace(",", "")))
+        prices.put(index, float(str(item.price).replace(",", "").replace("$", "")))
     total_price = np.sum(prices).item()
     
     # Normalize the price between 0 and 1
     total_price_string = str(total_price)
     whole_price = float(total_price_string.replace("$", "").replace(",", ""))
-    if whole_price != 0:
-        normalized_price = scaler.fit_transform(np.array(whole_price).reshape(-1, 1))
+    normalized_price = min(whole_price / MAX_PRICE, 1.0)
 
     # Combine the price, number of items, category and color in a sparse matrix
-    return np.concatenate([categories, colors, [normalized_price, number_items], tfidf_compressed])
+    return np.concatenate([categories, colors, [normalized_price, number_items], description])
 
 async def update_feed_daily(client : MongoClient):
     while True:
@@ -100,7 +111,7 @@ async def on_item_create(user_id : int, client : MongoClient, outfit : Outfit):
     # Compute the feature vector of the outfit
     feature_vector = create_feature_vector(outfit).reshape(1, -1)          
 
-    # Fetch the profiles of the friends
+    # Fetch the profiles of the friends of the user that created the outfit
     friend_profiles = [f for f in await fetch_friend_profiles(client, user_id) if f.get("profile")]
     if not friend_profiles:
         return
@@ -113,7 +124,6 @@ async def on_item_create(user_id : int, client : MongoClient, outfit : Outfit):
 
     # Update the recommendations of the friends
     await update_recommendations_batch(client, user_ids, scores.tolist(), outfit._id)
-    
     return feature_vector
 
 async def update_interaction(
@@ -145,8 +155,10 @@ async def update_interaction(
         
     # Extract the user profile vector or create a new one with zeros
     profile_vector = await fetch_user_profile_vector(client, user_id)
-    if not profile_vector:
+    if profile_vector is None or len(profile_vector) == 0:
         profile_vector = np.zeros_like(feature_vector)
+    else:
+        profile_vector = np.array(profile_vector, dtype=float)
         
     # Add the new interaction's weighted vector 
     if deleted:
@@ -154,11 +166,14 @@ async def update_interaction(
     else:
         updated_profile_vector = profile_vector + weighted_feature_vector
 
-    # Rescore the outfits against the cached candidate set
+    # Rescore the outfits against the cached candidate set if it exists
     old_recommendations = await fetch_user_recommendations(client, user_id)
-    scores = cosine_similarity(old_recommendations, updated_profile_vector)[:, 0]
-    recommendation_list = [{"item_id" : item_id_key, "score" : score} for item_id_key, score in zip(old_recommendations, scores)]
-    ranked_tuples = sorted(recommendation_list, key = lambda x : x['score'], reverse = True)[:100]
-        
+    if old_recommendations:
+        scores = cosine_similarity(old_recommendations, updated_profile_vector.reshape(1, -1))[:, 0]
+        recommendation_list = [{"item_id" : item_id_key, "score" : score} for item_id_key, score in zip(old_recommendations, scores)]
+        ranked_tuples = sorted(recommendation_list, key = lambda x : x['score'], reverse = True)[:100]
+    else:
+        ranked_tuples = []
+
     # Update the user recommendations table
-    await update_recommendations(client, user_id, ranked_tuples, updated_profile_vector)
+    await update_recommendations(client, user_id, ranked_tuples, updated_profile_vector.tolist())

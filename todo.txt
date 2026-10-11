@@ -2,14 +2,13 @@
 2) Fix the readmes
 3) Make sure the drag and drop and the scaling animations are working properly
 4) Make a vertical feed
-5) Load saved outfits as well in the index page
+5) Load saved outfits as well in the settings page
 6) Make sure redis is properly implemented
 7) Fix the classification algorithms
 8) Make a settings page
 9) Build a CI/CD pipeline
 10) Fix the quality of the code overall (exceptions and pydantic models mainly, and centralized constants and sectrets)
 11) check google log in is working
-12) the bag animation is opposite (it is squezing on the upper part of the motion !!!!!)
 
 future plans:
 1) initial quiz
@@ -17,3 +16,12 @@ future plans:
 3) improved notifications using native FCM push notifications instead of the Expo API
 4) web scraping for clothing items recommendation
 5) comment section
+
+where we need caching for faster loading with key invalidation:
+1) outfits created by the user in the index page
+2) items created by the user in the index page
+3) outfits saved using the feed
+4) friends of the user
+5) all the user that are not friends yet
+6) all user notifications
+7) User profile

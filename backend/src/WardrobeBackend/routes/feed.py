@@ -61,6 +61,8 @@ async def add_comment(
     except (DatabaseError, DatabaseUnavailableError):
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful loading of requests")
 
+    # UPDATE INTERACTIONS IN THE BACKGROUND !!!!!!!!!!!!!
+
 @router.get("/save")
 async def save_outfit(
     user : Annotated[User, Depends(get_current_user)],
