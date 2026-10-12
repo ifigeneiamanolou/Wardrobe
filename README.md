@@ -39,7 +39,7 @@ The application is containerized fully using Docker.
 
 ## Development instructions
 
-The application is build into 2 main components; the frontend and the backend. The latter includes the uvicorn server (port 8000), the MongoDB database (port 27017) and the redis server (port 6379), and is containerized using Docker. However, the frontend is build specifically for mobile devices, which means that Docker containers are not suitable. Given that it contains native modules for features, like Expo push notifications and Google sign-in, Expo Go is not suitable for development and testing. Instead an EAS build is needed. To contribute in this project follow these instructions:
+The application is build into 2 main components; the frontend and the backend. The latter includes the uvicorn server (port 8000), the MongoDB database (port 27017) and the redis server (port 6379), and is containerized using Docker. However, the frontend is build specifically for mobile devices, which means that Docker containers are not suitable. Given that it contains native modules for features, like Expo push notifications and Google sign-in, Expo Go is not suitable for development and testing. Instead an EAS development build is needed to test these features. To contribute in this project, you can either use Docker containers for the backend or run the Uvicorn server directly.
 
 1. Clone the repo
 
@@ -49,7 +49,14 @@ cd Wardrobe/frontend/my-app
 npm install
 ```
 
-2. Start the backend container
+2. Create an AWS S3 bucket by following the steps below
+
+* Create an AWS free tier account
+* Navigate to the AWS management console and then to S3 > Buckets > Create bucket
+* Disable block of external access temporarily 
+* Change the name and the region of the bucket in the backend/WardrobeBackend/config/conf.py file
+
+3. Start the backend container
 
 ```bash
 cd ../../backend
@@ -62,38 +69,56 @@ To check if the backend server is healthy, run:
 curl http://localhost:8000/health
 ```
 
-3. Create or fetch a development build of the frontend application.
+Alternatively, start the Uvicorn server, the mongoDB database and the Redis server directly, by following the steps below:
 
-Option A: Download the app using the link to the latest EAS build 
-(https://expo.dev/accounts/ifigeneiamanolou/projects/my-app/builds/b7a1cc0a-619e-4646-b506-258d8879e934). To access this build contact at 
-ifigeneiamanolou26@gmail.com. 
+* Start a redis server locally following the official tutorial (https://redis.io/docs/latest/operate/oss_and_stack/install/archive/install-redis/) and update the environment variables in the ".env" file in the root directory, following the ".env.example" file
+
+* Create a mongoDB account and create a cluster named "Wardrobe". Make sure that your computer's IP address is included in the IP access list and that all the essential environment variables are present in the ".env" file in the root directory. You can use the ".env.example" file to make sure the appropriate environment variables have been included 
+
+* Start the backend Uvicorn server by running (ensure pipx and python are installed first):
+
+```bash
+cd backend/src/WardrobeBackend/routes
+pipx install poetry 
+poetry install 
+poetry env activate 
+py main.py
+``` 
+
+4. Update the IP address of the backend server in the frontend/my-app/constants/my-app.ts file (instructions on how to find it can be found in that file)
+
+5. Create or fetch a development build of the frontend application.
+
+Option A: Download the app using the link to the latest EAS build (https://expo.dev/accounts/ifigeneiamanolou/projects/my-app/builds/b7a1cc0a-619e-4646-b506-258d8879e934). To access this build contact at ifigeneiamanolou26@gmail.com. 
 
 Option B: Make a new development build. This requires access to private keys, such as firebase credentials. To access these and make a proper build
-* Email ifigeneiamanolou26@gmail.com to be added to the EAS project
-* Run `eas login` without your EAS details
-* Make the build using:
+* Email ifigeneiamanolou26@gmail.com to be added to the EAS project. Once you have been added to the project, the credentials are built in the application and you can run the project, along with the push notifications and google log in features without having to know the credentials themselves
+* Run `eas login` and enter your EAS details when asked to
+* Make a local development build using:
 
 ```bash
 cd ../../frontend/my-app
 eas build --profile development --platform android
 ```
 
-Option C: Make your own credentials
-*
+Option C: Make your own credentials. This process consists of integrating Firebase in your project and creating OAuth credentials using the Google Cloud Console. These can be implemented, following the steps below:
+
+* Open the Google Cloud Console to and create a new project
+* Create an OAuth 2.0 Client ID with application type "Android", package name the one in app.json and SHA-1 fingerprint found using the "eas credentials" command
+* Create an OAuth 2.0 Client ID with application type "Web"
+* Register the application in Google Firebase Console and download the google-services.json and place it under the frontend/my-app folder
+* In the console, open Project settings > Service accounts and click "Generate New Private Key".  This should be securely stored under frontend/my-app by naming it "firebaseCredentials.json", which is included in the frontend's folder ".gitignore" folder.
+* Upload the JSON file to the EAS credentials to configure the app for Expo push notifications. This can be done using the EAS CLI by running "eas credentials" and selecting Android > production > Google Service Account > Manage your Google Service Account Key for Push Notifications (FCM V1) > Set up a Google Service Account Key for Push Notifications (FCM V1) > Upload a new service account key. The Expo CLI will automatically detected if the previous step was successful.
 
 Note that a new build is not needed every time changes are made in the src folder. However, if files like app.json, package.json or package-lock.json, or files related to the metro bundler or Babel, a new build is needed for those to be reflected.
 
-4. Start the frontend server
+6. Start the frontend server either using your own development build or a premade one
 
 ```bash
 npx expo start
 ```
 
-5. Connect the backend with the frontend, by altering frontend/my-app/constants/app.ts to include the public IP where the Uvicorn server is running.
-
-6. Set up .env files in the root of the project, as well as the frontend folder, according to the .env.example files
-
-7. After creating an AWS S3 bucket change the name and the region of the bucket in the backend/config/conf.py file
+You can then download the app in an Android device using the EAS dashboard with the account used to create the development build. Make sure that your mobile device and your computer are not in a public network, like a school or a company router, as this may not allow the EAS application in the mobile device to reach the server running in the laptop.
 
 
 

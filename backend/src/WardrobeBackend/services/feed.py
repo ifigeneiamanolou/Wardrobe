@@ -1,4 +1,7 @@
-from pymongo import MongoClient
+from gettext import find
+from turtle import update
+
+from pymongo import MongoClient, UpdateOne
 from src.WardrobeBackend.models.pydantic import Outfit
 from src.WardrobeBackend.config.conf import NAMED_COLORS, NAMED_CATEGORIES, INTERACTION_WEIGHTS
 import numpy as np
@@ -6,18 +9,19 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer
 from src.WardrobeBackend.services.database import (delete_interaction, save_interaction, fetch_item_feature_vector, fetch_user_profile_vector, 
                                    update_recommendations, fetch_user_recommendations, fetch_friend_profiles,
-                                   update_recommendations_batch, delete_interaction)
+                                   update_recommendations_batch, delete_interaction, find_all, update_feature_vectors)
 from sklearn.decomposition import TruncatedSVD
 from sklearn.metrics.pairwise import cosine_similarity
 import asyncio
 from datetime import datetime
 
-vectorizer = TfidfVectorizer()      # Term frequency-inverse document frequency
-svd = TruncatedSVD(n_components = 2)
-fitted = False                      # Indicates if the dimensionality reduction algorithm and TF-IDF have been fitted
+vectorizer = TfidfVectorizer()              # Term frequency-inverse document frequency
+svd = TruncatedSVD(n_components = 2)        # Reduce dimensionality of the description matrix
+fitted = False                              # Indicates if the dimensionality reduction algorithm and TF-IDF have been fitted
 MAX_ITEMS = 500     # TO TUNE
 MAX_PRICE = 5       # TO TUNE
 FIT_LENGTH = 100    # Maximum number of descriptions to fetch to fit the models
+NUM_FEATURES = len(NAMED_COLORS) + len(NAMED_CATEGORIES) + 2    # Without the description values
 
 def fit_models(descriptions : list[str]) -> bool:
     global fitted
@@ -77,20 +81,44 @@ def create_feature_vector(outfit : Outfit) -> np.ndarray:
     return np.concatenate([categories, colors, [normalized_price, number_items], description])
 
 async def update_feed_daily(client : MongoClient):
+    global vectorizer, svd
     while True:
         await asyncio.sleep(60 * 60 * 24)     # Wait one full day
-        print("Performing daily task ....")
-        # Find all active users
+        # Find all active users and iterate over each one of them
+        users = await find_all(client, "Users")
+        if users is None or len(users) == 0:
+            continue
+
+        # Find all corresponding entries in the recommendations table for each user
+        recommendations = await find_all(client, "Recommendations")
+        if recommendations is None or len(recommendations) == 0:
+            print(f"Error when creating recommendations. They have to be matching the users")
+            break
 
         # Find all outfits generated
-
+        outfits = await find_all(client, "Outfits", "Clothing")
+        if outfits is None or len(outfits) == 0:
+            continue
+        
         # Perform TF-IDF with the new context using fit_transform (new corpus)
+        descriptions = [o["description"] for o in outfits]
+        tfidf_matrix = svd.fit_transform(vectorizer.fit_transform(descriptions))
 
         # Update all outfit feature vectors in the db
-
-        # Iterate over each active user
+        new_vectors = []
+        for outfit, description in zip(outfits, tfidf_matrix):
+            old = np.array(outfit['feature_vector'])
+            new = np.concatenate(old[:NUM_FEATURES], description)
+            new_vectors.append(UpdateOne(
+                filter = {"_id" : outfit["_id"]}, 
+                update = {'$set' : {"feature_vector" : new.tolist()}}
+            ))
+        await update_feature_vectors(client, new_vectors)
 
         # Pull all interactions
+        interactions = await find_all(client, "Interactions", "Feed")
+        if interactions is None:
+            continue
 
         # Build the user profile vectors
 

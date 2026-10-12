@@ -7,7 +7,7 @@ from src.WardrobeBackend.utils.db_backoff import with_retry
 from src.WardrobeBackend.services.formatOutput import format_image
 from src.WardrobeBackend.config.conf import mongodb_key, INTERACTION_WEIGHTS
 import datetime
-from pymongo import AsyncMongoClient
+from pymongo import AsyncMongoClient, MongoClient
 from pymongo import UpdateOne
 import uuid
 import asyncio
@@ -862,5 +862,24 @@ async def load_feed(client : AsyncMongoClient, user_id : str):
     except Exception as exc:
        raise DatabaseError() from exc
 
-    
+async def find_all(client : AsyncMongoClient, collection : str, database : str = "Authentication"):
+    collection = client[database][collection]
+    try:
+        result = await collection.find({})
+        return list(result)
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+       raise DatabaseError() from exc
+
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def update_feature_vectors(client : MongoClient, update_operations : list):
+    collection = client["Clothing"]["Outfits"]
+    try:
+        await collection.bulk_write(update_operations, sorted = False)
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+       raise DatabaseError() from exc
+
 # function to load comments for a given outfit  !!!!!!!!!!!!!
