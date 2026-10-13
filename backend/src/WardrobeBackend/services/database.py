@@ -907,21 +907,3 @@ async def fetch_interactions_by_user(client : AsyncMongoClient, user_id : str):
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
        raise DatabaseError() from exc
-
-    #     recommendations_payload = {     # Used to create an entry in the recommendations payloadfsdave
-    #     "user_id" : user_id,
-    #     "profile" : None,           # No interaction data available on sign up,
-    #     "recommended_items" : [],
-    #     "interaction_count" : 0,
-    #     "comnputed_at" : None
-    # }
-
-
-# Used when updating the user profile and the recommendations daily
-@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def updateDaily(client : AsyncMongoClient, recommendations : list[str], profile : list[float], user_id : str):
-    collection = client["Clothing"]["Recommendations"]
-    document_to_find = {"user_id" : user_id}
-    update_op = {}
-
-# function to load comments for a given outfit  !!!!!!!!!!!!!
