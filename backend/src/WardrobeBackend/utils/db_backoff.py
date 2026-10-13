@@ -2,7 +2,7 @@ import functools
 from pymongo.errors import AutoReconnect, ConnectionFailure 
 import time
 
-# Decorator used to execute a function multiple times through exponential backoff
+# Decorator used to execute a DB query multiple times through exponential backoff
 def with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2):
     def decorator(func):            # Decorator: receives a function and returns a new one
         @functools.wraps(func)      # Useful for debugging to retain the docstring and name of func

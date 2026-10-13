@@ -45,6 +45,6 @@ async def make_notification(
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful loading")
     except DatabaseUnavailableError:
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
-    return {'message' : f'Sent notification to expo  and placed in db with id {id_inserted}'}
+    return {'message' : f'Sent notification to expo and placed in db with id {id_inserted}'}
 
     

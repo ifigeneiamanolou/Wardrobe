@@ -1,7 +1,7 @@
 import constants from "../constants/app";
 import { Session } from "../context/ctx";
 import showAlert from "../components/alert";
-import { EncodingType, File} from "expo-file-system";
+import {File} from 'expo-file-system';
 
 export enum InteractionTypes {
     LIKE = "like",

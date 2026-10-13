@@ -1,5 +1,3 @@
-from fastapi import APIRouter, Depends
-from typing import Annotated
 from src.WardrobeBackend.models.pydantic import ClothingItem, User, Outfit
 from src.WardrobeBackend.services.authentication import get_current_user
 from src.WardrobeBackend.services.database import save_clothing, save_outfit
@@ -7,11 +5,15 @@ from src.WardrobeBackend.services.predictions import predict_category, predict_c
 from src.WardrobeBackend.services.s3storage import upload_file_to_bucket
 from src.WardrobeBackend.models.parsers import load_clothing_item
 from src.WardrobeBackend.services.feed import on_item_create, update_interaction
+from src.WardrobeBackend.utils.redis_wrapper import invalidate_with_builder
+from src.WardrobeBackend.utils.redis_client import build_key_by_user
+from src.WardrobeBackend.routes.dependancies import MONGO_DEP
+from fastapi import APIRouter, Depends
+from typing import Annotated
 import os
 import uuid
 import shutil
 import base64
-from src.WardrobeBackend.routes.dependancies import MONGO_DEP
 
 router = APIRouter()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -54,6 +56,8 @@ async def save_item(
             os.remove(path)
         if(os.path.exists(processed_path)):
             os.remove(processed_path)
+
+    await invalidate_with_builder("items", build_key_by_user(user))   # Invalidate redis entry
     return {"message" : f"Item saved successfully with id {idNum}!"}
 
 @router.post("/outfit")
@@ -86,4 +90,6 @@ async def save_outfit(
     finally:
         if(os.path.exists(path)):
             os.remove(path)
+
+    await invalidate_with_builder("outfits", build_key_by_user(user))   # Invalidate redis entry
     return {"message" : f"Item saved successfully with id {idNum}!"}

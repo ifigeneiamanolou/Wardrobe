@@ -19,6 +19,7 @@ type NotificationProps = {
 }
 
 type requestProps = {
+    user_id : string;
     username : string;
     session : Session;
     noRessources : () => void;
@@ -159,7 +160,7 @@ export async function acceptRequest({username, onEnd, session, noRessources} : r
     }
 }
 
-export async function makeRequest({username, onEnd, session, noRessources} : requestProps){
+export async function makeRequest({username, onEnd, session, noRessources, user_id} : requestProps){
     const url = `${constants['BACKEND_URL']}/edit/friend/request`;
     const requestObj = {
         method : 'POST',
@@ -168,7 +169,7 @@ export async function makeRequest({username, onEnd, session, noRessources} : req
             'Content-Type' : 'application/json',
             'Authorization' : `Bearer ${session?.session}`
         },
-        body : JSON.stringify({'username' : username})
+        body : JSON.stringify({'username' : username, 'user_id' : user_id})
     };
 
     try{

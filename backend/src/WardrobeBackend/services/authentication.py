@@ -10,10 +10,12 @@ from jwt.exceptions import InvalidTokenError, PyJWTError
 from fastapi import HTTPException, status, Depends
 from typing import Annotated
 import uuid
-from src.WardrobeBackend.utils import redis_client
+from src.WardrobeBackend.utils import redis_client as redis_client_class
+from src.WardrobeBackend.utils.redis_pool import generate_client
 from pymongo import AsyncMongoClient
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from redis import Redis
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 password_hash = PasswordHash.recommended()
@@ -93,9 +95,10 @@ def create_access_token(data : dict, expires_delta : timedelta):
 # Token access
 ##########################################################
 async def get_current_user(
-        token: Annotated[str, Depends(oauth2_scheme)],
-        client : Annotated[AsyncMongoClient, Depends(load_cluster)]
-    ):
+    token: Annotated[str, Depends(oauth2_scheme)],
+    client : Annotated[AsyncMongoClient, Depends(load_cluster)],
+    redis_client : Annotated[Redis, Depends(generate_client)]
+):
     """ Validates a user JWT token and JTI without checking if the user is disabled
 
     Args:
@@ -125,7 +128,7 @@ async def get_current_user(
             raise credentials_exception
 
         # Check if the JTI is in the redis blacklit
-        if await redis_client.is_revoked(jti):
+        if await redis_client_class.is_revoked(redis_client, jti):
             raise credentials_exception
         token_data = TokenData(username = username)
     except (InvalidTokenError, PyJWTError) as e:

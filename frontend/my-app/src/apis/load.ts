@@ -36,6 +36,7 @@ type loadFeed = {
 type ItemsFromOutfitProps = {
     session : Session;
     item_ids : [string];
+    outfit_id : string;
 }
 
 type SavedOutfitProps = {
@@ -226,14 +227,14 @@ export async function fetchUsers({session, onEnd} : loadUsersProps){
     }
 }
 
-export async function loadItemsFromOutfit({session, item_ids} : ItemsFromOutfitProps){
+export async function loadItemsFromOutfit({session, item_ids, outfit_id} : ItemsFromOutfitProps){
     try{
         const response = await fetch(`${constants['BACKEND_URL']}/load/outfits/items`, {
             method : 'GET',
             headers : {
                 'Authorization' : `Bearer ${session?.session}`
             },
-            body : JSON.stringify({item_ids : item_ids})
+            body : JSON.stringify({item_ids : item_ids, outfit_id : outfit_id})
         });
         
         if(response.status == 401){

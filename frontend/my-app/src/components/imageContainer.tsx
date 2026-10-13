@@ -8,6 +8,7 @@ import colors from "../constants/colors";
 import { deleteItem } from "../apis/edit";
 import { submit } from "../apis/edit";
 import { useSession } from "../context/ctx";
+import { likeSaveOutfit, InteractionTypes } from "../apis/edit";
 
 type Props = {
     image : string;
@@ -75,11 +76,17 @@ export default function ImageContainer({image, name, type, _id, onFlip, saved, d
                         </TouchableOpacity> 
                     : null}
                     
-                    <TouchableOpacity onPress = {() =>deleteItem({
-                        _id : _id,
-                        type : type,
-                        session : session
-                    })}>
+                    <TouchableOpacity onPress = {
+                        saved ? () => likeSaveOutfit({
+                            item_id : _id,
+                            session : session,
+                            type : InteractionTypes.SAVE,
+                            deleteOption : true
+                        }) : () => deleteItem({
+                            _id : _id,
+                            type : type,
+                            session : session
+                        })}>
                         <Ionicons name = "trash" size = {24} color = {colors['White']} className = "pr-2" />
                     </TouchableOpacity> 
                     

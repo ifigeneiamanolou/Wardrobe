@@ -12,13 +12,14 @@ type props = {
     width : number;             // Corresponding width
     item_ids : [string];
     onPress : () => void;
+    outfit_id : string;
 }   
 
 type propsImage = {
     item : Item;
 }
 
-export default function Carousel({height, width, item_ids, onPress} : props){
+export default function Carousel({height, width, item_ids, onPress, outfit_id} : props){
     const session = useSession();
     const imageW = width * 0.7;
     const imageH = height * 1.54;
@@ -28,7 +29,7 @@ export default function Carousel({height, width, item_ids, onPress} : props){
     // Load the items on component mounting given a list of item ids
     useEffect(() => {
         const loadItems = async() => {
-            const imagesLoaded = await loadItemsFromOutfit({session, item_ids});
+            const imagesLoaded = await loadItemsFromOutfit({session, item_ids, outfit_id});
             setImages(imagesLoaded);
             setLoading(false);
         };

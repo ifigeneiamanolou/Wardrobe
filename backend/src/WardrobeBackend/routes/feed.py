@@ -6,6 +6,8 @@ from src.WardrobeBackend.routes.dependancies import MONGO_DEP
 from src.WardrobeBackend.services.database import fetch_user_recommendations, increment_decrement_likes, save_delete_outfit, create_comment
 from src.WardrobeBackend.services.authentication import get_current_user
 from src.WardrobeBackend.services.feed import update_interaction
+from src.WardrobeBackend.utils.redis_wrapper import invalidate_with_builder
+from src.WardrobeBackend.utils.redis_client import build_key_by_user
 router = APIRouter()
 
 async def safe_update_interaction(*args):
@@ -73,6 +75,9 @@ async def save_outfit(
     try:
         # Add the outfit to the saved ones for the current user
         await save_delete_outfit(mongo_client, user.id, data.item_id, data.delete)
+
+        # Delete the Redis entry for the current user for their saved outfits
+        await invalidate_with_builder("outfits_saved", build_key_by_user(user))
     except (DatabaseError, DatabaseUnavailableError):
         raise HTTPException(status_code = status.HTTP_501_NOT_IMPLEMENTED, detail = f"Unsuccessful loading of requests")
 

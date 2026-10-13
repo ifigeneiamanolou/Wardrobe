@@ -8,12 +8,12 @@ from src.WardrobeBackend.models.pydantic import User, ItemsFromOutfit
 from typing import Annotated
 from src.WardrobeBackend.routes.dependancies import MONGO_DEP
 from src.WardrobeBackend.utils.redis_wrapper import cache
-from src.WardrobeBackend.utils.redis_client import build_key
+from src.WardrobeBackend.utils.redis_client import build_key_by_user, build_key_by_outfit
 
 router = APIRouter()
 
-@cache(ttl = 600, prefix = "outfits", key_builder = build_key)
 @router.get("/outfits")
+@cache(ttl = 600, prefix = "outfits", key_builder = build_key_by_user)
 async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],
     client : MONGO_DEP
@@ -32,8 +32,8 @@ async def get_outfits(
     # Load the images from AWS S3 and return one by one in the frontend
     return StreamingResponse(format_output_outfits(results),  media_type="application/x-ndjson")
 
-@cache(ttl = 600, prefix = "outfits_saved", key_builder = build_key)
 @router.get("/outfits/saved")
+@cache(ttl = 600, prefix = "outfits_saved", key_builder = build_key_by_user)
 async def get_outfits(
     user : Annotated[User, Depends(get_current_user)],
     client : MONGO_DEP
@@ -51,8 +51,8 @@ async def get_outfits(
     # Load the images from AWS S3 and return one by one in the frontend
     return StreamingResponse(format_output_outfits(results),  media_type="application/x-ndjson")
 
-@cache(ttl = 600, prefix = "outfits_items", key_builder = build_key)
 @router.get("/outfits/items")
+@cache(ttl = 600, prefix = "outfits_items", key_builder = build_key_by_outfit)
 async def get_outfits(
     _ : Annotated[User, Depends(get_current_user)],
     client : MONGO_DEP,
@@ -87,8 +87,8 @@ async def get_outfits(
         raise HTTPException(status_code = status.HHTP_404_NOT_FOUND, detail = "No recommendations")
     return {"feed" : result}
 
-@cache(ttl = 600, prefix = "items", key_builder = build_key)
 @router.get("/items")
+@cache(ttl = 600, prefix = "items", key_builder = build_key_by_user)
 async def get_items(
     user : Annotated[User, Depends(get_current_user)],
     client : MONGO_DEP
@@ -107,8 +107,8 @@ async def get_items(
     # Load the images from AWS S3 and return one by one in the frontend
     return StreamingResponse(format_output_items(results),  media_type="application/x-ndjson")
 
-@cache(ttl = 600, prefix = "profiles", key_builder = build_key)
 @router.get("/profile")
+@cache(ttl = 600, prefix = "profiles", key_builder = build_key_by_user)
 async def get_profile(
     user : Annotated[User, Depends(get_current_user)],
 ):
@@ -119,8 +119,8 @@ async def get_profile(
        "url" : formatted_image
     }
 
-@cache(ttl = 600, prefix = "users", key_builder = build_key)
 @router.get("/users")
+@cache(ttl = 600, prefix = "users", key_builder = build_key_by_user)
 async def get_users(
     user : Annotated[User, Depends(get_current_user)],
     client : MONGO_DEP
@@ -134,8 +134,8 @@ async def get_users(
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
     return {'users' : formatted_result}
 
-@cache(ttl = 600, prefix = "notifications", key_builder = build_key)
 @router.get("/notifications")
+@cache(ttl = 600, prefix = "notifications", key_builder = build_key_by_user)
 async def get_notifications(
     user : Annotated[User, Depends(get_current_user)],
     client : MONGO_DEP
@@ -150,8 +150,8 @@ async def get_notifications(
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail = "Database connection error")
     return {'requests' : result}
 
-@cache(ttl = 600, prefix = "friends", key_builder = build_key)
 @router.get("/friends")
+@cache(ttl = 600, prefix = "friends", key_builder = build_key_by_user)
 async def get_friends(
     user : Annotated[User, Depends(get_current_user)],
     client : MONGO_DEP

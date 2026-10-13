@@ -2,6 +2,7 @@
 
 This project constists of a user-friendly personal wardrobe mobile application. The user is able to create a personal account and log in the application. After that, any wardrobe item can be scanned and placed in the app, with the additional option to generate outfits using the above items. Additional features of the application include a library of outfits and clothing item and social features (sharing outfits with friends in the form of a picture feed).
 
+
 ## Technology stack
 
 For the frontend the following are used:
@@ -19,6 +20,7 @@ For the backend the following are used:
 
 The application is containerized fully using Docker.
 
+
 ## Frontend features
 1) Custom animations and draggable elements using react-native-reanimated and react-gesture-handler to display pop ups and create outfits in a drag-and-drop fashion
 2) All routes are protected using an authentication context and a custom hook, storing all sensitive user information in expo-secure-store
@@ -28,6 +30,7 @@ The application is containerized fully using Docker.
 6) All forms are built using Formik and validated using Yup 
 7) Simplified push notifications via Expo instead of Firebase Cloud Messaging (FCM)
 
+
 ## Backend features
 1) Authentication using JWT tokens, password hashing and cached JTI IDs in Redis, along with a token version key in the database to handle password changes and credentials compromises
 2) Custom CNN build using Torch to categorize input clothing items in 10 distinct categories trained using FashionMNIST
@@ -36,6 +39,7 @@ The application is containerized fully using Docker.
 5) Redis used for storing both for JTI IDs and all expensive functions' results through a custom function decorator
 6) Looping connection to the MongoDB database with exponential backoff
 7) Centralized configuration files for easier development
+
 
 ## Development instructions
 
@@ -121,4 +125,11 @@ npx expo start
 You can then download the app in an Android device using the EAS dashboard with the account used to create the development build. Make sure that your mobile device and your computer are not in a public network, like a school or a company router, as this may not allow the EAS application in the mobile device to reach the server running in the laptop.
 
 
+## Future developments
+1) Add an initial quiz when signing up to the application to ensure the feed is customized when the user starts using it. Currently, when the user first creates an account, his profile is empty, since he hasn't interacted with any outfits. Thus, the feed is generated using their friends' most interacted items or is empty if they have no friends.
+2) Add the ability to log in with Apple apart from Google
+3) Replace Expo push notifications with native FCM notifications. The latter are more flexible, enabling us to give the user to accept a friend request using a button in the friend notification itself instead of having to open the app.
+4) Integrate web scraping to recommend new clothing items to the user, with links that redirect him to the appropriate web page to buy those items.
+5) Make a fully-functional comment section inside the "clothing items" feed.
+6) Integrate Redis to the feed, to avoid having to fetch the entries from the "Recommendations" table every time the user opens the feed. Currently, Redis is used when loading outfits/items in the library page, the user profile, users to make a friend request, the user's friends and the user's saved outfits from the feed.
 

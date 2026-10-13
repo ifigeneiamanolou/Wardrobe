@@ -22,7 +22,7 @@ async def load_cluster(retries : int = 10, delay : int = 3):
                 MONGO_URI, 
                 serverSelectionTimeoutMS=100000,
                 socketTimeoutMS=  45000,          
-                connectTimeoutMS= 30000,
+                connectTimeoutMS= 300000,
                 waitQueueTimeoutMS= 20000
             )
             await client.admin.command("ping")     # Ensure proper connection
@@ -500,8 +500,9 @@ async def save_outfit(
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def save_delete_outfit(client : AsyncMongoClient, user_id : str, item_id : str, delete : bool = False):
     document_to_find = {"_id" : user_id}
+    outfits_collection = client["Clothing"]["Outfits"]
     if delete:
-        update_operation = {"$pop" : {"item_ids_saved" : item_id}}
+        update_operation = {"$pull" : {"item_ids_saved" : item_id}}
     else:
         update_operation = {"$push" : {"item_ids_saved" : item_id}}
     outfits_collection = client["Authentication"]["Users"]
@@ -903,6 +904,40 @@ async def fetch_interactions_by_user(client : AsyncMongoClient, user_id : str):
     collection = client["Feed"]["Interactions"]
     try:
         return await collection.find({"user_id" : user_id}).to_list()  # WHAT IF ITS EMPTY??
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+       raise DatabaseError() from exc
+
+# Delete all saved outfits from the list of saved items for each user
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def delete_batch_saved_items(client : AsyncMongoClient, item_id : str, user_id : str):
+    friends_collection = client["Authentication"]["Friendships"]
+    user_collection = client["Authentication"]["Users"]
+
+    try:
+        # Find all friends of the current user and store in a list
+        result_cursor = await friends_collection.aggregate([
+            {'$match' : {
+                'accepted' : 1,
+                '$or' : [{'id_1' : user_id}, {'id_2' : user_id}]
+            }},
+            {'$addFields' : { 'otherUser' : { '$cond' : {
+                'if' : {'$eq' : ['$id_1', user_id]},
+                'then' : '$id_2',
+                'else' : '$id_1'
+            }}}},
+            {'$project' : {'otherUser' : 1, '_id': 0}}        # Only return the ids of the friends
+        ])
+
+        friends = await result_cursor.to_list()
+        friend_ids = [d['otherUser'] for d in friends]
+        if len(friends) != 0:
+            # Check if they have saved the deleted outfit; if yes delete it from the saved list
+            await user_collection.aggregate([
+                {'$match' : {'_id' : {'$in' : friend_ids}}},
+                {"$pull" : {'item_ids_saved' : item_id}}
+            ])
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:

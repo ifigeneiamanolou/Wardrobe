@@ -124,7 +124,7 @@ export default function OutfitMetadata({favorite, onFlip, saved, description, _i
 
                 {/* Pop up with the zoomed outfit*/}
                 <PopUp visible = {visible} background={colors['White']}>
-                    <Carousel height = {height} width = {width} item_ids={item_ids} onPress={zoomOutfit}/>
+                    <Carousel height = {height} width = {width} item_ids={item_ids} onPress={zoomOutfit} outfit_id={_id}/>
                 </PopUp>
             </View>
         </View>

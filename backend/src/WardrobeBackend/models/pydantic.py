@@ -68,6 +68,7 @@ class editData(deleteData):
 
 class requestData(BaseModel):
     username : str
+    user_id : str
 
 class Outfit(BaseModel):
     _id : str
@@ -98,6 +99,7 @@ class CommentData(BaseModel):
 
 class ItemsFromOutfit(BaseModel):
     item_ids : list[str]
+    outfit_id : str
 
 
 
