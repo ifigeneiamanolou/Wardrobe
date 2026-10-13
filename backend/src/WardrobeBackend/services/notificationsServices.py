@@ -4,7 +4,7 @@ import asyncio
 from src.WardrobeBackend.services.database import retrieve_push_notifications
 from src.WardrobeBackend.utils.notification_backoff import retry
 from datetime import datetime, timedelta
-from pymongo import MongoClient
+from pymongo import AsyncMongoClient
 
 async def send_notification(push_token : str, title : str, body : str):
     headers = {
@@ -98,9 +98,9 @@ async def check_receipts_batch(results : list):
                 if message == 'DeviceNotRegistered':
                     print("DELETE FROM POSSIBLE DEVICES")
 
-async def check_for_receipts(client : MongoClient):
+async def check_for_receipts(client : AsyncMongoClient):
     while True:
-        await asyncio.sleep(60)
+        await asyncio.sleep(60 * 15)
         
         entries = await retrieve_push_notifications(
             datetime.now() - timedelta(minutes = 15),

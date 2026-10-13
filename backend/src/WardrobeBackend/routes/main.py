@@ -10,7 +10,7 @@ from src.WardrobeBackend.services.notificationsServices import check_for_receipt
 from src.WardrobeBackend.routes.notifications import router as notification_router
 from src.WardrobeBackend.routes.edit import router as edit_router
 from src.WardrobeBackend.services.database import load_cluster
-from src.WardrobeBackend.services.feed import update_feed_daily
+from src.WardrobeBackend.services.feed import daily_feed_task
 from typing import Annotated
 from redis.asyncio import Redis
 import asyncio
@@ -20,9 +20,9 @@ from redis.exceptions import ConnectionError
 async def lifespan(app: FastAPI):
     await create_pool()
     client = await load_cluster()
-    app.state.mongo_client = client                     # Persist mongodb client
+    app.state.mongo_client = client                             # Persist mongodb client
     task = asyncio.create_task(check_for_receipts(client))      # Check push receipts
-    feed_task = asyncio.create_task(update_feed_daily(client))   # Update feed
+    feed_task = asyncio.create_task(daily_feed_task(client))  # Update feed
 
     yield           # Run the server
 

@@ -11,7 +11,7 @@ from fastapi import HTTPException, status, Depends
 from typing import Annotated
 import uuid
 from src.WardrobeBackend.utils import redis_client
-from pymongo import MongoClient
+from pymongo import AsyncMongoClient
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
@@ -46,7 +46,7 @@ def hash(password : str):
     """
     return password_hash.hash(password)
 
-async def authenticate_user(username : str, password : str, client : MongoClient):
+async def authenticate_user(username : str, password : str, client : AsyncMongoClient):
     """ Authenticates a user given his username and password checking he exists in the system and the 
         password is correct
 
@@ -94,7 +94,7 @@ def create_access_token(data : dict, expires_delta : timedelta):
 ##########################################################
 async def get_current_user(
         token: Annotated[str, Depends(oauth2_scheme)],
-        client : Annotated[MongoClient, Depends(load_cluster)]
+        client : Annotated[AsyncMongoClient, Depends(load_cluster)]
     ):
     """ Validates a user JWT token and JTI without checking if the user is disabled
 
@@ -197,7 +197,7 @@ async def create_account_link(
     provider_sub : str,
     email : str,
     email_verified : bool,
-    client : MongoClient
+    client : AsyncMongoClient
 ):
     try:
         # Check if a user with the same provider sub already exists

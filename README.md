@@ -89,9 +89,9 @@ py main.py
 
 5. Create or fetch a development build of the frontend application.
 
-Option A: Download the app using the link to the latest EAS build (https://expo.dev/accounts/ifigeneiamanolou/projects/my-app/builds/b7a1cc0a-619e-4646-b506-258d8879e934). To access this build contact at ifigeneiamanolou26@gmail.com. 
+**Option A:** Download the app using the link to the latest EAS build (https://expo.dev/accounts/ifigeneiamanolou/projects/my-app/builds/b7a1cc0a-619e-4646-b506-258d8879e934). To access this build contact at ifigeneiamanolou26@gmail.com. 
 
-Option B: Make a new development build. This requires access to private keys, such as firebase credentials. To access these and make a proper build
+**Option B:** Make a new development build. This requires access to private keys, such as firebase credentials. To access these and make a proper build
 * Email ifigeneiamanolou26@gmail.com to be added to the EAS project. Once you have been added to the project, the credentials are built in the application and you can run the project, along with the push notifications and google log in features without having to know the credentials themselves
 * Run `eas login` and enter your EAS details when asked to
 * Make a local development build using:
@@ -101,7 +101,7 @@ cd ../../frontend/my-app
 eas build --profile development --platform android
 ```
 
-Option C: Make your own credentials. This process consists of integrating Firebase in your project and creating OAuth credentials using the Google Cloud Console. These can be implemented, following the steps below:
+**Option C:** Make your own credentials. This process consists of integrating Firebase in your project and creating OAuth credentials using the Google Cloud Console. These can be implemented, following the steps below:
 
 * Open the Google Cloud Console to and create a new project
 * Create an OAuth 2.0 Client ID with application type "Android", package name the one in app.json and SHA-1 fingerprint found using the "eas credentials" command

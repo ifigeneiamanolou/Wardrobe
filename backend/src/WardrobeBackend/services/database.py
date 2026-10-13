@@ -1,4 +1,3 @@
-from cv2 import NORMCONV_FILTER
 import numpy as np
 from src.WardrobeBackend.models.pydantic import ClothingItem, UserWithToken, NewUser
 from pymongo.errors import AutoReconnect, DuplicateKeyError, OperationFailure, ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
@@ -7,7 +6,7 @@ from src.WardrobeBackend.utils.db_backoff import with_retry
 from src.WardrobeBackend.services.formatOutput import format_image
 from src.WardrobeBackend.config.conf import mongodb_key, INTERACTION_WEIGHTS
 import datetime
-from pymongo import AsyncMongoClient, MongoClient
+from pymongo import AsyncMongoClient
 from pymongo import UpdateOne
 import uuid
 import asyncio
@@ -569,11 +568,12 @@ async def save_interaction(
     if interaction_type not in INTERACTION_WEIGHTS.keys():
         raise ValueError("Interaction type is invalid!")
     
-    payload = {
+    payload = {     # unique id will be given automatically by mongo to this entry
         "user_id" : user_id,
         "item_id" : item_id,
         "interaction_type" : interaction_type,
-        "weight" : INTERACTION_WEIGHTS[interaction_type]
+        "weight" : INTERACTION_WEIGHTS[interaction_type],
+        "created_at" : datetime.datetime.now()
     }
 
     try:
@@ -658,6 +658,7 @@ async def fetch_item_feature_vector(client : AsyncMongoClient, item_id : str):
     except Exception as exc:
         raise DatabaseError() from exc
 
+# Update the recommended items and optionally his profile of a single user
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def update_recommendations(
     client : AsyncMongoClient, 
@@ -689,7 +690,7 @@ async def update_recommendations(
     except Exception as exc:
         raise DatabaseError() from exc
 
-# Bulk update operation for the recommendations to remove number of calls
+# Bulk update operation for the recommendations after an item was creatd
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def update_recommendations_batch(
     client : AsyncMongoClient, 
@@ -698,7 +699,7 @@ async def update_recommendations_batch(
     item_id : str
 ):
     collection = client["Clothing"]["Recommendations"]
-    operation = [UpdateOne(
+    update_ops = [UpdateOne(
         filter = {"user_id" : user_id},
         update = {
             '$push' : {"recommended_items" : {
@@ -711,7 +712,21 @@ async def update_recommendations_batch(
     ) for user_id, score in zip(user_ids, scores)]
 
     try:
-        await collection.bulk_write(operation, ordered = False)
+        await collection.bulk_write(update_ops, ordered = False)
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+        raise DatabaseError() from exc
+
+# Bulk update operation for the recommendations within the daily task
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def update_recommendations_daily(
+    client : AsyncMongoClient,
+    update_ops : list
+):
+    collection = client["Clothing"]["Recommendations"]
+    try:
+        await collection.bulk_write(update_ops, ordered = False)
     except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
@@ -862,6 +877,7 @@ async def load_feed(client : AsyncMongoClient, user_id : str):
     except Exception as exc:
        raise DatabaseError() from exc
 
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
 async def find_all(client : AsyncMongoClient, collection : str, database : str = "Authentication"):
     collection = client[database][collection]
     try:
@@ -873,7 +889,7 @@ async def find_all(client : AsyncMongoClient, collection : str, database : str =
        raise DatabaseError() from exc
 
 @with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
-async def update_feature_vectors(client : MongoClient, update_operations : list):
+async def update_feature_vectors(client : AsyncMongoClient, update_operations : list):
     collection = client["Clothing"]["Outfits"]
     try:
         await collection.bulk_write(update_operations, sorted = False)
@@ -881,5 +897,31 @@ async def update_feature_vectors(client : MongoClient, update_operations : list)
         raise DatabaseUnavailableError() from exc
     except Exception as exc:
        raise DatabaseError() from exc
+
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def fetch_interactions_by_user(client : AsyncMongoClient, user_id : str):
+    collection = client["Feed"]["Interactions"]
+    try:
+        return await collection.find({"user_id" : user_id}).to_list()  # WHAT IF ITS EMPTY??
+    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+        raise DatabaseUnavailableError() from exc
+    except Exception as exc:
+       raise DatabaseError() from exc
+
+    #     recommendations_payload = {     # Used to create an entry in the recommendations payloadfsdave
+    #     "user_id" : user_id,
+    #     "profile" : None,           # No interaction data available on sign up,
+    #     "recommended_items" : [],
+    #     "interaction_count" : 0,
+    #     "comnputed_at" : None
+    # }
+
+
+# Used when updating the user profile and the recommendations daily
+@with_retry(max_attempts = 5, base_delay = 0.5, backoff = 2)
+async def updateDaily(client : AsyncMongoClient, recommendations : list[str], profile : list[float], user_id : str):
+    collection = client["Clothing"]["Recommendations"]
+    document_to_find = {"user_id" : user_id}
+    update_op = {}
 
 # function to load comments for a given outfit  !!!!!!!!!!!!!

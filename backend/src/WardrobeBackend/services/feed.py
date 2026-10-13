@@ -1,7 +1,4 @@
-from gettext import find
-from turtle import update
-
-from pymongo import MongoClient, UpdateOne
+from pymongo import AsyncMongoClient, UpdateOne
 from src.WardrobeBackend.models.pydantic import Outfit
 from src.WardrobeBackend.config.conf import NAMED_COLORS, NAMED_CATEGORIES, INTERACTION_WEIGHTS
 import numpy as np
@@ -9,7 +6,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer
 from src.WardrobeBackend.services.database import (delete_interaction, save_interaction, fetch_item_feature_vector, fetch_user_profile_vector, 
                                    update_recommendations, fetch_user_recommendations, fetch_friend_profiles,
-                                   update_recommendations_batch, delete_interaction, find_all, update_feature_vectors)
+                                   update_recommendations_batch, delete_interaction, find_all, update_feature_vectors, 
+                                   fetch_interactions_by_user)
 from sklearn.decomposition import TruncatedSVD
 from sklearn.metrics.pairwise import cosine_similarity
 import asyncio
@@ -80,62 +78,80 @@ def create_feature_vector(outfit : Outfit) -> np.ndarray:
     # Combine the price, number of items, category and color in a sparse matrix
     return np.concatenate([categories, colors, [normalized_price, number_items], description])
 
-async def update_feed_daily(client : MongoClient):
+async def rebuild_user(client : AsyncMongoClient, user_id : str, new_vectors : dict):
+    # Fetch all the interactions of the given user
+    interactions = await fetch_interactions_by_user(client, user_id)
+    if interactions is None:
+        return      # Nothing to change
+
+    # Calculate the user profile vector based on the interactions and the item vectors
+    dim = len(next(iter(new_vectors.values())))
+    profile_new = np.zeros(dim)
+    for i in interactions:
+        v = new_vectors.get(i["item_id"])
+        created_at = i["created_at"] or datetime.now()
+        profile_new += apply_weight(v, INTERACTION_WEIGHTS[i["interaction_type"]], created_at)
+
+    # Find the scores for the outfits for the given user
+    scores = cosine_similarity(profile_new, new_vectors.values())[:, 0]
+    recom_new, _ = zip(*sorted(zip(new_vectors.keys(), scores), key = lambda x : x[0]))
+    return profile_new, recom_new       # Return the new profile and a list of the sorted outfit ids based on the new scores
+
+async def update_feed_daily(client : AsyncMongoClient):
     global vectorizer, svd
-    while True:
-        await asyncio.sleep(60 * 60 * 24)     # Wait one full day
-        # Find all active users and iterate over each one of them
-        users = await find_all(client, "Users")
-        if users is None or len(users) == 0:
-            continue
 
-        # Find all corresponding entries in the recommendations table for each user
-        recommendations = await find_all(client, "Recommendations")
-        if recommendations is None or len(recommendations) == 0:
-            print(f"Error when creating recommendations. They have to be matching the users")
-            break
+    # Find all outfits generated
+    outfits = await find_all(client, "Outfits", "Clothing")
+    if outfits is None or len(outfits) == 0:
+        return 
 
-        # Find all outfits generated
-        outfits = await find_all(client, "Outfits", "Clothing")
-        if outfits is None or len(outfits) == 0:
-            continue
-        
-        # Perform TF-IDF with the new context using fit_transform (new corpus)
-        descriptions = [o["description"] for o in outfits]
-        tfidf_matrix = svd.fit_transform(vectorizer.fit_transform(descriptions))
+    # Perform TF-IDF with the new context using fit_transform (new corpus)
+    descriptions = [o["description"] for o in outfits]
+    tfidf_matrix = svd.fit_transform(vectorizer.fit_transform(descriptions))
 
-        # Update all outfit feature vectors in the db
-        new_vectors = []
-        for outfit, description in zip(outfits, tfidf_matrix):
-            old = np.array(outfit['feature_vector'])
-            new = np.concatenate(old[:NUM_FEATURES], description)
-            new_vectors.append(UpdateOne(
-                filter = {"_id" : outfit["_id"]}, 
-                update = {'$set' : {"feature_vector" : new.tolist()}}
+    # Update all outfit feature vectors in the db
+    new_vectors = {}            # Outfit feature vectors indexed by outfit id
+    update_ops = []
+    for outfit, description in zip(outfits, tfidf_matrix):
+        old = np.array(outfit['feature_vector'][:NUM_FEATURES])
+        new = np.concatenate(old, description)
+        new_vectors[outfit["_id"]] = new
+        new_vectors.append(UpdateOne(
+            filter = {"_id" : outfit["_id"]}, 
+            update = {'$set' : {"feature_vector" : new.tolist()}}
+        ))
+    await update_feature_vectors(client, update_ops)
+
+    # For each active user rebuild their profile and recompute their recommended outfits
+    users = await find_all(client, "Users") or []
+    update_ops_user = []
+    for user in users:
+        try:
+            profile_new, recoms = await rebuild_user(client, user["_id"], new_vectors)
+            update_ops_user.append(UpdateOne(
+                filter = {'user_id' : user["_id"]},
+                update = {'$set' : {'profile' : profile_new, 'recommended_items' : recoms}}
             ))
-        await update_feature_vectors(client, new_vectors)
+        except Exception as e:
+            print(f"Failed to rebuild user {user['_id']}: {e}")
 
-        # Pull all interactions
-        interactions = await find_all(client, "Interactions", "Feed")
-        if interactions is None:
-            continue
-
-        # Build the user profile vectors
-
-        # Update the profile vectors in the db
-
-        # Use cosine similarity to score outfits
-
-        # Order the outfits using the score above
-
-        # Update the entry with the ordered outfits for the given user
+    # Batch update all users' profile vectors and recommendations
+    
+            
+async def daily_feed_task(client : AsyncMongoClient):
+    while True:
+        await asyncio.sleep(60 * 60 * 24)   # Once a day
+        try:
+            await update_feed_daily(client)
+        except Exception as e:
+            print(f"Error when performing daily feed task : {e}")
 
 def apply_weight(vector : np.ndarray, weight : int, created_at : datetime, decay : float = 0.95):
     daysDifference = (datetime.now() - created_at).days
     vector = weight * (decay ** daysDifference) * vector
     return vector       # weighted
 
-async def on_item_create(user_id : int, client : MongoClient, outfit : Outfit):
+async def on_item_create(user_id : int, client : AsyncMongoClient, outfit : Outfit):
     # Compute the feature vector of the outfit
     feature_vector = create_feature_vector(outfit).reshape(1, -1)          
 
@@ -158,7 +174,7 @@ async def update_interaction(
     user_id : int, 
     item_id : int, 
     interaction_type : str, 
-    client : MongoClient,
+    client : AsyncMongoClient,
     deleted : bool = False
 ):
     # Raise a value error if needed
@@ -203,5 +219,5 @@ async def update_interaction(
     else:
         ranked_tuples = []
 
-    # Update the user recommendations table
+    # Update the user recommendations table only for one user
     await update_recommendations(client, user_id, ranked_tuples, updated_profile_vector.tolist())
